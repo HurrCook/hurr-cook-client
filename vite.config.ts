@@ -1,6 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA, VitePWAOptions } from 'vite-plugin-pwa';
+import path from 'path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const pwaOptions: Partial<VitePWAOptions> = {
   registerType: 'autoUpdate',
@@ -16,7 +20,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
-    theme_color: '#111827',
+    theme_color: '#FF8800',
     description: 'Vite + React + TS Progressive Web App',
     icons: [
       { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -44,9 +48,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
         handler: 'StaleWhileRevalidate',
         options: {
           cacheName: 'images',
-          expiration: {
-            maxEntries: 100,
-          },
+          expiration: { maxEntries: 100 },
         },
       },
     ],
@@ -58,4 +60,9 @@ const pwaOptions: Partial<VitePWAOptions> = {
 
 export default defineConfig({
   plugins: [react(), VitePWA(pwaOptions)],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'), // 절대경로 alias
+    },
+  },
 });
