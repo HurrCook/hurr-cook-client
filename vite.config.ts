@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { VitePWA, VitePWAOptions } from 'vite-plugin-pwa';
+import tailwindcss from '@tailwindcss/vite';
+import { VitePWA, type VitePWAOptions } from 'vite-plugin-pwa';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// PWA 옵션 타입 지정
 const pwaOptions: Partial<VitePWAOptions> = {
   registerType: 'autoUpdate',
   includeAssets: [
@@ -41,7 +43,6 @@ const pwaOptions: Partial<VitePWAOptions> = {
   },
   workbox: {
     globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-    navigateFallback: '/offline.html',
     runtimeCaching: [
       {
         urlPattern: /.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
@@ -53,16 +54,14 @@ const pwaOptions: Partial<VitePWAOptions> = {
       },
     ],
   },
-  devOptions: {
-    enabled: false,
-  },
+  devOptions: { enabled: false },
 };
 
 export default defineConfig({
-  plugins: [react(), VitePWA(pwaOptions)],
+  plugins: [react(), tailwindcss(), VitePWA(pwaOptions)],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'), // 절대경로 alias
+      '@': path.resolve(__dirname, './src'),
     },
   },
 });

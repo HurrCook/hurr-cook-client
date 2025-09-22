@@ -1,9 +1,19 @@
+@import 'pretendard/dist/web/variable/pretendardvariable.css';
+@import "tailwindcss";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Pretendard 로드 */
-@import 'pretendard/dist/web/variable/pretendardvariable.css';
+
+@font-face {
+    font-family: 'Gretoon';
+    src: url('/fonts/Gretoon.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
 
 /* Tailwind v4: 디자인 토큰은 CSS에서 선언 */
 @theme {
@@ -22,5 +32,5 @@
 /* 1rem = 10px + 전역 sans 적용 */
 @layer base {
     html { font-size: 62.5%; }
-    html { font-family: var(--font-sans); } /* = @apply font-sans */
+    html { font-family: var(--font-sans); }
 }
