@@ -1,32 +1,16 @@
+// src/components/common/AppLayout.tsx
 import React from 'react';
-import Header from './Header';
 
 type Props = {
   children: React.ReactNode;
-  onOpenDrawer?: () => void;
-  onOpenSettings?: () => void;
-  withHeader?: boolean;
 };
 
-export default function AppLayout({
-  children,
-  onOpenDrawer,
-  onOpenSettings,
-  withHeader = true,
-}: Props) {
+export default function AppLayout({ children }: Props) {
   return (
-    <div className="flex flex-col min-h-screen bg-white text-textDark font-sans">
-      {/* 상단 헤더 */}
-      {withHeader && (
-        <div className="shrink-0">
-          <Header onLeftClick={onOpenDrawer} onRightClick={onOpenSettings} />
-        </div>
-      )}
-
-      {/* 본문 컨텐츠 */}
-      <main className="flex-1 w-full max-w-screen-sm mx-auto px-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <div className="w-[430px] h-[932px] bg-white shadow-lg overflow-y-auto">
         {children}
-      </main>
+      </div>
     </div>
   );
 }
