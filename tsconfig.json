@@ -12,12 +12,11 @@
     "rootDir": "./src",
     "types": ["vite/client"],
 
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "dist",
-    "tailwind.config.cjs", "postcss.config.js"]
+  "exclude": ["node_modules", "dist"]
 }
