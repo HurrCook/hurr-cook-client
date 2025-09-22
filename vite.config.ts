@@ -1,13 +1,14 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { VitePWA } from 'vite-plugin-pwa';
+import { VitePWA, type VitePWAOptions } from 'vite-plugin-pwa';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const pwaOptions = {
+// PWA 옵션 타입 지정
+const pwaOptions: Partial<VitePWAOptions> = {
   registerType: 'autoUpdate',
   includeAssets: [
     'icons/icon-192.png',
@@ -57,11 +58,7 @@ const pwaOptions = {
 };
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(), // ← 이거 추가
-    VitePWA(pwaOptions),
-  ],
+  plugins: [react(), tailwindcss(), VitePWA(pwaOptions)],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
