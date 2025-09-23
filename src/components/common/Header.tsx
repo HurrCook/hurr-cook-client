@@ -1,57 +1,29 @@
 import React from 'react';
 import TabIcon from '@/assets/탭.svg';
-import Logo from '@/assets/HurrCook-Color.svg';
 import SettingIcon from '@/assets/세팅.svg';
 
 type HeaderProps = {
-  onLeftClick?: () => void;
-  onRightClick?: () => void;
-  className?: string;
+  onOpenSidebar: () => void;
+  onOpenModal: () => void;
 };
 
-const Header: React.FC<HeaderProps> = ({
-  onLeftClick,
-  onRightClick,
-  className,
-}) => {
+export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   return (
-    <header
-      className={[
-        'sticky top-0 z-50 bg-white border-b border-cardBorderLight',
-        'h-20 md:h-24', // 모바일 80px, 데스크탑 96px
-        className ?? '',
-      ].join(' ')}
-    >
-      <div className="mx-auto w-full h-full flex items-center justify-between px-4">
-        {/* 왼쪽 버튼 */}
-        <button
-          type="button"
-          onClick={onLeftClick}
-          className="flex items-center justify-center w-14 h-14 active:scale-95"
-          aria-label="메뉴 열기"
-        >
-          <img src={TabIcon} alt="메뉴" className="w-8 h-8" />
-        </button>
+    <header className="w-full h-[52px] bg-white border-b border-gray-200 flex items-center justify-between px-4">
+      {/* 왼쪽: 탭 아이콘 */}
+      <button onClick={onOpenSidebar}>
+        <img src={TabIcon} alt="탭 아이콘" className="w-8 h-8" />
+      </button>
 
-        {/* 중앙 로고 */}
-        <img
-          src={Logo}
-          alt="Hurr Cook"
-          className="h-10 md:h-12 object-contain max-w-[220px]"
-        />
+      {/* 가운데: 로고 텍스트 */}
+      <h1 className="text-[#FF8800] font-[Gretoon] text-2xl font-normal">
+        Hurr Cook
+      </h1>
 
-        {/* 오른쪽 버튼 */}
-        <button
-          type="button"
-          onClick={onRightClick}
-          className="flex items-center justify-center w-14 h-14 active:scale-95"
-          aria-label="설정 열기"
-        >
-          <img src={SettingIcon} alt="설정" className="w-8 h-8" />
-        </button>
-      </div>
+      {/* 오른쪽: 세팅 아이콘 */}
+      <button onClick={onOpenModal}>
+        <img src={SettingIcon} alt="세팅 아이콘" className="w-8 h-8" />
+      </button>
     </header>
   );
-};
-
-export default Header;
+}
