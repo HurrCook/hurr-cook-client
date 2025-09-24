@@ -67,7 +67,7 @@ export default function CameraModal({ onClose }: CameraModalProps) {
           ref={videoRef}
           autoPlay
           playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"
+          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none scale-x-[-1]"
         />
 
         {/* 상단 영역 */}
