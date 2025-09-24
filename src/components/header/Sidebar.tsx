@@ -48,7 +48,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <SidebarItem
             label="저장된 레시피"
             selected={selected === '저장된 레시피'}
-            onClick={() => handleNavigation('저장된 레시피', '/recipes')}
+            onClick={() => handleNavigation('저장된 레시피', '/recipt')}
           />
         </nav>
       </div>
