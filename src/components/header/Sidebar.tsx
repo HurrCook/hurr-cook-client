@@ -46,8 +46,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
           />
           <SidebarItem
             label="저장된 레시피"
-            selected={location.pathname === '/receipt'}
-            onClick={() => handleNavigation('/receipt')}
+            selected={location.pathname === '/recipe'}
+            onClick={() => handleNavigation('/recipe')}
           />
         </nav>
       </div>
