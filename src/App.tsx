@@ -2,7 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import SplashScreen from './pages/splash/SplashScreen';
 import LoginPage from './pages/login/LoginPage';
 import ChatbotPage from './pages/chat/ChatbotPage';
-import AppLayout from './components/header/AppLayout';
+import AppLayout from './components/layout/AppLayout';
 import Refrigerator from './pages/refrigerator/Refrigerator';
 import Recipt from './pages/receipt/Receipt';
 

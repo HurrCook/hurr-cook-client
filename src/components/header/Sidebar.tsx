@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // ✅ 추가
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Hurr3Icon from '@/assets/Hurr3.svg';
 import SidebarItem from './SidebarItem';
 import LogoutIcon from '@/assets/로그아웃.svg';
@@ -9,13 +9,12 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ onClose }: SidebarProps) {
-  const [selected, setSelected] = useState('후르랑 대화하기');
-  const navigate = useNavigate(); // ✅ 추가
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleNavigation = (label: string, path: string) => {
-    setSelected(label);
-    navigate(path); // ✅ 페이지 이동
-    onClose(); // 사이드바 닫기
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    onClose();
   };
 
   return (
@@ -37,18 +36,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <nav className="flex flex-col space-y-2 mt-4">
           <SidebarItem
             label="후르랑 대화하기"
-            selected={selected === '후르랑 대화하기'}
-            onClick={() => handleNavigation('후르랑 대화하기', '/chat')}
+            selected={location.pathname === '/chat'}
+            onClick={() => handleNavigation('/chat')}
           />
           <SidebarItem
             label="내 냉장고"
-            selected={selected === '내 냉장고'}
-            onClick={() => handleNavigation('내 냉장고', '/refrigerator')}
+            selected={location.pathname === '/refrigerator'}
+            onClick={() => handleNavigation('/refrigerator')}
           />
           <SidebarItem
             label="저장된 레시피"
-            selected={selected === '저장된 레시피'}
-            onClick={() => handleNavigation('저장된 레시피', '/recipt')}
+            selected={location.pathname === '/recipt'}
+            onClick={() => handleNavigation('/recipt')}
           />
         </nav>
       </div>

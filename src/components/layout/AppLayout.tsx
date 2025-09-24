@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import Header from './Header';
-import Sidebar from './Sidebar';
-import SettingsModal from './SettingsModal';
+import Header from '../header/Header';
+import Sidebar from '../header/Sidebar';
+import SettingsModal from '../header/SettingsModal';
 import { AnimatePresence, motion } from 'framer-motion';
 
 type Props = {
