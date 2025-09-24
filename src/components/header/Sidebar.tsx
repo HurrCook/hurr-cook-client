@@ -25,12 +25,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <h1 className="ml-4 text-[#FF8800] font-[Gretoon] text-2xl">
             Hurr Cook
           </h1>
-          <button
-            onClick={onClose}
-            className="absolute right-0 text-gray-400 hover:text-gray-600"
-          >
-            ✕
-          </button>
         </div>
 
         <nav className="flex flex-col space-y-2 mt-4">
