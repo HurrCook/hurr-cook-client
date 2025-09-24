@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Hurr3Icon from '@/assets/Hurr3.svg';
 import SidebarItem from './SidebarItem';
+import LogoutIcon from '@/assets/로그아웃.svg'; // 추가
 
 type SidebarProps = {
   onClose: () => void;
@@ -10,13 +11,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const [selected, setSelected] = useState('후르랑 대화하기');
 
   return (
-    <aside className="w-[270px] bg-white shadow-lg z-50 flex flex-col">
-      {/* 상단 영역 (로고 + 메뉴) */}
+    <aside className="w-[270px] h-full bg-white shadow-lg z-50 flex flex-col">
       <div className="p-4 flex-1 flex flex-col">
-        {/* 로고 */}
         <div className="flex items-center mb-6 relative">
-          <img src={Hurr3Icon} alt="Hurr Cook Logo" className="w-10 h-10" />
-          <h1 className="ml-3 text-[#FF8800] font-[Gretoon] text-lg">
+          <img src={Hurr3Icon} alt="Hurr Cook Logo" className="w-14 h-14" />
+          <h1 className="ml-4 text-[#FF8800] font-[Gretoon] text-2xl">
             Hurr Cook
           </h1>
           <button
@@ -26,9 +25,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             ✕
           </button>
         </div>
-
-        {/* 메뉴 리스트 */}
-        <nav className="flex flex-col space-y-2">
+        <nav className="flex flex-col space-y-2 mt-4">
           <SidebarItem
             label="후르랑 대화하기"
             selected={selected === '후르랑 대화하기'}
@@ -53,7 +50,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <span className="ml-4 text-[#212121] font-[Gretoon] text-[16px]">
           박건민
         </span>
-        <div className="ml-auto w-[18px] h-[18px] border border-[#A7A7A7] rounded-sm" />
+        {/* 로그아웃 아이콘 */}
+        <img
+          src={LogoutIcon}
+          alt="로그아웃"
+          className="ml-auto w-8 h-8 cursor-pointer"
+        />
       </div>
     </aside>
   );

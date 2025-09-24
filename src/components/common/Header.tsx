@@ -9,7 +9,7 @@ type HeaderProps = {
 
 export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   return (
-    <header className="w-full h-[52px] bg-white border-b border-gray-200 flex items-center justify-between px-4">
+    <header className="w-full h-13 bg-white flex items-center justify-between px-4 mt-3">
       {/* 왼쪽: 탭 아이콘 */}
       <button onClick={onOpenSidebar}>
         <img src={TabIcon} alt="탭 아이콘" className="w-8 h-8" />

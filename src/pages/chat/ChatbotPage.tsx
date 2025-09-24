@@ -4,14 +4,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full p-4">
       {/* 채팅 영역 */}
-      <div className="flex-1 overflow-y-auto space-y-3">
-        <div className="self-start bg-gray-200 text-gray-800 px-3 py-2 rounded-xl max-w-[70%]">
-          안녕하세요! 무엇을 도와드릴까요?
-        </div>
-        <div className="self-end bg-[#FF8800] text-white px-3 py-2 rounded-xl max-w-[70%]">
-          레시피 추천해줘
-        </div>
-      </div>
+      <div className="flex-1 overflow-y-auto space-y-3"></div>
 
       {/* 입력 영역 */}
       <div className="flex items-center border-t border-gray-200 mt-2 pt-2">

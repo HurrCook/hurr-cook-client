@@ -14,7 +14,7 @@ export default function SidebarItem({
   return (
     <div
       onClick={onClick}
-      className={`w-full h-12 rounded-lg flex items-center px-4 cursor-pointer transition-colors ${
+      className={`w-full h-20 rounded-lg flex items-center px-4 cursor-pointer transition-colors ${
         selected ? 'bg-[#F0F0F0]' : 'bg-white hover:bg-gray-100'
       }`}
     >
