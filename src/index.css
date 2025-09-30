@@ -31,6 +31,5 @@
 
 /* 1rem = 10px + 전역 sans 적용 */
 @layer base {
-    html { font-size: 62.5%; }
     html { font-family: var(--font-sans); }
 }

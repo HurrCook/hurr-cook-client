@@ -9,7 +9,7 @@ export default function FooterButton({
   className = '',
   ...rest
 }: FooterButtonProps) {
-  const fixedSizeClasses = 'px-36 py-3 text-xl';
+  const fixedSizeClasses = 'w-96 h-12 px-36 py-3 text-xl font-normal';
   const fixedColorClasses =
     'text-white bg-main hover:bg-orange-300 disabled:bg-orange-100';
 
