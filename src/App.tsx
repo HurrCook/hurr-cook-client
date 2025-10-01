@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import SplashScreen from './pages/splash/SplashScreen';
 import LoginPage from './pages/login/LoginPage';
 import ChatbotPage from './pages/chat/ChatbotPage';
