@@ -53,7 +53,7 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-13 bg-white flex items-center px-4 z-30">
+    <header className="fixed mt-1 left-0 right-0 h-13 bg-white/70 backdrop-blur-sm flex items-center px-4 z-30">
       <button onClick={onOpenSidebar} className="z-10">
         <img src={TabIcon} alt="탭 아이콘" className="w-6 h-6" />
       </button>
