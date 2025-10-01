@@ -74,7 +74,7 @@ export default function CameraModal({ onClose }: CameraModalProps) {
         <div className="relative z-20 flex justify-start p-4">
           <button
             onClick={onClose}
-            className="bg-black/20 text-white w-14 h-14 flex items-center justify-center rounded-full text-4xl"
+            className="bg-black/20 text-white w-8 h-8 flex items-center justify-center rounded-full text-xl"
           >
             ✕
           </button>

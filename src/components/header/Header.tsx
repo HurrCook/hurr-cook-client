@@ -34,7 +34,7 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
             <img
               src={PencilIcon}
               alt="연필 아이콘"
-              className="w-7 h-7 ml-1 mt-2"
+              className="w-8 h-8 ml-1 mt-2"
             />
           </button>
         </div>

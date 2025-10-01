@@ -3,19 +3,18 @@ import Header from '../header/Header';
 import Sidebar from '../header/Sidebar';
 import SettingsModal from '../header/SettingsModal';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Outlet } from 'react-router-dom';
 
 type Props = {
-  children: React.ReactNode;
   withHeader?: boolean;
 };
 
-export default function AppLayout({ children, withHeader = true }: Props) {
+export default function AppLayout({ withHeader = true }: Props) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="flex min-h-dvh w-full flex-col gap-5">
-      {/* 헤더 */}
+    <div className="flex min-h-dvh w-full flex-col gap-5 relative">
       {withHeader && (
         <Header
           onOpenSidebar={() => setIsSidebarOpen(true)}
@@ -23,10 +22,11 @@ export default function AppLayout({ children, withHeader = true }: Props) {
         />
       )}
 
-      {/* 메인 컨텐츠 */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      {/* ✅ 여기서 children 대신 Outlet */}
+      <main className="flex-1 overflow-y-auto">
+        <Outlet />
+      </main>
 
-      {/* 사이드바 (앱 프레임 안에서만 열림) */}
       <AnimatePresence initial={false}>
         {isSidebarOpen && (
           <motion.div
@@ -35,7 +35,6 @@ export default function AppLayout({ children, withHeader = true }: Props) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            {/* 반투명 배경 (페이드 인/아웃) */}
             <motion.div
               className="absolute inset-0 bg-black/40"
               onClick={() => setIsSidebarOpen(false)}
@@ -43,8 +42,6 @@ export default function AppLayout({ children, withHeader = true }: Props) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             />
-
-            {/* 사이드바 본체 (슬라이드 인/아웃) */}
             <motion.div
               className="relative z-50"
               initial={{ x: -270 }}
@@ -58,10 +55,8 @@ export default function AppLayout({ children, withHeader = true }: Props) {
         )}
       </AnimatePresence>
 
-      {/* 모달 (앱 프레임 안에서만 열림) */}
       {isModalOpen && (
         <div className="absolute inset-0 z-50 flex items-center justify-center">
-          {/* 반투명 배경 */}
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setIsModalOpen(false)}
