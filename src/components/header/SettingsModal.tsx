@@ -20,19 +20,19 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
         {/* 입력 영역 */}
         <textarea
-          className="mt-5 w-full h-[460px] border border-[#BEBEBE] rounded-xl p-3 resize-none focus:outline-none text-2xl"
+          className="mt-5 w-full h-[460px] border border-[#BEBEBE] rounded-xl p-3 resize-none focus:outline-none text-l"
           placeholder="여기에 입력하세요..."
         />
 
         {/* 하단 버튼 영역 */}
-        <div className="absolute bottom-0 left-0 w-full h-0 mb-14 bg-gradient-to-b from-[rgba(255,255,255,0)] to-white backdrop-blur-sm flex items-center justify-between px-6">
+        <div className="absolute bottom-0 left-0 w-full h-0 mb-8 bg-gradient-to-b from-[rgba(255,255,255,0)] to-white backdrop-blur-sm flex items-center justify-between px-6">
           <button
             onClick={onClose}
-            className="px-10 py-1 bg-[#EDEDED] text-[#777777] text-[16px] font-pretendard font-normal rounded-xl"
+            className="px-10 py-1 bg-[#EDEDED] text-[#777777] text-l font-pretendard font-normal rounded-xl"
           >
             취소
           </button>
-          <button className="px-10 py-1 bg-[#FF8800] text-white text-[16px] font-pretendard font-normal rounded-xl">
+          <button className="px-10 py-1 bg-[#FF8800] text-white text-l font-pretendard font-normal rounded-xl">
             적용
           </button>
         </div>
