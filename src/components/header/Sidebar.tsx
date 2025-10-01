@@ -18,8 +18,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
   };
 
   return (
-    <aside className="w-[270px] h-full bg-white shadow-lg z-50 flex flex-col">
-      <div className="p-4 flex-1 flex flex-col">
+    <aside className="w-[270px] h-screen bg-white shadow-lg flex flex-col justify-between overflow-hidden">
+      {/* 상단: 로고 + 메뉴 */}
+      <div className="p-4 flex flex-col">
         <div className="flex items-center mb-6 relative">
           <img src={Hurr3Icon} alt="Hurr Cook Logo" className="w-10 h-10" />
           <h1 className="ml-4 text-[#FF8800] font-[Gretoon] text-l">

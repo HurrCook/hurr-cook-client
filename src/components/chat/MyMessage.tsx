@@ -1,13 +1,15 @@
 import React from 'react';
 
-interface MyMessageProps {
+export default function MyMessage({
+  text,
+  className = '',
+}: {
   text: string;
-}
-
-export default function MyMessage({ text }: MyMessageProps) {
+  className?: string;
+}) {
   return (
-    <div className="flex justify-end mb-2">
-      <div className="bg-[#FF8800] text-white rounded-xl px-3 py-2 max-w-[70%] text-sm">
+    <div className={`flex justify-end ${className}`}>
+      <div className="bg-[#FF8800] text-white px-3 py-2 rounded-lg max-w-[70%] text-sm">
         {text}
       </div>
     </div>
