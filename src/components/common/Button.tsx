@@ -11,7 +11,7 @@ const COLOR_MAP: { [k in ButtonProps['color']]: string } = {
     'text-neutral-500 bg-gray-200 hover:bg-neutral-300 disabled:bg-neutral-600',
 };
 
-export default function FooterButton({
+export default function Button({
   color,
   children,
   className = '',
