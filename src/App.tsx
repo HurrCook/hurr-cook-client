@@ -8,15 +8,16 @@ import RecipePage from './pages/receipt/RecipePage';
 
 export default function App() {
   return (
-    <AppLayout>
-      <Routes>
-        <Route path="/" element={<SplashScreen />} />
-        <Route path="/login" element={<LoginPage />} />
+    <Routes>
+      {/* 레이아웃 없이 보여줄 라우트 */}
+      <Route path="/" element={<SplashScreen />} />
+      <Route path="/login" element={<LoginPage />} />
+      {/* 레이아웃 적용 라우트 (중첩) */}
+      <Route element={<AppLayout />}>
         <Route path="/refrigerator" element={<RefrigeratorPage />} />
         <Route path="/recipe" element={<RecipePage />} />
         <Route path="/chat" element={<ChatbotPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AppLayout>
+      </Route>
+    </Routes>
   );
 }
