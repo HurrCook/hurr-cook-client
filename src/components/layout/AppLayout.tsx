@@ -14,7 +14,7 @@ export default function AppLayout({ withHeader = true }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <div className="flex min-h-dvh w-full flex-col gap-5 relative">
+    <div className="flex min-h-dvh w-full flex-col relative">
       {withHeader && (
         <Header
           onOpenSidebar={() => setIsSidebarOpen(true)}
@@ -22,8 +22,8 @@ export default function AppLayout({ withHeader = true }: Props) {
         />
       )}
 
-      {/* ✅ 여기서 children 대신 Outlet */}
-      <main className="flex-1 overflow-y-auto">
+      {/* ✅ 헤더 fixed → main에 padding-top 줌 */}
+      <main className="flex-1 overflow-y-auto pt-16">
         <Outlet />
       </main>
 
