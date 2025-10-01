@@ -6,6 +6,7 @@ import CameraIcon from '@/assets/카메라.svg';
 import PencilIcon from '@/assets/연필.svg';
 import CameraModal from './CameraModal';
 
+//아 거지같은 깃허브
 type HeaderProps = {
   onOpenSidebar: () => void;
   onOpenModal: () => void;
