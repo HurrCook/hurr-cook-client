@@ -11,7 +11,6 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ name, image }) => {
       <div className="w-full h-40 bg-neutral-100 rounded-[10px] overflow-hidden flex items-center justify-center">
         <img src={image} alt={name} className="w-full h-full object-cover" />
       </div>
-      <div className="mt-2 w-full px-1 flex flex-col gap-0.5">
         <p className="text-black text-base font-normal truncate">{name}</p>
       </div>
     </div>
