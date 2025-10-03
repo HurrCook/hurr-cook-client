@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
-import RecipeCard from '@/pages/receipt/components/RecipeCard';
-import RecipeModal from './components/RecipeModal';
+import RecipeCard from './components/RecipeCard';
+import RecipeEditModal from './components/RecipeEditModal';
+import SubtractModal from './components/SubtractModal';
 
-// 레시피 데이터의 타입을 정의합니다. (date와 quantity 필드 포함)
-type Recipe = {
+// --- 공통 인터페이스 정의 ---
+interface Ingredient {
+  name: string;
+  quantity: string;
+}
+
+interface Recipe {
   id: number;
   name: string;
   image: string;
-  ingredients: { name: string; quantity: string }[];
+  ingredients: Ingredient[];
   instructions: string[];
-};
+}
 
 const RecipePage: React.FC = () => {
-  // 상태 초기값을 RecipePage 컴포넌트 내부에서 정의합니다.
   const [recipes, setRecipes] = useState<Recipe[]>([
     {
       id: 1,
@@ -73,29 +78,66 @@ const RecipePage: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [subtractModalOpen, setSubtractModalOpen] = useState(false);
 
+  // --- 모달 상태 관리 함수 ---
+
+  // 1. 레시피 카드 클릭 (RecipeEditModal 열기)
   const handleCardClick = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
     setIsModalOpen(true);
   };
 
+  // 2. RecipeEditModal 닫기 (전체 플로우 종료)
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedRecipe(null);
   };
 
-  const handleDelete = (id: number) => {
-    // 레시피 목록에서 해당 ID의 항목을 필터링하여 제거합니다.
-    setRecipes((prev) => prev.filter((recipe) => recipe.id !== id));
+  // 3. 모달 플로우 전체 종료 (SubtractModal 완료/취소 시 호출)
+  const handleEndFlow = () => {
+    setSubtractModalOpen(false);
     setIsModalOpen(false);
     setSelectedRecipe(null);
   };
 
+  // 4. RecipeEditModal에서 '재료차감' 클릭
+  const handleStartSubtract = () => {
+    setIsModalOpen(false);
+    setSubtractModalOpen(true);
+  };
+
+  // 5. SubtractModal에서 '이전' 클릭
+  const handleBackToRecipe = () => {
+    setSubtractModalOpen(false); // SubtractModal 닫기
+    setIsModalOpen(true); // CookingModal 열기
+  };
+
+  // 6. SubtractModal에서 '완료' 클릭 (재료 차감 로직)
+  const handleConfirmSubtract = (recipeId: number) => {
+    console.log(`✅ ID ${recipeId} 레시피의 재료 차감 API 호출 (임시 로직)`);
+    // 이 로직이 수행된 후 SubtractModal 내부에서 onClose (여기서는 handleEndFlow)가 호출되어 플로우가 종료됩니다.
+  };
+
+  // 7. 레시피 수정 후 저장
+  const handleRecipeSave = (updatedRecipe: Recipe) => {
+    console.log('✅ 레시피 업데이트 API 호출:', updatedRecipe.name);
+    setRecipes(
+      recipes.map((r) => (r.id === updatedRecipe.id ? updatedRecipe : r)),
+    );
+  };
+
+  // 10. 레시피 삭제
+  const handleDelete = (id: number) => {
+    console.log('❌ 레시피 삭제 API 호출:', id);
+    setRecipes((prev) => prev.filter((recipe) => recipe.id !== id));
+    setIsModalOpen(false);
+    setSelectedRecipe(null);
+  };
   return (
     <div className="w-full min-h-dvh flex flex-col items-center">
       <main className="w-full flex-1 py-4 pt-0 flex justify-center">
         <div className="flex flex-wrap w-[365px] h-52 justify-between gap-y-4">
-          {/* recipes 배열을 사용합니다. */}
           {recipes.map((recipe) => (
             <div
               key={recipe.id}
@@ -109,11 +151,23 @@ const RecipePage: React.FC = () => {
       </main>
 
       {isModalOpen && selectedRecipe && (
-        <RecipeModal
+        <RecipeEditModal
           isOpen={isModalOpen}
           onDelete={() => handleDelete(selectedRecipe.id)}
           onClose={handleCloseModal}
           recipe={selectedRecipe}
+          onStartCooking={handleStartSubtract}
+          onSave={handleRecipeSave}
+        />
+      )}
+
+      {subtractModalOpen && selectedRecipe && (
+        <SubtractModal
+          isOpen={subtractModalOpen}
+          onClose={handleEndFlow}
+          onBack={handleBackToRecipe} // ✅ 이전으로 돌아가는 함수 연결
+          recipe={selectedRecipe}
+          onConfirmSubtract={handleConfirmSubtract} // 차감 로직
         />
       )}
     </div>
