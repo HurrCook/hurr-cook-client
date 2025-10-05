@@ -37,7 +37,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
         </div>
 
         {/* 모달 내용 스크롤 */}
-        <div className="p-5 flex flex-col overflow-y-auto gap-5 custom-scrollbar">
+        <div className="p-6 pt-0 flex flex-col overflow-y-auto gap-4 custom-scrollbar">
           {/* 이미지 */}
           <div className="flex flex-col items-start gap-2.5">
             <div className="w-40 h-36 relative rounded-xl outline-1 outline-stone-300 overflow-hidden">

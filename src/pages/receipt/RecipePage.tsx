@@ -26,6 +26,7 @@ const RecipePage: React.FC = () => {
       ingredients: [
         { name: '피망', quantity: '3개' },
         { name: '양파', quantity: '1개' },
+        { name: '간장', quantity: '1숟가락' }, // 👈 간장 추가
       ],
       instructions: [
         '재료 손질하기\n 피망, 양파, 대파를 잘게 썬다. 계란은 미리 풀어둔다.',
