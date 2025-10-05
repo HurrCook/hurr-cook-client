@@ -3,15 +3,11 @@ import FooterButton from '/src/components/FooterButton';
 import CameraModal from '/src/components/header/CameraModal';
 import ImageOptionsModal from '/src/components/modal/ImageOptionsModal';
 
-export default function UserInfoPage1() {
+export default function UserInfoPage2() {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
 
   // 1. 썸네일 클릭 -> 옵션 모달 열기
-  const handleaddimageClick = () => {
-    setIsOverlayVisible(true);
-  };
-
   // 2. 옵션 모달 닫기
   const handleOptionsModalClose = () => {
     setIsOverlayVisible(false);
@@ -52,31 +48,14 @@ export default function UserInfoPage1() {
 
       {/* 상단 타이틀/설명: Header(127px) 바로 아래부터 시작하도록 마진 조정 */}
       <div className="w-full flex justify-center mt-[18.5px]">
-        <div className="w-74 p-2.5 flex flex-col justify-start items-center gap-[23px]">
+        <div className="w-74 p-2.5 flex flex-col justify-start items-center gap-[35px]">
           <div className="text-center text-amber-500 text-[32px] font-normal font-['Gretoon']">
             Hurr Cook
           </div>
           <div className="text-center text-amber-500 text-base font-normal font-['Pretendard']">
-            AI 레시피 추천 서비스를 이용하기 위해
-            <br />
-            아래 버튼을 클릭하여 재료를 추가해 주세요!
+            등록된 재료 정보가 맞는지 확인해주실래요?
           </div>
         </div>
-      </div>
-
-      {/* 썸네일 카드 (클릭 시 옵션 모달 활성화) */}
-      <div
-        className="w-[37.20%] aspect-square absolute rounded-lg overflow-hidden cursor-pointer"
-        style={{ left: '8.60%', top: '171px' }} // 앱 프레임 최상단(헤더 포함) 기준 위치
-        onClick={handleaddimageClick}
-        role="button"
-        tabIndex={0}
-      >
-        <img
-          className="w-full h-full"
-          src="/src/assets/ingredient_add_image.svg"
-          alt="재료 추가 버튼"
-        />
       </div>
 
       {/* 메인 스크롤 영역 (푸터 간격 확보) */}
