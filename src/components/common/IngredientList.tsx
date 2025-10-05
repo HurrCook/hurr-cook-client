@@ -39,7 +39,6 @@ const RecipePage: React.FC = () => {
     <div className="w-full min-h-dvh flex flex-col items-center">
       <main className="w-full flex-1 py-4 pt-0 flex justify-center">
         <div className="flex flex-wrap w-[365px] h-52 justify-between gap-y-4">
-          {/* recipes 배열을 사용합니다. */}
           {ingredients.map((ingredient) => (
             <div key={ingredient.id} className="cursor-pointer">
               <IngredientCard

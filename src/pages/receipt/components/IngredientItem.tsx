@@ -3,13 +3,17 @@ import React from 'react';
 interface IngredientItemProps {
   name: string;
   quantity: string;
-  isEditable?: boolean; // 편집 가능 여부
+  isEditable?: boolean;
+  onNameChange?: (value: string) => void;
+  onQuantityChange?: (value: string) => void;
 }
 
 const IngredientItem: React.FC<IngredientItemProps> = ({
   name,
   quantity,
   isEditable = false,
+  onNameChange,
+  onQuantityChange,
 }) => {
   return (
     <div className="flex gap-4">
@@ -21,6 +25,8 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
             type="text"
             value={name}
             readOnly={!isEditable}
+            // *수정*: isEditable일 때 onChange 연결
+            onChange={(e) => onNameChange && onNameChange(e.target.value)}
             className="w-full text-zinc-800 text-sm font-light focus:outline-none bg-transparent"
             aria-label="재료명"
           />
@@ -37,6 +43,10 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
             type="text"
             value={quantity}
             readOnly={!isEditable}
+            // *수정*: isEditable일 때 onChange 연결
+            onChange={(e) =>
+              onQuantityChange && onQuantityChange(e.target.value)
+            }
             className="w-full text-zinc-800 text-sm font-light focus:outline-none bg-transparent"
             aria-label="갯수/용량"
           />
