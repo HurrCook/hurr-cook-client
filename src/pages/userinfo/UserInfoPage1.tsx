@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import FooterButton from '/src/components/FooterButton';
+import FooterButton from '/src/components/common/FooterButton';
 import CameraModal from '/src/components/header/CameraModal';
 import ImageOptionsModal from '/src/components/modal/ImageOptionsModal';
+import { useNavigate } from 'react-router-dom';
 
 export default function UserInfoPage1() {
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
-
+  const navigate = useNavigate();
   // 1. 썸네일 클릭 -> 옵션 모달 열기
   const handleaddimageClick = () => {
     setIsOverlayVisible(true);
@@ -35,7 +36,11 @@ export default function UserInfoPage1() {
   const handleCameraModalClose = () => {
     setCameraOn(false);
   };
-
+  const handleNextClick = () => {
+    console.log('다음으로 클릭');
+    // 다음 페이지로 이동
+    navigate('/userinfopage1_2');
+  };
   return (
     // SettingLayout의 Outlet에 렌더링되므로, 높이/중앙 정렬 코드를 제거하고 콘텐츠만 남깁니다.
     <div className="w-full h-full relative">
@@ -92,7 +97,8 @@ export default function UserInfoPage1() {
         <div className="h-[26.17%] w-full"></div>
         <FooterButton
           className="w-[82.79%] h-[32.21%]"
-          onClick={() => console.log('다음으로 클릭')}
+          // 💡 정의한 핸들러 함수 연결
+          onClick={handleNextClick}
         >
           다음으로
         </FooterButton>
