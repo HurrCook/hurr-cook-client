@@ -5,77 +5,111 @@ import CameraModal from '/src/components/header/CameraModal';
 import ImageOptionsModal from '/src/components/modal/ImageOptionsModal';
 import IngredientList, { Ingredient } from '@/components/common/IngredientList';
 
+// 재료 데이터의 타입을 수정합니다. (quantity: number, unit: string으로 분리)
+type Ingredient = {
+  id: number | string;
+  name: string;
+  image: string;
+  date: string;
+  quantity: number; // 💡 숫자 타입으로 변경
+  unit: 'EA' | 'g' | 'ml'; // 💡 단위 필드 추가 (허용되는 단위 명시)
+};
+
 export default function UserInfoPage1_2() {
   const navigate = useNavigate();
   const [isOverlayVisible, setIsOverlayVisible] = useState(false);
   const [cameraOn, setCameraOn] = useState(false);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false); // 💡 삭제 모달 상태 추가
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<
     number | string | null
-  >(null); // 💡 선택된 재료 ID
+  >(null);
 
-  // 💡 데이터 정의
+  // 💡 재료 수량 포맷팅 함수
+  const formatQuantity = (
+    quantity: number,
+    unit: 'EA' | 'g' | 'ml',
+  ): string => {
+    switch (unit) {
+      case 'EA':
+        return `${quantity}개`;
+      case 'g':
+        return `${quantity}g`;
+      case 'ml':
+        return `${quantity}ml`;
+      default:
+        return `${quantity}`;
+    }
+  };
+
+  // 💡 데이터 정의 (수정된 타입 사용)
   const [ingredients, setIngredients] = useState<Ingredient[]>([
-    // setIngredients 사용
     {
       id: 1,
       name: '당근',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '3개',
+      quantity: 3,
+      unit: 'EA',
     },
     {
       id: 2,
       name: '피망',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '1개',
+      quantity: 1,
+      unit: 'EA',
     },
     {
       id: 3,
       name: '뿡',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '4개',
+      quantity: 400,
+      unit: 'g',
     },
     {
       id: 4,
       name: '양파',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '2개',
+      quantity: 150,
+      unit: 'ml',
     },
     {
       id: 5,
       name: '감자',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '5개',
+      quantity: 5,
+      unit: 'EA',
     },
     {
       id: 6,
       name: '양파',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '2개',
+      quantity: 2,
+      unit: 'EA',
     },
     {
       id: 7,
       name: '양파',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '2개',
+      quantity: 200,
+      unit: 'g',
     },
     {
       id: 8,
       name: '양파',
       image: 'https://placehold.co/152x152',
       date: '2025.07.30',
-      quantity: '2개',
+      quantity: 50,
+      unit: 'ml',
     },
   ]);
 
-  // 💡 옵션 모달 핸들러
+  // 💡 옵션 모달 핸들러 (생략)
   const handleOptionsModalClose = () => {
     setIsOverlayVisible(false);
   };
@@ -95,30 +129,33 @@ export default function UserInfoPage1_2() {
     navigate('/userinfopage2');
   };
 
-  // 💡 재료 카드 클릭 핸들러 (삭제 모달 열기)
+  // 💡 재료 카드 클릭 핸들러 (생략)
   const handleIngredientCardClick = (id: number | string) => {
     setSelectedIngredientId(id);
     setIsDeleteModalVisible(true);
   };
 
-  // 💡 삭제 모달 닫기
+  // 💡 삭제 모달 닫기 (생략)
   const handleDeleteModalClose = () => {
     setIsDeleteModalVisible(false);
     setSelectedIngredientId(null);
   };
 
-  // 💡 삭제 로직 (성공적으로 구현됨)
+  // 💡 삭제 로직 (생략)
   const handleDeleteConfirm = () => {
-    // 💡 선택된 ID와 다른 요소들만 남겨서 상태를 업데이트 (실제 삭제)
     setIngredients((prev) =>
       prev.filter((item) => item.id !== selectedIngredientId),
     );
-    handleDeleteModalClose(); // 삭제 후 모달 닫기
+    handleDeleteModalClose();
   };
 
-  // 모달 비율 상수 (재계산 필요 없음, 이전 값 사용)
-  const MODAL_WIDTH_PERCENT = '66.98%'; // 288px/430px
-  const MODAL_HEIGHT_PERCENT = '13.73%'; // 128px/932px
+  // 모달 비율 상수 (생략)
+  const MODAL_WIDTH_PERCENT = '66.98%';
+  const MODAL_HEIGHT_PERCENT = '13.73%';
+
+  // 💡 삭제 모달 텍스트에 사용할 재료 이름 (포맷팅 필요)
+  const selectedIngredientName =
+    ingredients.find((i) => i.id === selectedIngredientId)?.name || '재료';
 
   return (
     <div className="w-full h-full relative flex flex-col">
@@ -135,59 +172,49 @@ export default function UserInfoPage1_2() {
 
       {/* 🚀 2. 삭제 확인 모달 렌더링 */}
       {isDeleteModalVisible && (
-        <div
-          className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center"
-          // 💡 배경 클릭 시 닫히는 기능 제거 (onClick={handleDeleteModalClose} 삭제)
-        >
-          {/* 삭제 모달 컨테이너 (중앙 배치) */}
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
           <div
             className={`w-[${MODAL_WIDTH_PERCENT}] h-[${MODAL_HEIGHT_PERCENT}] relative bg-white rounded-[9.60px] overflow-hidden`}
-            onClick={(e) => e.stopPropagation()} // 모달 내부 클릭 시 닫기 방지
+            onClick={(e) => e.stopPropagation()}
           >
             {/* 텍스트 */}
             <div
               className="absolute top-[30.63%] left-1/2 -translate-x-1/2 text-center text-neutral-700 text-sm font-medium font-['Pretendard']"
-              style={{ width: '90%' }} // 화면 크기 변경 시 줄 바꿈 허용
+              style={{ width: '90%' }}
             >
-              {ingredients.find((i) => i.id === selectedIngredientId)?.name ||
-                '재료'}
-              을 삭제하시겠습니까?
+              {selectedIngredientName}을 삭제하시겠습니까?
             </div>
 
-            {/* 삭제 버튼 (좌측 - 클릭 시 삭제 및 모달 닫기) */}
+            {/* 삭제/취소 버튼 */}
             <button
+              /* 삭제 버튼 */ onClick={handleDeleteConfirm}
               className="absolute w-[50%] h-[31.25%] left-0 top-[66.88%] bg-white border border-t-neutral-300 border-l-0 border-r-0 border-b-0 flex items-center justify-center text-orange-600 text-sm font-medium font-['Pretendard']"
-              onClick={handleDeleteConfirm} // 💡 삭제 로직 연결
             >
               삭제
             </button>
-
-            {/* 취소 버튼 (우측 - 클릭 시 모달 닫기) */}
             <button
+              /* 취소 버튼 */ onClick={handleDeleteModalClose}
               className="absolute w-[50%] h-[31.25%] left-[50%] top-[66.88%] bg-white border border-t-neutral-300 border-l-0 border-r-0 border-b-0 flex items-center justify-center text-neutral-700 text-sm font-medium font-['Pretendard']"
-              onClick={handleDeleteModalClose} // 💡 모달 닫기 로직 연결
             >
               취소
             </button>
-
-            {/* 중앙 세로선 */}
             <div className="absolute w-[0.80px] h-[31.25%] left-[50%] top-[66.88%] bg-neutral-300"></div>
           </div>
         </div>
       )}
 
-      {/* 🚀 메인 스크롤 영역: 모든 콘텐츠를 포함하고 푸터 간격 확보 */}
+      {/* 🚀 메인 스크롤 영역 */}
       <div
         className="flex-grow overflow-y-auto w-full flex justify-center"
         style={{ paddingBottom: '15.99%' }}
       >
-        {/* 💡 재료 목록 영역 */}
-        <div className="w-full flex justify-center">
+        <div className="w-full flex justify-center mt-[18.5px]">
           <div className="w-[87.44%]">
-            {/* 💡 onCardClick 핸들러 연결 */}
             <IngredientList
               ingredients={ingredients}
               onCardClick={handleIngredientCardClick}
+              // 💡 포맷팅 함수 전달
+              formatQuantity={formatQuantity}
             />
           </div>
         </div>

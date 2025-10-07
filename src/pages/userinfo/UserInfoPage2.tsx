@@ -1,17 +1,32 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FooterButton from '/src/components/common/FooterButton';
-// ❌ CameraModal, ImageOptionsModal은 현재 코드에서 제거됨 (필요시 임포트)
 import IngredientEditList, {
   IngredientEditData,
-} from '@/components/common/IngredientEditList'; // 💡 새 컴포넌트 임포트
+} from '@/components/common/IngredientEditList';
+
+// 💡 Helper function: Ensures quantity is treated as a string for display/input
+const parseQuantityValue = (value: string, field: string): string => {
+  if (field === 'quantity') {
+    // 숫자만 허용 (입력 필드에서 숫자가 아닌 문자를 막을 때 유용)
+    return value.replace(/[^0-9]/g, '');
+  }
+  return value;
+};
+
+// 💡 Helper function: Formats date from YYYY-MM-DD (input default) to YYYY.MM.DD
+const formatDateValue = (rawDate: string): string => {
+  if (rawDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return rawDate.replace(/-/g, '.');
+  }
+  return rawDate;
+};
 
 export default function UserInfoPage2() {
   const navigate = useNavigate();
-  // 💡 사용되지 않는 상태는 주석 처리하거나 제거 (여기서는 제거)
 
-  // 💡 데이터 정의 (수정된 타입 사용 및 단위 추가)
-  const [ingredients] = useState<IngredientEditData[]>([
+  // 💡 데이터 정의 (수정 가능하도록 setIngredients 사용)
+  const [ingredients, setIngredients] = useState<IngredientEditData[]>([
     {
       id: 1,
       name: '피망',
@@ -50,7 +65,7 @@ export default function UserInfoPage2() {
       image: 'https://placehold.co/100x91',
       date: '2025.08.30',
       quantity: '5',
-      unit: 'KG',
+      unit: 'g',
     },
     {
       id: 6,
@@ -58,7 +73,7 @@ export default function UserInfoPage2() {
       image: 'https://placehold.co/100x91',
       date: '2025.08.30',
       quantity: '1',
-      unit: '포기',
+      unit: 'EA',
     },
     {
       id: 7,
@@ -70,31 +85,56 @@ export default function UserInfoPage2() {
     },
   ]);
 
+  // 💡 재료 데이터 업데이트 핸들러: IngredientEditItem에서 호출됩니다.
+  const handleUpdateIngredient = (
+    id: number | string,
+    field: keyof IngredientEditData,
+    value: string,
+  ) => {
+    setIngredients((prevIngredients) =>
+      prevIngredients.map((ingredient) => {
+        if (ingredient.id === id) {
+          // 날짜 필드인 경우 포맷팅 적용
+          const updatedValue =
+            field === 'date'
+              ? formatDateValue(value)
+              : parseQuantityValue(value, field);
+
+          return {
+            ...ingredient,
+            [field]: updatedValue,
+          };
+        }
+        return ingredient;
+      }),
+    );
+    console.log(`Updated ingredient ${id}: set ${field} to ${value}`);
+  };
+
   // 💡 핸들러 함수들
   const handleNextClick = () => {
+    // 💡 최종 데이터를 확인하고 다음 페이지로 이동
+    console.log('Final Ingredients:', ingredients);
     navigate('/userinfopage3');
-  }; // userinfopage3으로 이동하도록 수정
+  };
 
   return (
-    // SettingLayout의 Outlet에 렌더링되므로, 이중 컨테이너 구조를 유지
     <div className="w-full h-full relative flex flex-col">
-      {/* 0. CameraModal 렌더링 영역은 제거됨 */}
-      {/* 1. ImageOptionsModal 렌더링 영역은 제거됨 */}
-
-      {/* 상단 타이틀/설명: Header(127px) 바로 아래부터 시작하도록 마진 조정 */}
-
       {/* 🚀 메인 스크롤 영역: 재료 목록 배치 */}
       <div
         className="flex-grow overflow-y-auto w-full flex justify-center"
         style={{ paddingBottom: '15.99%' }}
       >
-        {/* 💡 재료 목록 영역: 타이틀 아래에 바로 시작 */}
-        <div className="w-full flex justify-center ">
+        {/* 💡 재료 목록 영역 */}
+        <div className="w-full flex justify-center mt-[0.5px]">
           {' '}
-          {/* 타이틀 아래 간격 추가 */}
+          {/* 타이틀 아래 간격 조정 */}
           {/* 💡 너비 86.98% 컨테이너 (양옆 28px 간격 확보) */}
           <div className="w-[86.98%]">
-            <IngredientEditList ingredients={ingredients} />
+            <IngredientEditList
+              ingredients={ingredients}
+              onUpdate={handleUpdateIngredient} // 💡 onUpdate 핸들러 전달
+            />
           </div>
         </div>
       </div>

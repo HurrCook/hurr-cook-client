@@ -46,7 +46,7 @@ export default function UserInfoPage3() {
   };
 
   return (
-    <div className="w-full h-full relative flex flex-col">
+    <div className="w-full h-full relative flex flex-col mt-[0.5px]">
       {/* 상단 타이틀/설명: Header(127px) 바로 아래부터 시작하도록 마진 조정 */}
 
       {/* 🚀 메인 스크롤 영역 (도구 목록 배치) */}

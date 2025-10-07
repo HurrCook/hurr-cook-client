@@ -3,23 +3,27 @@
 import React from 'react';
 import IngredientCard from '@/components/common/IngredientCard';
 
-// 재료 데이터의 타입을 정의합니다. (UserInfoPage1_2와 동일하게 정의)
+// 💡 재료 데이터의 타입을 수정합니다. (UserInfoPage1_2와 동일하게 정의)
 export type Ingredient = {
   id: number | string;
   name: string;
   image: string;
   date: string;
-  quantity: string;
+  quantity: number; // 💡 quantity를 number 타입으로 변경
+  unit: 'EA' | 'g' | 'ml'; // 💡 unit 필드 추가 (단위 명시)
 };
 
 interface IngredientListProps {
   ingredients: Ingredient[];
-  onCardClick: (id: number | string) => void; // 💡 새로운 Prop 추가
+  onCardClick: (id: number | string) => void;
+  // 💡 새로운 Prop: quantity와 unit을 받아 포맷팅된 문자열을 반환하는 함수
+  formatQuantity: (quantity: number, unit: 'EA' | 'g' | 'ml') => string;
 }
 
 const IngredientList: React.FC<IngredientListProps> = ({
   ingredients,
   onCardClick,
+  formatQuantity, // 💡 Prop으로 받습니다.
 }) => {
   return (
     <div className="flex flex-wrap w-full justify-between gap-y-4">
@@ -34,7 +38,8 @@ const IngredientList: React.FC<IngredientListProps> = ({
             name={ingredient.name}
             image={ingredient.image}
             date={ingredient.date}
-            quantity={ingredient.quantity}
+            // 💡 quantity와 unit을 formatQuantity 함수로 처리하여 전달
+            quantity={formatQuantity(ingredient.quantity, ingredient.unit)}
           />
         </div>
       ))}

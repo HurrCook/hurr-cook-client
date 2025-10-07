@@ -1,10 +1,9 @@
-// src/components/IngredientEditList.tsx
+// src/components/common/IngredientEditList.tsx
 
 import React from 'react';
-// 💡 IngredientEditItem을 임포트합니다. 경로를 맞게 수정해주세요.
 import IngredientEditItem from './IngredientEditItem';
 
-// UserInfoPage2에서 사용할 데이터 타입을 정의합니다.
+// UserInfoPage2에서 사용할 데이터 타입을 정의합니다. (Props와 일치해야 함)
 export type IngredientEditData = {
   id: number | string;
   name: string;
@@ -16,22 +15,27 @@ export type IngredientEditData = {
 
 interface IngredientEditListProps {
   ingredients: IngredientEditData[];
+  // 💡 새로운 Prop: 상위 컴포넌트의 업데이트 함수
+  onUpdate: (
+    id: number | string,
+    field: keyof IngredientEditData,
+    value: string,
+  ) => void;
 }
 
 const IngredientEditList: React.FC<IngredientEditListProps> = ({
   ingredients,
+  onUpdate,
 }) => {
   return (
-    // 💡 gap-2.5는 항목 간의 세로 간격을 제공합니다.
     <div className="w-full inline-flex flex-col justify-start items-start gap-2.5">
       {ingredients.map((ingredient) => (
         <IngredientEditItem
           key={ingredient.id}
-          name={ingredient.name}
-          image={ingredient.image}
-          date={ingredient.date}
-          quantity={ingredient.quantity}
-          unit={ingredient.unit}
+          // 💡 모든 데이터를 전달합니다.
+          {...ingredient}
+          // 💡 onUpdate 핸들러를 하위 컴포넌트로 전달합니다.
+          onUpdate={onUpdate}
         />
       ))}
     </div>
