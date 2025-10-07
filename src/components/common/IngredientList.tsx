@@ -1,58 +1,50 @@
-import React, { useState } from 'react';
+// src/components/common/IngredientList.tsx
+
+import React from 'react';
 import IngredientCard from '@/components/common/IngredientCard';
 
-// 레시피 데이터의 타입을 정의합니다. (date와 quantity 필드 포함)
-type Ingredients = {
-  id: number;
+// 💡 재료 데이터의 타입을 수정합니다. (UserInfoPage1_2와 동일하게 정의)
+export type Ingredient = {
+  id: number | string;
   name: string;
   image: string;
   date: string;
-  quantity: string;
+  quantity: number; // 💡 quantity를 number 타입으로 변경
+  unit: 'EA' | 'g' | 'ml'; // 💡 unit 필드 추가 (단위 명시)
 };
 
-const RecipePage: React.FC = () => {
-  const [ingredients] = useState<Ingredients[]>([
-    {
-      id: 1,
-      name: '당근',
-      image: 'https://placehold.co/152x152',
-      date: '2025.07.30',
-      quantity: '3개',
-    },
-    {
-      id: 2,
-      name: '피망',
-      image: 'https://placehold.co/152x152',
-      date: '2025.07.30',
-      quantity: '1개',
-    },
-    {
-      id: 3,
-      name: '뿡',
-      image: 'https://placehold.co/152x152',
-      date: '2025.07.30',
-      quantity: '4개',
-    },
-  ]);
+interface IngredientListProps {
+  ingredients: Ingredient[];
+  onCardClick: (id: number | string) => void;
+  // 💡 새로운 Prop: quantity와 unit을 받아 포맷팅된 문자열을 반환하는 함수
+  formatQuantity: (quantity: number, unit: 'EA' | 'g' | 'ml') => string;
+}
 
+const IngredientList: React.FC<IngredientListProps> = ({
+  ingredients,
+  onCardClick,
+  formatQuantity, // 💡 Prop으로 받습니다.
+}) => {
   return (
-    <div className="w-full min-h-dvh flex flex-col items-center">
-      <main className="w-full flex-1 py-4 pt-0 flex justify-center">
-        <div className="flex flex-wrap w-[365px] h-52 justify-between gap-y-4">
-          {ingredients.map((ingredient) => (
-            <div key={ingredient.id} className="cursor-pointer">
-              <IngredientCard
-                name={ingredient.name}
-                image={ingredient.image}
-                date={ingredient.date}
-                quantity={ingredient.quantity}
-              />
-            </div>
-          ))}
+    <div className="flex flex-wrap w-full justify-between gap-y-4">
+      {ingredients.map((ingredient, index) => (
+        <div
+          key={`${ingredient.id}-${index}`}
+          // 💡 w-[48.5%]를 적용하여 카드가 비율에 맞게 크기 조정되도록 합니다.
+          className="w-[48.5%] cursor-pointer"
+          onClick={() => onCardClick(ingredient.id)} // 💡 클릭 시 ID 전달
+        >
+          <IngredientCard
+            name={ingredient.name}
+            image={ingredient.image}
+            date={ingredient.date}
+            // 💡 quantity와 unit을 formatQuantity 함수로 처리하여 전달
+            quantity={formatQuantity(ingredient.quantity, ingredient.unit)}
+          />
         </div>
-      </main>
+      ))}
     </div>
   );
 };
 
-export default RecipePage;
+export default IngredientList;
