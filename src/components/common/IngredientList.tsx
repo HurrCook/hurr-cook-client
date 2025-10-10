@@ -1,7 +1,7 @@
 // src/components/common/IngredientList.tsx
 
 import React from 'react';
-import IngredientCard from '@/components/common/IngredientCard';
+import IngredientItem from '@/components/common/IngredientItem';
 
 // 💡 재료 데이터의 타입을 수정합니다. (UserInfoPage1_2와 동일하게 정의)
 export type Ingredient = {
@@ -34,7 +34,7 @@ const IngredientList: React.FC<IngredientListProps> = ({
           className="w-[48.5%] cursor-pointer"
           onClick={() => onCardClick(ingredient.id)} // 💡 클릭 시 ID 전달
         >
-          <IngredientCard
+          <IngredientItem
             name={ingredient.name}
             image={ingredient.image}
             date={ingredient.date}

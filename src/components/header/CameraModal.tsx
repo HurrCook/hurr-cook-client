@@ -1,12 +1,18 @@
 import React, { useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type CameraModalProps = {
   onClose: () => void;
+  redirectToLoading?: boolean; // ✅ 헤더에서만 true로 전달
 };
 
-export default function CameraModal({ onClose }: CameraModalProps) {
+export default function CameraModal({
+  onClose,
+  redirectToLoading = false, // 기본값 false
+}: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const startCamera = async () => {
@@ -51,18 +57,24 @@ export default function CameraModal({ onClose }: CameraModalProps) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL('image/png');
 
+      // ✅ 사진 저장
       const link = document.createElement('a');
       link.href = dataUrl;
       link.download = `capture_${Date.now()}.png`;
       link.click();
+
+      // ✅ redirectToLoading이 true일 때만 이동
+      if (redirectToLoading) {
+        navigate('/loading');
+      }
+
+      onClose();
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex justify-center items-center z-50">
-      {/* 카메라 뷰 */}
+    <div className="fixed inset-0 bg-black flex justify-center items-center z-[9999]">
       <div className="relative w-[430px] h-[932px] bg-black overflow-hidden flex flex-col justify-between">
-        {/* 비디오 */}
         <video
           ref={videoRef}
           autoPlay
@@ -70,7 +82,7 @@ export default function CameraModal({ onClose }: CameraModalProps) {
           className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none scale-x-[-1]"
         />
 
-        {/* 상단 영역 */}
+        {/* 닫기 버튼 */}
         <div className="relative z-20 flex justify-start p-4">
           <button
             onClick={onClose}
@@ -80,7 +92,7 @@ export default function CameraModal({ onClose }: CameraModalProps) {
           </button>
         </div>
 
-        {/* 하단 영역 */}
+        {/* 촬영 버튼 */}
         <div className="relative z-20 flex justify-center p-6">
           <button
             onClick={takePhoto}
@@ -91,7 +103,6 @@ export default function CameraModal({ onClose }: CameraModalProps) {
         </div>
       </div>
 
-      {/* 캔버스 */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );

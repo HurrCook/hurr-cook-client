@@ -1,0 +1,20 @@
+.dot {
+    width: 0.5rem; /* w-2 */
+    height: 0.75rem; /* h-3 */
+    background-color: #ff8800;
+    border-radius: 9999px;
+    display: inline-block;
+    transform-origin: center;
+    animation: stretchBoth 2s ease-in-out infinite;
+}
+
+@keyframes stretchBoth {
+    0%, 100% {
+        transform: scaleY(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scaleY(1.4);
+        opacity: 1;
+    }
+}
