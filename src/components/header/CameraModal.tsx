@@ -3,9 +3,13 @@ import { useNavigate } from 'react-router-dom';
 
 type CameraModalProps = {
   onClose: () => void;
+  redirectToLoading?: boolean; // ✅ 헤더에서만 true로 전달
 };
 
-export default function CameraModal({ onClose }: CameraModalProps) {
+export default function CameraModal({
+  onClose,
+  redirectToLoading = false, // 기본값 false
+}: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
@@ -59,8 +63,11 @@ export default function CameraModal({ onClose }: CameraModalProps) {
       link.download = `capture_${Date.now()}.png`;
       link.click();
 
-      // ✅ 로딩 페이지로 이동
-      navigate('/loading');
+      // ✅ redirectToLoading이 true일 때만 이동
+      if (redirectToLoading) {
+        navigate('/loading');
+      }
+
       onClose();
     }
   };
@@ -75,6 +82,7 @@ export default function CameraModal({ onClose }: CameraModalProps) {
           className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none scale-x-[-1]"
         />
 
+        {/* 닫기 버튼 */}
         <div className="relative z-20 flex justify-start p-4">
           <button
             onClick={onClose}
@@ -84,6 +92,7 @@ export default function CameraModal({ onClose }: CameraModalProps) {
           </button>
         </div>
 
+        {/* 촬영 버튼 */}
         <div className="relative z-20 flex justify-center p-6">
           <button
             onClick={takePhoto}
