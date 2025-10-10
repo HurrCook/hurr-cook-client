@@ -14,6 +14,9 @@ import SettingLayout1_2 from './components/layout/SettingLayout1_2';
 import SettingLayout2 from './components/layout/SettingLayout2';
 import SettingLayout3 from './components/layout/SettingLayout3';
 import SettingLayout4 from './components/layout/SettingLayout4';
+import LoadingPage from './pages/loading/LoadingPage';
+import IngredientPhotoAddPage from './pages/refrigerator/IngredientPhotoAddPage';
+import IngredientAddPage from './pages/refrigerator/IngredientAddPage';
 
 import UserInfoPage4 from '@/pages/userinfo/UserInfoPage4';
 
@@ -44,6 +47,12 @@ export default function App() {
         <Route path="refrigerator" element={<RefrigeratorPage />} />
         <Route path="recipe" element={<RecipePage />} />
         <Route path="chat" element={<ChatbotPage />} />
+        <Route path="/loading" element={<LoadingPage />} />
+        <Route
+          path="/refrigerator/photo-add"
+          element={<IngredientPhotoAddPage />}
+        />
+        <Route path="/refrigerator/add" element={<IngredientAddPage />} />
       </Route>
     </Routes>
   );
