@@ -76,7 +76,7 @@ export default function RefrigeratorPage() {
       {/* 탭 높이만큼 여백 확보 */}
       <div className="h-[60px]" />
 
-      <div className="mt-6 w-full max-w-[700px]">
+      <div className="w-full max-w-[700px]">
         {activeTab === 'ingredient' ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
             {ingredients.map((item, index) => (
