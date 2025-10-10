@@ -67,7 +67,7 @@ export default function RefrigeratorPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center px-6 relative">
-      <div className="fixed left-0 w-full z-50 justify-center">
+      <div className="fixed left-0 w-full z-29 justify-center">
         <div className="w-full mt-[-1.3vh] px-4 py-2 bg-white">
           <RefrigeratorTab activeTab={activeTab} onChange={setActiveTab} />
         </div>

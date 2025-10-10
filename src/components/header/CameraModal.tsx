@@ -59,7 +59,7 @@ export default function CameraModal({ onClose }: CameraModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black flex justify-center items-center z-9999">
       {/* 카메라 뷰 */}
       <div className="relative w-[430px] h-[932px] bg-black overflow-hidden flex flex-col justify-between">
         {/* 비디오 */}
