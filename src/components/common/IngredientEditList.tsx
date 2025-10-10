@@ -1,3 +1,5 @@
+// src/components/common/IngredientEditList.tsx
+
 import React from 'react';
 import IngredientEditItem from './IngredientEditItem';
 
@@ -17,8 +19,8 @@ interface IngredientEditListProps {
     field: keyof IngredientEditData,
     value: string,
   ) => void;
-  onOpenCamera: () => void; // ✅ 추가
-  onSelectPhoto: (file: File) => void; // ✅ 추가
+  onOpenCamera: (id: number | string) => void; // ✅ 수정
+  onSelectPhoto: (file: File) => void;
 }
 
 const IngredientEditList: React.FC<IngredientEditListProps> = ({
@@ -34,7 +36,7 @@ const IngredientEditList: React.FC<IngredientEditListProps> = ({
           key={ingredient.id}
           {...ingredient}
           onUpdate={onUpdate}
-          onOpenCamera={onOpenCamera}
+          onOpenCamera={() => onOpenCamera(ingredient.id)}
           onSelectPhoto={onSelectPhoto}
         />
       ))}
