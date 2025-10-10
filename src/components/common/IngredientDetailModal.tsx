@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import TrashIcon from '@/assets/쓰레기통.svg';
 import Button from '@/components/common/Button';
+import CameraModal from '@/components/header/CameraModal';
+import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 
 interface IngredientDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDelete?: () => void; // 삭제 로직 전달 (선택적)
+  onDelete?: () => void;
   ingredient: {
     name: string;
     date: string;
     quantity: string;
     image: string;
   };
+  onUpdateImage?: (newUrl: string) => void;
 }
 
 const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
@@ -19,37 +22,52 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   onClose,
   onDelete,
   ingredient,
+  onUpdateImage,
 }) => {
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   if (!isOpen) return null;
 
-  // 오늘 날짜 비교
   const today = new Date();
   const parsedDate = new Date(ingredient.date.replace(/\./g, '-'));
   const isExpired = parsedDate < today;
 
-  // 삭제 버튼 핸들러
-  const handleDeleteClick = () => {
-    setIsDeleteConfirmOpen(true);
-  };
-
-  const handleDeleteCancel = () => {
-    setIsDeleteConfirmOpen(false);
-  };
-
+  const handleDeleteClick = () => setIsDeleteConfirmOpen(true);
+  const handleDeleteCancel = () => setIsDeleteConfirmOpen(false);
   const handleDeleteConfirm = () => {
     setIsDeleteConfirmOpen(false);
     if (onDelete) onDelete();
     onClose();
   };
 
+  const handleLaunchCamera = () => {
+    setIsImageOptionOpen(false);
+    setIsCameraOpen(true);
+  };
+
+  const handleLaunchLibrary = () => {
+    setIsImageOptionOpen(false);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      const file = target.files?.[0];
+      if (file) {
+        const newUrl = URL.createObjectURL(file);
+        if (onUpdateImage) onUpdateImage(newUrl);
+      }
+    };
+
+    input.click();
+  };
+
   return (
     <>
-      {/* 상세 모달 */}
       <div className="fixed inset-0 bg-black/50 z-50 flex justify-center items-center px-6 py-10">
         <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-lg flex flex-col overflow-hidden">
-          {/* 상단 헤더 */}
           <div className="p-5 flex justify-between items-center">
             <h2 className="text-[22px] font-normal text-[#212121] font-[Pretendard]">
               재료 상세
@@ -63,10 +81,11 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
             </button>
           </div>
 
-          {/* 내용 */}
           <div className="px-5 pb-6 flex flex-col gap-6 overflow-y-auto max-h-[70vh]">
-            {/* 이미지 */}
-            <div className="w-[162px] h-[162px] bg-[#F5F5F5] rounded-[10px] overflow-hidden">
+            <div
+              className="w-[162px] h-[162px] bg-[#F5F5F5] rounded-[10px] overflow-hidden cursor-pointer"
+              onClick={() => setIsImageOptionOpen(true)}
+            >
               <img
                 src={ingredient.image}
                 alt={ingredient.name}
@@ -74,9 +93,7 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
               />
             </div>
 
-            {/* 기본 정보 한 줄 배치 */}
             <div className="flex justify-between items-start w-full gap-3">
-              {/* 재료명 */}
               <div className="flex-1 flex flex-col gap-1.5">
                 <label className="text-[#838383] text-[10px] font-light font-[Pretendard]">
                   재료명
@@ -88,7 +105,6 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* 유통기한 */}
               <div className="flex-1 flex flex-col gap-1.5">
                 <label className="text-[#838383] text-[10px] font-light font-[Pretendard]">
                   유통기한
@@ -104,7 +120,6 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* 갯수/용량 */}
               <div className="flex-[0.6] flex flex-col gap-1.5">
                 <label className="text-[#838383] text-[10px] font-light font-[Pretendard]">
                   갯수/용량
@@ -117,7 +132,6 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
               </div>
             </div>
 
-            {/* 보관방법 */}
             <div className="flex flex-col gap-2">
               <h3 className="text-[#3B3B3B] text-[12px] font-normal font-[Pretendard]">
                 보관방법
@@ -136,7 +150,6 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
             </div>
           </div>
 
-          {/* 하단 버튼 */}
           <div className="p-5 flex justify-end">
             <button
               onClick={onClose}
@@ -148,7 +161,15 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
         </div>
       </div>
 
-      {/* 삭제 확인 모달 */}
+      <ImageOptionsModal
+        isVisible={isImageOptionOpen}
+        onClose={() => setIsImageOptionOpen(false)}
+        onLaunchCamera={handleLaunchCamera}
+        onLaunchLibrary={handleLaunchLibrary}
+      />
+
+      {isCameraOpen && <CameraModal onClose={() => setIsCameraOpen(false)} />}
+
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[60]">
           <div className="bg-white rounded-[9.6px] inline-flex p-6 w-72 flex-col items-center gap-7">
