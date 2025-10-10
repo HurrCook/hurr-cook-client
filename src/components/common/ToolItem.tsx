@@ -2,7 +2,7 @@
 
 import React from 'react';
 // 💡 SVG 파일 임포트
-import CheckIcon from '/src/assets/check.svg';
+// import CheckIcon from '/src/assets/check.svg';
 
 interface ToolItemProps {
   name: string;
