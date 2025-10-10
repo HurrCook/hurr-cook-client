@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import TabIcon from '@/assets/탭.svg';
 import SettingIcon from '@/assets/세팅.svg';
 import CameraIcon from '@/assets/카메라.svg';
 import PencilIcon from '@/assets/연필.svg';
+import ArrowIcon from '@/assets/arrow.svg';
 import CameraModal from './CameraModal';
 
 type HeaderProps = {
@@ -13,7 +14,32 @@ type HeaderProps = {
 
 export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [cameraOn, setCameraOn] = useState(false);
+
+  if (
+    location.pathname.startsWith('/loading') ||
+    location.pathname.startsWith('/refrigerator/photo-add') ||
+    location.pathname.startsWith('/refrigerator/add')
+  ) {
+    return (
+      <header className="fixed left-0 right-0 h-13 bg-white flex items-center px-4 z-30">
+        <button onClick={() => navigate(-1)} className="z-10">
+          <img
+            src={ArrowIcon}
+            alt="뒤로가기 아이콘"
+            className="w-6 h-6 transform rotate-180"
+          />
+        </button>
+
+        <h1 className="absolute left-1/2 transform -translate-x-1/2 text-[#FF8800] font-[Gretoon] text-xl font-normal">
+          Hurr Cook
+        </h1>
+
+        <div className="w-6 h-6" />
+      </header>
+    );
+  }
 
   const renderRightButtons = () => {
     if (location.pathname.startsWith('/chat')) {
@@ -30,7 +56,7 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
           <button onClick={() => setCameraOn(true)}>
             <img src={CameraIcon} alt="카메라 아이콘" className="w-7 h-7" />
           </button>
-          <button>
+          <button onClick={() => navigate('/refrigerator/add')}>
             <img
               src={PencilIcon}
               alt="연필 아이콘"
