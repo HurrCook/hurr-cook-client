@@ -34,10 +34,7 @@ export default function ImageOptionsModal({
 
   return (
     // 1. 오버레이 배경 (fixed inset-0으로 뷰포트 전체 고정)
-    <div
-      className="fixed inset-0 bg-black/30 z-50 flex flex-col items-center justify-end"
-      onClick={onClose} // 배경 클릭 시 닫기
-    >
+    <div className="fixed inset-0 bg-black/30 z-50 flex flex-col items-center justify-end">
       {/* 2. 모달 컨테이너 (앱 프레임 크기 기준 비율) */}
       <div
         className="w-[93.02%] h-[17.06%] relative mb-[7.30vh]" // mb-[7.30vh]로 높이 비율 간격 유지
