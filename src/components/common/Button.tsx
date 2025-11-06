@@ -17,7 +17,7 @@ export default function Button({
   className = '',
   ...rest
 }: ButtonProps) {
-  const fixedSizeClasses = 'py-[3px] text-lg font-normal';
+  const fixedSizeClasses = 'py-1 text-l font-normal';
 
   const classes = `w-24 inline-flex items-center justify-center rounded-[10px] ${fixedSizeClasses} ${COLOR_MAP[color]} ${className}`;
 

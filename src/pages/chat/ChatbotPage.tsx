@@ -4,13 +4,16 @@ import ChatMessages from '@/components/chat/ChatMessages';
 import ChatEmptyCard from '@/components/chat/ChatEmptyCard';
 import ChatSuggestions from '@/components/chat/ChatSuggestions';
 
+interface Message {
+  id: number;
+  type: 'me' | 'other' | 'recipe';
+  text?: string;
+}
+
 export default function ChatbotPage() {
-  const [messages, setMessages] = useState<
-    { id: number; type: string; text: string }[]
-  >([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -21,9 +24,10 @@ export default function ChatbotPage() {
     const text = msg ?? input.trim();
     if (!text) return;
 
-    const userMsg = { id: messages.length + 1, type: 'me', text };
+    const userMsg: Message = { id: messages.length + 1, type: 'me', text };
     setMessages((prev) => [...prev, userMsg]);
 
+    // "후르" 입력 시 응답
     if (text === '후르') {
       setLoading(true);
       setTimeout(() => {
@@ -33,6 +37,18 @@ export default function ChatbotPage() {
         ]);
         setLoading(false);
       }, 1500);
+    }
+
+    // "레시피" 입력 시 레시피 카드 표시
+    if (text === '레시피') {
+      setLoading(true);
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          { id: prev.length + 1, type: 'recipe' },
+        ]);
+        setLoading(false);
+      }, 500);
     }
 
     setInput('');
