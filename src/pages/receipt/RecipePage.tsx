@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import RecipeCard from './components/RecipeCard';
 import RecipeEditModal from './components/RecipeEditModal';
 import SubtractModal from './components/SubtractModal';
-import { getRecipeList, updateRecipe, deleteRecipe } from '@/apis/recipeApi';
 
-// --- 공통 인터페이스 정의 ---
 interface Ingredient {
   name: string;
   quantity: string;
@@ -19,34 +16,37 @@ interface Recipe {
   instructions: string[];
 }
 
-const RecipePage: React.FC = () => {
-  const queryClient = useQueryClient();
-
-  const {
-    data: recipes = [],
-    isLoading,
-    isError,
-  } = useQuery<Recipe[]>({
-    queryKey: ['recipes'],
-    queryFn: getRecipeList,
-  });
-  console.log('불러온 레시피 데이터:', recipes);
-
-  const updateRecipeMutation = useMutation({
-    mutationFn: (updatedRecipe: Recipe) =>
-      updateRecipe(updatedRecipe.id, updatedRecipe),
-    onSuccess: () => {
-      // 수정 후 목록 자동 갱신
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+export default function RecipePage() {
+  const [recipes, setRecipes] = useState<Recipe[]>([
+    {
+      id: 1,
+      name: '피망 볶음밥',
+      image: 'https://placehold.co/245x163',
+      ingredients: [
+        { name: '피망', quantity: '3개' },
+        { name: '양파', quantity: '1개' },
+        { name: '간장', quantity: '1숟가락' },
+      ],
+      instructions: ['재료 손질', '볶기', '양념하기'],
     },
-  });
-
-  const deleteRecipeMutation = useMutation({
-    mutationFn: (id: number) => deleteRecipe(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    {
+      id: 2,
+      name: '미트볼 스파게티',
+      image: 'https://placehold.co/245x163',
+      ingredients: [
+        { name: '스파게티면', quantity: '200g' },
+        { name: '미트볼', quantity: '5개' },
+      ],
+      instructions: ['면 삶기', '소스 만들기', '섞기'],
     },
-  });
+    {
+      id: 3,
+      name: '치킨 카레',
+      image: 'https://placehold.co/245x163',
+      ingredients: [{ name: '닭고기', quantity: '500g' }],
+      instructions: ['볶기', '졸이기'],
+    },
+  ]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -79,45 +79,39 @@ const RecipePage: React.FC = () => {
   };
 
   const handleConfirmSubtract = (recipeId: number) => {
-    console.log(`✅ ID ${recipeId} 레시피 재료 차감`);
+    console.log(`✅ ID ${recipeId} 레시피의 재료 차감`);
   };
 
   const handleRecipeSave = (updatedRecipe: Recipe) => {
-    updateRecipeMutation.mutate(updatedRecipe);
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === updatedRecipe.id ? updatedRecipe : r)),
+    );
+    setSelectedRecipe(updatedRecipe);
   };
 
   const handleDelete = (id: number) => {
-    deleteRecipeMutation.mutate(id);
+    setRecipes((prev) => prev.filter((recipe) => recipe.id !== id));
     setIsModalOpen(false);
     setSelectedRecipe(null);
   };
 
-  // --- 로딩 및 에러 상태 처리 ---
-  if (isLoading) return <div className="text-center mt-10">⏳ 로딩 중...</div>;
-  if (isError)
-    return (
-      <div className="text-center mt-10 text-red-500">
-        ❌ 레시피 목록 불러오기 실패
-      </div>
-    );
-
   return (
-    <div className="w-full min-h-dvh flex flex-col items-center">
-      <main className="w-full flex-1 py-4 pt-0 flex justify-center">
-        <div className="flex flex-wrap w-[365px] h-52 justify-between gap-y-4">
+    <div className="min-h-screen flex flex-col items-center px-6 relative">
+      <div className="w-full max-w-[700px]">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
           {recipes.map((recipe) => (
             <div
               key={recipe.id}
-              onClick={() => handleCardClick(recipe)}
               className="cursor-pointer"
+              onClick={() => handleCardClick(recipe)}
             >
               <RecipeCard name={recipe.name} image={recipe.image} />
             </div>
           ))}
         </div>
-      </main>
+      </div>
 
-      {/* ✅ 수정 모달 */}
+      {/* Recipe Edit Modal */}
       {isModalOpen && selectedRecipe && (
         <RecipeEditModal
           isOpen={isModalOpen}
@@ -129,7 +123,7 @@ const RecipePage: React.FC = () => {
         />
       )}
 
-      {/* ✅ 재료 차감 모달 */}
+      {/* 재료 차감 모달 */}
       {subtractModalOpen && selectedRecipe && (
         <SubtractModal
           isOpen={subtractModalOpen}
@@ -141,6 +135,4 @@ const RecipePage: React.FC = () => {
       )}
     </div>
   );
-};
-
-export default RecipePage;
+}
