@@ -44,7 +44,8 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
               <img
                 src={recipe.image}
                 alt={recipe.name}
-                className="w-full h-full object-cover cursor-pointer"
+                className="w-full h-full object-cover cursor-default select-none opacity-90"
+                draggable={false}
               />
             </div>
             <p className="text-amber-500 text-sm font-normal">

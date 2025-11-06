@@ -26,7 +26,7 @@ const RecipePage: React.FC = () => {
       ingredients: [
         { name: '피망', quantity: '3개' },
         { name: '양파', quantity: '1개' },
-        { name: '간장', quantity: '1숟가락' }, // 👈 간장 추가
+        { name: '간장', quantity: '1숟가락' },
       ],
       instructions: [
         '재료 손질하기\n 피망, 양파, 대파를 잘게 썬다. 계란은 미리 풀어둔다.',
@@ -123,9 +123,14 @@ const RecipePage: React.FC = () => {
   // 7. 레시피 수정 후 저장
   const handleRecipeSave = (updatedRecipe: Recipe) => {
     console.log('✅ 레시피 업데이트 API 호출:', updatedRecipe.name);
-    setRecipes(
-      recipes.map((r) => (r.id === updatedRecipe.id ? updatedRecipe : r)),
+
+    // 1️⃣ recipes 배열 업데이트
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === updatedRecipe.id ? updatedRecipe : r)),
     );
+
+    // 2️⃣ 모달 내부도 즉시 반영
+    setSelectedRecipe(updatedRecipe);
   };
 
   // 10. 레시피 삭제
