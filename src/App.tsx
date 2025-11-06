@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route } from 'react-router-dom';
 import SplashScreen from './pages/splash/SplashScreen';
 import LoginPage from './pages/login/LoginPage';
@@ -19,41 +20,47 @@ import IngredientPhotoAddPage from './pages/refrigerator/IngredientPhotoAddPage'
 import IngredientAddPage from './pages/refrigerator/IngredientAddPage';
 
 import UserInfoPage4 from '@/pages/userinfo/UserInfoPage4';
+import LoginCallbackPage from '@/pages/login/LoginCallbackPage';
+
+const queryClient = new QueryClient();
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<SplashScreen />} />
-      <Route path="/login" element={<LoginPage />} />
+    <QueryClientProvider client={queryClient}>
+      <Routes>
+        <Route path="/" element={<SplashScreen />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login/callback" element={<LoginCallbackPage />} />
 
-      {/* SettingLayout이 UserInfoPage1을 감싸 헤더를 제공합니다. */}
-      <Route element={<SettingLayout1 />}>
-        <Route path="userinfopage1" element={<UserInfoPage1 />} />
-      </Route>
-      <Route element={<SettingLayout1_2 />}>
-        <Route path="userinfopage1_2" element={<UserInfoPage1_2 />} />
-      </Route>
-      <Route element={<SettingLayout2 />}>
-        <Route path="userinfopage2" element={<UserInfoPage2 />} />
-      </Route>
-      <Route element={<SettingLayout3 />}>
-        <Route path="userinfopage3" element={<UserInfoPage3 />} />
-      </Route>
-      <Route element={<SettingLayout4 />}>
-        <Route path="userinfopage4" element={<UserInfoPage4 />} />
-      </Route>
+        <Route element={<SettingLayout1 />}>
+          <Route path="userinfopage1" element={<UserInfoPage1 />} />
+        </Route>
+        <Route element={<SettingLayout1_2 />}>
+          <Route path="userinfopage1_2" element={<UserInfoPage1_2 />} />
+        </Route>
+        <Route element={<SettingLayout2 />}>
+          <Route path="userinfopage2" element={<UserInfoPage2 />} />
+        </Route>
+        <Route element={<SettingLayout3 />}>
+          <Route path="userinfopage3" element={<UserInfoPage3 />} />
+        </Route>
+        <Route element={<SettingLayout4 />}>
+          <Route path="userinfopage4" element={<UserInfoPage4 />} />
+        </Route>
 
-      <Route element={<AppLayout />}>
-        <Route path="refrigerator" element={<RefrigeratorPage />} />
-        <Route path="recipe" element={<RecipePage />} />
-        <Route path="chat" element={<ChatbotPage />} />
-        <Route path="/loading" element={<LoadingPage />} />
-        <Route
-          path="/refrigerator/photo-add"
-          element={<IngredientPhotoAddPage />}
-        />
-        <Route path="/refrigerator/add" element={<IngredientAddPage />} />
-      </Route>
-    </Routes>
+        {/* 앱 내부 라우트 */}
+        <Route element={<AppLayout />}>
+          <Route path="refrigerator" element={<RefrigeratorPage />} />
+          <Route path="recipe" element={<RecipePage />} />
+          <Route path="chat" element={<ChatbotPage />} />
+          <Route path="/loading" element={<LoadingPage />} />
+          <Route
+            path="/refrigerator/photo-add"
+            element={<IngredientPhotoAddPage />}
+          />
+          <Route path="/refrigerator/add" element={<IngredientAddPage />} />
+        </Route>
+      </Routes>
+    </QueryClientProvider>
   );
 }
