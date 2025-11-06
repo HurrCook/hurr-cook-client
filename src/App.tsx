@@ -18,7 +18,6 @@ import SettingLayout4 from './components/layout/SettingLayout4';
 import LoadingPage from './pages/loading/LoadingPage';
 import IngredientPhotoAddPage from './pages/refrigerator/IngredientPhotoAddPage';
 import IngredientAddPage from './pages/refrigerator/IngredientAddPage';
-
 import UserInfoPage4 from '@/pages/userinfo/UserInfoPage4';
 import LoginCallbackPage from '@/pages/login/LoginCallbackPage';
 
