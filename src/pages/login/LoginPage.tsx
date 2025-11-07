@@ -1,33 +1,39 @@
+// src/pages/login/LoginPage.tsx
 import React from 'react';
 
 export default function LoginPage() {
-  return (
-    <div className="flex justify-center items-center min-h-screen">
-      {/* 앱 프레임 */}
-      <div className="flex px-10 w-screen h-screen justify-center items-center bg-white flex-col overflow-hidden">
-        <div className="w-full inline-flex flex-col justify-start items-center gap-20">
-          <div className="w-full flex flex-col justify-start items-center gap-6">
-            <div className="self-stretch text-center justify-start text-amber-500 text-4xl font-normal font-['Gretoon']">
-              Hurr Cook
-            </div>
-            <div className="self-stretch text-center justify-start text-amber-500 text-base font-normal font-['Pretendard']">
-              자취생을 위한 쉽고 간편한 AI 레시피 서비스
-            </div>
-          </div>
-          <button className="relative flex w-full h-12 py-3 bg-[#FFE200] rounded-sm items-center">
-            {/* 왼쪽 아이콘 고정 */}
-            <img
-              className="absolute left-4 w-6 "
-              src="/src/assets/kakao_logo.svg"
-              alt="카카오"
-            />
+  const handleKakaoLogin = () => {
+    // ✅ 백엔드에서 카카오 인증 URL로 리다이렉트 → 카카오 로그인 → (프론트 콜백) /login/callback?code=...
+    window.location.href = 'http://13.125.158.205:8080/api/auth/kakao/login';
+  };
 
-            {/* 중앙 텍스트 */}
-            <span className="mx-auto text-black text-[20px] font-normal font-['Pretendard']">
-              카카오로 로그인
-            </span>
-          </button>
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-white">
+      <div className="flex flex-col items-center justify-center w-full max-w-md px-10">
+        {/* 타이틀 */}
+        <div className="flex flex-col items-center gap-6 mb-10">
+          <h1 className="text-amber-500 text-5xl font-['Gretoon']">
+            Hurr Cook
+          </h1>
+          <p className="text-amber-500 text-base font-['Pretendard'] text-center">
+            자취생을 위한 쉽고 간편한 AI 레시피 서비스
+          </p>
         </div>
+
+        {/* 카카오 로그인 버튼 */}
+        <button
+          onClick={handleKakaoLogin}
+          className="relative flex items-center justify-center w-full h-12 bg-[#FEE500] rounded-lg hover:brightness-95 transition shadow-md"
+        >
+          <img
+            src="/src/assets/kakao_logo.svg"
+            alt="kakao"
+            className="absolute left-4 w-6 h-6"
+          />
+          <span className="text-black text-[18px] font-semibold font-['Pretendard']">
+            카카오로 로그인
+          </span>
+        </button>
       </div>
     </div>
   );

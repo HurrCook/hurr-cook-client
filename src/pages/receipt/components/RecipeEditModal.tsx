@@ -17,6 +17,7 @@ interface RecipeEditModalProps {
   onSave: (updatedRecipe: {
     id: number;
     name: string;
+    image: string;
     instructions: string[];
     ingredients: Ingredient[];
   }) => void;
@@ -49,14 +50,11 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
 
   // Prop 동기화: recipe prop이 변경될 때마다 모달 내부 상태를 업데이트합니다.
   useEffect(() => {
-    // 편집 중이 아닐 때만 업데이트하여 사용자의 입력 내용을 덮어쓰지 않도록 함
-    if (!isEditing) {
-      setEditedName(recipe.name);
-      setEditedInstructions(recipe.instructions.join('\n'));
-      setEditedIngredients(recipe.ingredients);
-    }
-    // 의존성 배열에 recipe 객체의 주요 값들을 넣어 prop 변경 시 실행되도록 합니다.
-  }, [recipe.name, recipe.instructions, recipe.ingredients, isEditing]);
+    // recipe prop이 바뀌면 항상 내부 상태도 업데이트
+    setEditedName(recipe.name);
+    setEditedInstructions(recipe.instructions.join('\n'));
+    setEditedIngredients(recipe.ingredients);
+  }, [recipe]);
 
   if (!isOpen) return null;
 
@@ -72,13 +70,13 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     const updatedRecipeData = {
       id: recipe.id,
       name: editedName,
+      image: recipe.image,
       instructions: editedInstructions.split('\n'),
       ingredients: editedIngredients,
     };
 
     // 1. 상위 컴포넌트의 onSave를 호출 (상위 컴포넌트가 이제 recipe 데이터를 업데이트해야 함)
     onSave(updatedRecipeData);
-
     setIsEditing(false);
   };
 

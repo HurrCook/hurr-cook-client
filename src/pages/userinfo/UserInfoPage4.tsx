@@ -6,7 +6,7 @@ export default function UserInfoPage4() {
   const navigate = useNavigate();
   const handleNextClick = () => {
     console.log('다음으로 클릭');
-    navigate('/userinfopage1_2');
+    navigate('/chat');
   };
 
   return (
@@ -17,7 +17,7 @@ export default function UserInfoPage4() {
         {/* 1. 💡 가운데 콘텐츠 (로고 및 텍스트) */}
         <div
           // 💡 top-[26.93%] 유지, left-1/2와 -translate-x-1/2 추가하여 수평 중앙 정렬
-          className="fixed absolute top-[26.93%] left-1/2 -translate-x-1/2 flex flex-col items-center"
+          className="fixed top-[26.93%] left-1/2 -translate-x-1/2 flex flex-col items-center"
         >
           <img
             className="flex max-w-62"
