@@ -1,11 +1,9 @@
-// src/components/header/Sidebar.tsx
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Hurr3Icon from '@/assets/Hurr3.svg';
 import SidebarItem from './SidebarItem';
 import LogoutIcon from '@/assets/로그아웃.svg';
-import Button from '../common/Button'; //
+import Button from '../common/Button';
 
 type SidebarProps = {
   onClose: () => void;
@@ -21,11 +19,22 @@ export default function Sidebar({ onClose }: SidebarProps) {
     onClose();
   };
 
+  /** ✅ 로그아웃 처리 로직 */
   const handleLogoutConfirm = () => {
-    // 여기에 실제 로그아웃 처리 로직 추가 가능
-    // ex) localStorage.removeItem('token');
-    navigate('/'); // 홈으로 이동
-    setIsLogoutModalOpen(false);
+    try {
+      // 1️⃣ 토큰 완전 제거
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('refreshToken');
+
+      // 2️⃣ 페이지 이동
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('❌ 로그아웃 에러:', error);
+    } finally {
+      setIsLogoutModalOpen(false);
+    }
   };
 
   const handleLogoutCancel = () => {
@@ -67,16 +76,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <div className="w-full h-[70px] bg-[#F0F0F0] flex items-center px-5">
           <div className="w-[30px] h-[30px] bg-[#A7A7A7] rounded-md" />
           <span className="ml-2 mt-1 text-[#212121] font-[Gretoon] text-[16px]">
-            박건민
+            사용자
           </span>
           <img
             src={LogoutIcon}
             alt="로그아웃"
             className="ml-auto w-6 h-6 cursor-pointer"
-            onClick={() => setIsLogoutModalOpen(true)} // ✅ 클릭 시 모달 오픈
+            onClick={() => setIsLogoutModalOpen(true)} // 모달 열기
           />
         </div>
       </aside>
+
+      {/* ✅ 로그아웃 모달 */}
       {isLogoutModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-[9999]">
           <div className="bg-white rounded-[9.6px] inline-flex p-6 w-72 flex-col items-center gap-7 shadow-lg">
