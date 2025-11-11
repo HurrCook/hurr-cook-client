@@ -43,6 +43,8 @@ export default function ChatbotPage() {
 
     try {
       const res = await api.post('/chats', { 프롬프트: text });
+      console.log('Response data:', res.data);
+
       const { success, data, message } = res.data;
 
       if (success && data) {
@@ -62,7 +64,8 @@ export default function ChatbotPage() {
           },
         ]);
       }
-    } catch {
+    } catch (err) {
+      console.error('API Error:', err);
       setMessages((prev) => [
         ...prev,
         {
