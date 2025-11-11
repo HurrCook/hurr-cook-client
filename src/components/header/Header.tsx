@@ -20,13 +20,16 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
+  // 특정 경로에서는 헤더 간소화 (뒤로가기 + 로고만 표시)
   if (
     location.pathname.startsWith('/loading') ||
     location.pathname.startsWith('/refrigerator/photo-add') ||
-    location.pathname.startsWith('/refrigerator/add')
+    location.pathname.startsWith('/refrigerator/add') ||
+    location.pathname.startsWith('/fail')
   ) {
     return (
       <header className="fixed left-0 right-0 h-13 bg-white flex items-center px-4 z-30">
+        {/* 뒤로가기 버튼 */}
         <button onClick={() => navigate(-1)} className="z-10">
           <img
             src={ArrowIcon}
@@ -35,10 +38,12 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
           />
         </button>
 
+        {/* 중앙 로고 */}
         <h1 className="absolute left-1/2 transform -translate-x-1/2 text-[#FF8800] font-[Gretoon] text-xl font-normal">
           Hurr Cook
         </h1>
 
+        {/* 우측 빈 공간 확보 */}
         <div className="w-6 h-6" />
       </header>
     );

@@ -27,11 +27,17 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [editData, setEditData] = useState({
+    name: ingredient.name,
+    date: ingredient.date,
+    quantity: ingredient.quantity,
+    image: ingredient.image,
+  });
 
   if (!isOpen) return null;
 
   const today = new Date();
-  const parsedDate = new Date(ingredient.date.replace(/\./g, '-'));
+  const parsedDate = new Date(editData.date.replace(/\./g, '-'));
   const isExpired = parsedDate < today;
 
   const handleDeleteClick = () => setIsDeleteConfirmOpen(true);
@@ -41,6 +47,14 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
     if (onDelete) onDelete();
     onClose();
   };
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
 
   const handleLaunchCamera = () => {
     setIsImageOptionOpen(false);
@@ -52,15 +66,15 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
       if (file) {
-        const newUrl = URL.createObjectURL(file);
-        if (onUpdateImage) onUpdateImage(newUrl);
+        const base64 = await fileToBase64(file);
+        setEditData((prev) => ({ ...prev, image: base64 }));
+        if (onUpdateImage) onUpdateImage(base64);
       }
     };
-
     input.click();
   };
 
@@ -86,11 +100,17 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
               className="w-[162px] h-[162px] bg-[#F5F5F5] rounded-[10px] overflow-hidden cursor-pointer"
               onClick={() => setIsImageOptionOpen(true)}
             >
-              <img
-                src={ingredient.image}
-                alt={ingredient.name}
-                className="w-full h-full object-cover"
-              />
+              {editData.image ? (
+                <img
+                  src={editData.image}
+                  alt={editData.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center w-full h-full text-gray-400 text-sm">
+                  이미지 추가
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between items-start w-full gap-3">
@@ -98,37 +118,45 @@ const IngredientDetailModal: React.FC<IngredientDetailModalProps> = ({
                 <label className="text-[#838383] text-[10px] font-light font-[Pretendard]">
                   재료명
                 </label>
-                <div className="px-2 py-1.5 rounded border border-[#C8C8C8]">
-                  <span className="text-[#313131] text-[14px] font-light font-[Pretendard]">
-                    {ingredient.name}
-                  </span>
-                </div>
+                <input
+                  type="text"
+                  value={editData.name}
+                  onChange={(e) =>
+                    setEditData({ ...editData, name: e.target.value })
+                  }
+                  className="px-2 py-1.5 rounded border border-[#C8C8C8] text-[#313131] text-[14px] font-light font-[Pretendard] w-full"
+                />
               </div>
 
               <div className="flex-1 flex flex-col gap-1.5">
                 <label className="text-[#838383] text-[10px] font-light font-[Pretendard]">
                   유통기한
                 </label>
-                <div className="px-2 py-1.5 rounded border border-[#C8C8C8]">
-                  <span
-                    className={`text-[14px] font-light font-[Pretendard] ${
-                      isExpired ? 'text-[#FF4741]' : 'text-[#313131]'
-                    }`}
-                  >
-                    {ingredient.date}
-                  </span>
-                </div>
+                <input
+                  type="text"
+                  value={editData.date}
+                  onChange={(e) =>
+                    setEditData({ ...editData, date: e.target.value })
+                  }
+                  placeholder="YYYY.MM.DD"
+                  className={`px-2 py-1.5 rounded border border-[#C8C8C8] text-[14px] font-light font-[Pretendard] w-full ${
+                    isExpired ? 'text-[#FF4741]' : 'text-[#313131]'
+                  }`}
+                />
               </div>
 
               <div className="flex-[0.6] flex flex-col gap-1.5">
                 <label className="text-[#838383] text-[10px] font-light font-[Pretendard]">
                   갯수/용량
                 </label>
-                <div className="px-2 py-1.5 rounded border border-[#C8C8C8]">
-                  <span className="text-[#313131] text-[14px] font-light font-[Pretendard]">
-                    {ingredient.quantity}
-                  </span>
-                </div>
+                <input
+                  type="text"
+                  value={editData.quantity}
+                  onChange={(e) =>
+                    setEditData({ ...editData, quantity: e.target.value })
+                  }
+                  className="px-2 py-1.5 rounded border border-[#C8C8C8] text-[#313131] text-[14px] font-light font-[Pretendard] w-full"
+                />
               </div>
             </div>
 

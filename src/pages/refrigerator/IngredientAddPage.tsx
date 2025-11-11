@@ -1,38 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import IngredientEditList, {
   IngredientEditData,
 } from '@/components/common/IngredientEditList';
 import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
+import api from '@/lib/axios';
 
 export default function IngredientPhotoAddPage() {
-  const [ingredients, setIngredients] = useState<IngredientEditData[]>([
-    {
-      id: 1,
-      name: '당근',
-      image: 'https://placehold.co/245x163',
-      date: '2025.11.30',
-      quantity: '3',
-      unit: 'EA',
-    },
-    {
-      id: 2,
-      name: '양파',
-      image: 'https://placehold.co/245x163',
-      date: '2025.10.15',
-      quantity: '2',
-      unit: 'EA',
-    },
-    {
-      id: 3,
-      name: '돼지고기',
-      image: 'https://placehold.co/245x163',
-      date: '2025.12.01',
-      quantity: '500',
-      unit: 'g',
-    },
-  ]);
+  const navigate = useNavigate();
 
+  const [ingredients, setIngredients] = useState<IngredientEditData[]>([
+    { id: 1, name: '', image: '', date: '', quantity: '', unit: '' },
+  ]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<
@@ -49,12 +29,27 @@ export default function IngredientPhotoAddPage() {
     );
   };
 
-  const handleSelectPhoto = (file: File) => {
-    const newUrl = URL.createObjectURL(file);
+  const handleAddIngredient = () => {
+    setIngredients((prev) => [
+      ...prev,
+      { id: Date.now(), name: '', image: '', date: '', quantity: '', unit: '' },
+    ]);
+  };
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+    });
+
+  const handleSelectPhoto = async (file: File) => {
+    const base64 = await fileToBase64(file);
     if (!selectedIngredientId) return;
     setIngredients((prev) =>
       prev.map((item) =>
-        item.id === selectedIngredientId ? { ...item, image: newUrl } : item,
+        item.id === selectedIngredientId ? { ...item, image: base64 } : item,
       ),
     );
   };
@@ -74,12 +69,41 @@ export default function IngredientPhotoAddPage() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const target = e.target as HTMLInputElement;
       const file = target.files?.[0];
-      if (file) handleSelectPhoto(file);
+      if (file) await handleSelectPhoto(file);
     };
     input.click();
+  };
+
+  const handleSaveIngredients = async () => {
+    try {
+      const payload = {
+        ingredients: ingredients.map((item) => ({
+          name: item.name.trim(),
+          amount: Number(item.quantity) || 0,
+          unit: item.unit.toUpperCase(),
+          expireDate: item.date
+            ? new Date(item.date).toISOString()
+            : new Date().toISOString(),
+          image: item.image || null,
+        })),
+      };
+
+      const res = await api.post('/ingredients', payload);
+      const { success, message } = res.data;
+
+      if (success) {
+        alert('재료가 성공적으로 등록되었습니다.');
+        navigate('/fridge');
+      } else {
+        alert(`등록 실패: ${message || '알 수 없는 오류'}`);
+      }
+    } catch (err) {
+      console.error('재료 등록 실패:', err);
+      alert('서버 요청 중 오류가 발생했습니다.');
+    }
   };
 
   return (
@@ -91,6 +115,17 @@ export default function IngredientPhotoAddPage() {
           onOpenCamera={handleOpenImageOptions}
           onSelectPhoto={handleSelectPhoto}
         />
+        <div className="flex justify-center mt-6">
+          <button
+            onClick={handleAddIngredient}
+            className="w-full border-2 border-dashed border-[#FF8800] text-[#FF8800]
+                       rounded-lg py-3 font-medium text-sm bg-transparent
+                       hover:bg-[#FFF8F2] hover:scale-[1.02] active:scale-[0.98]
+                       transition-all"
+          >
+            + 재료 추가하기
+          </button>
+        </div>
       </div>
 
       <ImageOptionsModal
@@ -103,7 +138,10 @@ export default function IngredientPhotoAddPage() {
       {isCameraOpen && <CameraModal onClose={() => setIsCameraOpen(false)} />}
 
       <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-white border-t border-gray-200 py-4">
-        <button className="w-[90%] max-w-[600px] bg-[#FF8800] text-white py-3 rounded-lg font-medium">
+        <button
+          onClick={handleSaveIngredients}
+          className="w-[90%] max-w-[600px] bg-[#FF8800] text-white py-3 rounded-lg font-medium hover:bg-[#ff7b00] active:scale-[0.98] transition-all shadow-md"
+        >
           저장하기
         </button>
       </div>

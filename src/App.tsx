@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -23,12 +25,12 @@ import SettingLayout3 from './components/layout/SettingLayout3';
 import SettingLayout4 from './components/layout/SettingLayout4';
 
 import LoadingPage from './pages/loading/LoadingPage';
+import FailPage from './pages/fail/FailPage';
 import IngredientPhotoAddPage from './pages/refrigerator/IngredientPhotoAddPage';
 import IngredientAddPage from './pages/refrigerator/IngredientAddPage';
 
 import RequireAuth from './routes/RequireAuth';
 import React from 'react';
-import TestModalPage from '@/pages/recipe/TestModalPage';
 
 const queryClient = new QueryClient();
 
@@ -66,7 +68,7 @@ export default function App() {
             <Route path="recipe" element={<RecipePage />} />
             <Route path="chat" element={<ChatbotPage />} />
             <Route path="loading" element={<LoadingPage />} />
-            <Route path="/test-modal" element={<TestModalPage />} />
+            <Route path="fail" element={<FailPage />} />
             <Route
               path="refrigerator/photo-add"
               element={<IngredientPhotoAddPage />}
@@ -74,9 +76,6 @@ export default function App() {
             <Route path="refrigerator/add" element={<IngredientAddPage />} />
           </Route>
         </Route>
-        {/* 보호 라우트 끝 */}
-
-        {/* 없는 경로 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </QueryClientProvider>
