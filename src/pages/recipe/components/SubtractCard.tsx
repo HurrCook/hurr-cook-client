@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 interface SubtractCardProps {
   item: {
-    id: number;
+    id: string | number;
     name: string;
     image: string;
     quantity: string;

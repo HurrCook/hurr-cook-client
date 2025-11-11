@@ -104,7 +104,7 @@ export default function RecipePage() {
   if (!recipes || recipes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] text-gray-400">
-        저장된 레시피가 없습니다 🍳
+        저장된 레시피가 없습니다
       </div>
     );
   }
