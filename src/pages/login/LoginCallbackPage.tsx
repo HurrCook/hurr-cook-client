@@ -39,7 +39,7 @@ export default function LoginCallbackPage() {
       const { accessToken, refreshToken, firstLogin } = res.data;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
-
+      localStorage.setItem('userName', res.data.name);
       // ✅ URL에서 code 제거 (새로고침 시 재호출 방지)
       window.history.replaceState({}, '', '/login/callback');
 
