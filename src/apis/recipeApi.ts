@@ -1,14 +1,11 @@
 import axiosInstance from './axiosInstance';
-import type { AxiosError } from 'axios';
 
-// ✅ 서버 기본 응답 형태 정의 (Swagger 기준)
 interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T | null;
 }
 
-// ✅ Recipe 타입 (예시 — 서버 스펙에 맞게 수정 가능)
 export interface Ingredient {
   name: string;
   quantity: string;
@@ -22,23 +19,21 @@ export interface Recipe {
   instructions: string[];
 }
 
-// ✅ 레시피 목록 조회
 export const getRecipeList = async (): Promise<Recipe[]> => {
   try {
     const { data } = await axiosInstance.get<ApiResponse<Recipe[]>>('/recipes');
     console.log('✅ 서버 응답:', data);
-    return data.data ?? [];
+
+    // null or object 보호
+    if (!data.data) return [];
+    if (!Array.isArray(data.data)) return [data.data];
+    return data.data;
   } catch (error: unknown) {
-    const err = error as AxiosError<ApiResponse<null>>;
-    console.error(
-      '❌ 레시피 목록 API 에러:',
-      err.response?.data || err.message,
-    );
-    throw err;
+    console.error('❌ 레시피 목록 API 에러:', error);
+    return [];
   }
 };
 
-// ✅ 레시피 상세 조회
 export const getRecipeDetail = async (recipeId: number): Promise<Recipe> => {
   const { data } = await axiosInstance.get<ApiResponse<Recipe>>(
     `/recipes/${recipeId}`,
@@ -46,7 +41,6 @@ export const getRecipeDetail = async (recipeId: number): Promise<Recipe> => {
   return data.data as Recipe;
 };
 
-// ✅ 레시피 등록
 export const createRecipe = async (
   recipeData: Omit<Recipe, 'id'>,
 ): Promise<Recipe> => {
@@ -57,7 +51,6 @@ export const createRecipe = async (
   return data.data as Recipe;
 };
 
-// ✅ 레시피 수정
 export const updateRecipe = async (
   recipeId: number,
   recipeData: Partial<Recipe>,
@@ -69,7 +62,6 @@ export const updateRecipe = async (
   return data.data as Recipe;
 };
 
-// ✅ 레시피 삭제
 export const deleteRecipe = async (recipeId: number): Promise<boolean> => {
   const { data } = await axiosInstance.delete<ApiResponse<null>>(
     `/recipes/${recipeId}`,
