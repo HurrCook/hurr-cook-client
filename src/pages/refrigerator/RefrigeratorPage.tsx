@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import IngredientCard from '@/components/common/IngredientCard';
 import RefrigeratorTab from '@/components/common/RefrigeratorTab';
 import ToolItem from '@/components/common/ToolItem';
+import IngredientDetailModal from '@/components/common/IngredientDetailModal';
 import api from '@/lib/axios';
 
 interface Ingredient {
@@ -10,6 +11,7 @@ interface Ingredient {
   amount: number;
   expireDate: string;
   unit: string;
+  imageUrl?: string;
 }
 
 interface CookwareResponse {
@@ -31,6 +33,10 @@ export default function RefrigeratorPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(false);
   const [toolLoading, setToolLoading] = useState(false);
+  const [selectedIngredientId, setSelectedIngredientId] = useState<
+    string | null
+  >(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toolMap: Record<string, keyof CookwareResponse> = {
     냄비: 'hasPot',
@@ -53,8 +59,8 @@ export default function RefrigeratorPage() {
         if (res.data.success && Array.isArray(res.data.data)) {
           setIngredients(res.data.data);
         }
-      } catch (err) {
-        console.error('재료 불러오기 실패:', err);
+      } catch (error) {
+        console.error('[RefrigeratorPage] 재료 불러오기 실패:', error);
       } finally {
         setLoading(false);
       }
@@ -68,7 +74,7 @@ export default function RefrigeratorPage() {
       const res = await api.get('/cookwares');
       if (res.data.success && res.data.data) {
         const activeTools = Object.entries(res.data.data)
-          .filter(([, value]) => value === true)
+          .filter(([, value]) => value)
           .map(
             ([key]) =>
               Object.keys(toolMap).find((k) => toolMap[k] === key) || '',
@@ -76,8 +82,8 @@ export default function RefrigeratorPage() {
           .filter((v) => v !== '');
         setSelectedTools(activeTools);
       }
-    } catch (err) {
-      console.error('도구 불러오기 실패:', err);
+    } catch (error) {
+      console.error('[RefrigeratorPage] 도구 불러오기 실패:', error);
     } finally {
       setToolLoading(false);
     }
@@ -107,14 +113,29 @@ export default function RefrigeratorPage() {
 
     try {
       await api.post('/cookwares', payload);
-    } catch (err) {
-      console.error('도구 업데이트 실패:', err);
+    } catch (error) {
+      console.error('[RefrigeratorPage] 도구 업데이트 실패:', error);
     }
   };
 
+  const handleIngredientClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>, id: string) => {
+      e.stopPropagation();
+      if (isModalOpen) return;
+      setSelectedIngredientId(id);
+      setIsModalOpen(true);
+    },
+    [isModalOpen],
+  );
+
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedIngredientId(null);
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center px-6 relative">
-      <div className="fixed left-0 w-full z-29 justify-center">
+      <div className="fixed left-0 w-full z-30 justify-center">
         <div className="w-full mt-[-1.3vh] px-4 py-2 bg-white">
           <RefrigeratorTab activeTab={activeTab} onChange={setActiveTab} />
         </div>
@@ -130,13 +151,19 @@ export default function RefrigeratorPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {ingredients.length > 0 ? (
                 ingredients.map((item) => (
-                  <IngredientCard
+                  <div
                     key={item.userFoodId}
-                    name={item.name}
-                    image="https://placehold.co/245x163"
-                    date={new Date(item.expireDate).toLocaleDateString('ko-KR')}
-                    quantity={`${item.amount}${item.unit}`}
-                  />
+                    onClick={(e) => handleIngredientClick(e, item.userFoodId)}
+                  >
+                    <IngredientCard
+                      name={item.name}
+                      image={item.imageUrl || 'https://placehold.co/245x163'}
+                      date={new Date(item.expireDate).toLocaleDateString(
+                        'ko-KR',
+                      )}
+                      quantity={`${item.amount}${item.unit}`}
+                    />
+                  </div>
                 ))
               ) : (
                 <p className="col-span-2 text-center text-gray-500">
@@ -160,6 +187,14 @@ export default function RefrigeratorPage() {
           </div>
         )}
       </div>
+
+      {isModalOpen && selectedIngredientId && (
+        <IngredientDetailModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          ingredientId={selectedIngredientId}
+        />
+      )}
     </div>
   );
 }

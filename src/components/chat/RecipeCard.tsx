@@ -3,11 +3,13 @@ import LikeOff from '@/assets/좋아요1.svg';
 import LikeOn from '@/assets/좋아요2.svg';
 import RecipeModal from '@/components/common/RecipeModal';
 import api from '@/lib/axios';
+import { AxiosError } from 'axios';
 
 interface Ingredient {
   name: string;
   amount: number;
   unit: string;
+  userFoodId?: string;
 }
 
 interface RecipePayload {
@@ -18,17 +20,19 @@ interface RecipePayload {
   time: string;
 }
 
+interface RecipeCardProps {
+  imageUrl: string;
+  title: string;
+  ingredients: string;
+  steps: string;
+}
+
 export default function RecipeCard({
   imageUrl,
   title,
   ingredients,
   steps,
-}: {
-  imageUrl: string;
-  title: string;
-  ingredients: string;
-  steps: string;
-}) {
+}: RecipeCardProps) {
   const [liked, setLiked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -49,10 +53,10 @@ export default function RecipeCard({
     const unitRaw = last.replace(/[\d.]/g, '').trim();
 
     const unit = unitRaw && unitRaw.length > 0 ? unitRaw : 'EA';
-    return { name, amount, unit };
+    return { name, amount, unit, userFoodId: `${name}_${Date.now()}` };
   };
 
-  const handleLikeClick = async () => {
+  const handleLikeClick = async (): Promise<void> => {
     const newLiked = !liked;
     setLiked(newLiked);
     if (!newLiked) return;
@@ -76,39 +80,17 @@ export default function RecipeCard({
         time: '15분',
       };
 
-      console.log('[RecipeCard] POST /recipes payload:', payload);
-
       const res = await api.post('/recipes', payload);
-      console.log('[RecipeCard] POST /recipes response:', res.data);
-
-      const { success, message } = res.data;
-
-      if (success) {
-        alert('레시피가 저장되었습니다.');
-      } else {
-        alert(message || '응답 형식이 올바르지 않습니다.');
-      }
-    } catch (error) {
-      console.error('[RecipeCard] API Error:', error);
-
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        (error as { response?: { data?: unknown; status?: number } }).response
-      ) {
-        const errRes = (
-          error as { response: { data?: unknown; status?: number } }
-        ).response;
-        console.error('[RecipeCard] Error response data:', errRes.data);
-
-        if (errRes.status === 401) {
-          alert('인증에 실패했습니다. 다시 로그인해주세요.');
-          return;
+      console.log('[RecipeCard] POST /recipes success:', res.data);
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error('[RecipeCard] API 오류:', err.message);
+      if (err.response) {
+        console.error('[RecipeCard] 응답 본문:', err.response.data);
+        if (err.response.status === 401) {
+          console.warn('인증 실패: 다시 로그인 필요');
         }
       }
-
-      alert('서버 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
@@ -172,6 +154,10 @@ export default function RecipeCard({
                   fontFamily: 'Pretendard',
                   fontWeight: 600,
                   color: '#212121',
+                  maxWidth: '100px',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'normal',
+                  lineHeight: '1.3',
                 }}
               >
                 {title}
@@ -251,16 +237,17 @@ export default function RecipeCard({
         <RecipeModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onNext={() => {
-            alert('재료 차감 완료!');
-            handleCloseModal();
-          }}
           recipe={{
+            id: Date.now(),
             name: title,
             image: imageUrl,
             ingredients: ingredients.split(',').map((item) => {
-              const [name, quantity] = item.trim().split(' ');
-              return { name, quantity: quantity ?? '' };
+              const parsed = parseIngredientItem(item);
+              return {
+                name: parsed.name,
+                quantity: parsed.amount.toString(),
+                userFoodId: parsed.userFoodId,
+              };
             }),
             instructions: steps.split('\n'),
           }}
