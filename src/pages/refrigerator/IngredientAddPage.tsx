@@ -96,7 +96,7 @@ export default function IngredientPhotoAddPage() {
 
       if (success) {
         alert('재료가 성공적으로 등록되었습니다.');
-        navigate('/fridge');
+        navigate('/refrigerator');
       } else {
         alert(`등록 실패: ${message || '알 수 없는 오류'}`);
       }

@@ -12,10 +12,10 @@ interface Ingredient {
 
 interface RecipePayload {
   title: string;
+  image: string;
   ingredients: Ingredient[];
   steps: string[];
   time: string;
-  image: string;
 }
 
 export default function RecipeCard({
@@ -36,6 +36,22 @@ export default function RecipeCard({
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
+  const parseIngredientItem = (item: string): Ingredient => {
+    const trimmed = item.trim();
+    if (!trimmed) return { name: '', amount: 1, unit: 'EA' };
+
+    const parts = trimmed.split(/\s+/);
+    const last = parts[parts.length - 1];
+    const name = parts.slice(0, -1).join(' ') || parts[0];
+
+    const amountMatch = last.match(/[\d.]+/);
+    const amount = amountMatch ? Number(amountMatch[0]) : 1;
+    const unitRaw = last.replace(/[\d.]/g, '').trim();
+
+    const unit = unitRaw && unitRaw.length > 0 ? unitRaw : 'EA';
+    return { name, amount, unit };
+  };
+
   const handleLikeClick = async () => {
     const newLiked = !liked;
     setLiked(newLiked);
@@ -43,38 +59,55 @@ export default function RecipeCard({
 
     setSaving(true);
     try {
+      const ingArray: Ingredient[] = ingredients
+        .split(',')
+        .map((it) => it.trim())
+        .filter(Boolean)
+        .map(parseIngredientItem);
+
       const payload: RecipePayload = {
         title,
-        ingredients: ingredients.split(',').map((item) => {
-          const [name, amountUnit] = item.trim().split(' ');
-          const [amount, unit] = amountUnit
-            ? [
-                amountUnit.replace(/[^0-9]/g, ''),
-                amountUnit.replace(/[0-9]/g, ''),
-              ]
-            : [1, ''];
-          return { name, amount: Number(amount) || 1, unit: unit || '' };
-        }),
+        image: imageUrl,
+        ingredients: ingArray,
         steps: steps
           .split('\n')
           .map((s) => s.trim())
           .filter(Boolean),
         time: '15분',
-        image: imageUrl,
       };
 
-      const res = await api.post('/recipes', payload, {
-        headers: { Authorization: undefined }, // 인증 필요 없음
-      });
+      console.log('[RecipeCard] POST /recipes payload:', payload);
+
+      const res = await api.post('/recipes', payload);
+      console.log('[RecipeCard] POST /recipes response:', res.data);
 
       const { success, message } = res.data;
+
       if (success) {
         alert('레시피가 저장되었습니다.');
       } else {
         alert(message || '응답 형식이 올바르지 않습니다.');
       }
-    } catch (err) {
-      console.error('API Error:', err);
+    } catch (error) {
+      console.error('[RecipeCard] API Error:', error);
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error as { response?: { data?: unknown; status?: number } }).response
+      ) {
+        const errRes = (
+          error as { response: { data?: unknown; status?: number } }
+        ).response;
+        console.error('[RecipeCard] Error response data:', errRes.data);
+
+        if (errRes.status === 401) {
+          alert('인증에 실패했습니다. 다시 로그인해주세요.');
+          return;
+        }
+      }
+
       alert('서버 오류가 발생했습니다.');
     } finally {
       setSaving(false);
