@@ -10,6 +10,13 @@ interface Ingredient {
   amount: number;
   expireDate: string;
   unit: string;
+  cropImage?: string; // ✅ 서버가 crop_image 줄 경우 반영
+}
+
+interface IngredientsResponse {
+  success: boolean;
+  message: string | null;
+  data: Ingredient[] | null;
 }
 
 interface CookwareResponse {
@@ -29,8 +36,8 @@ export default function RefrigeratorPage() {
   );
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [toolLoading, setToolLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [toolLoading, setToolLoading] = useState(false);
 
   const toolMap: Record<string, keyof CookwareResponse> = {
     냄비: 'hasPot',
@@ -45,37 +52,63 @@ export default function RefrigeratorPage() {
 
   const tools = Object.keys(toolMap);
 
+  /** ✅ 재료 가져오기 */
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/ingredients');
-        if (res.data.success && Array.isArray(res.data.data)) {
-          setIngredients(res.data.data);
+        const res = await api.get<IngredientsResponse>('/ingredients');
+        console.log('✅ /ingredients 응답:', res.data);
+
+        const responseData = res.data;
+
+        if (responseData.success && Array.isArray(responseData.data)) {
+          const formatted: Ingredient[] = responseData.data.map((item) => ({
+            userFoodId: item.userFoodId,
+            name: item.name,
+            amount: item.amount,
+            expireDate: item.expireDate,
+            unit: item.unit,
+            cropImage: item.cropImage, // 백엔드가 crop_image 주면 자동 반영
+          }));
+
+          setIngredients(formatted);
+        } else {
+          console.warn('⚠️ 재료 데이터가 비어 있습니다:', responseData);
+          setIngredients([]);
         }
-      } catch {
+      } catch (err) {
+        console.error('❌ 재료 불러오기 실패:', err);
+        setIngredients([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchIngredients();
   }, []);
 
+  /** ✅ 조리도구 가져오기 */
   const fetchTools = async () => {
     try {
       setToolLoading(true);
-      const res = await api.get('/cookwares');
+      const res = await api.get<{ success: boolean; data: CookwareResponse }>(
+        '/cookwares',
+      );
+      console.log('✅ /cookwares 응답:', res.data);
+
       if (res.data.success && res.data.data) {
         const activeTools = Object.entries(res.data.data)
-          .filter(([_, value]) => value === true)
+          .filter(([value]) => value)
           .map(
             ([key]) =>
               Object.keys(toolMap).find((k) => toolMap[k] === key) || '',
           )
-          .filter((v) => v !== '');
+          .filter((v): v is string => v !== '');
         setSelectedTools(activeTools);
       }
-    } catch {
+    } catch (err) {
+      console.error('❌ 조리도구 불러오기 실패:', err);
     } finally {
       setToolLoading(false);
     }
@@ -85,11 +118,11 @@ export default function RefrigeratorPage() {
     fetchTools();
   }, []);
 
+  /** ✅ 조리도구 클릭 핸들러 */
   const handleToolClick = async (toolName: string) => {
     const updatedTools = selectedTools.includes(toolName)
       ? selectedTools.filter((t) => t !== toolName)
       : [...selectedTools, toolName];
-
     setSelectedTools(updatedTools);
 
     const payload: CookwareResponse = {
@@ -104,13 +137,20 @@ export default function RefrigeratorPage() {
     };
 
     try {
-      await api.post('/cookwares', payload);
-      await api.get('/cookwares');
-    } catch {}
+      const res = await api.post<{
+        success: boolean;
+        message: string;
+        data: string;
+      }>('/cookwares', payload);
+      console.log('✅ /cookwares 저장 응답:', res.data);
+    } catch (err) {
+      console.error('❌ 조리도구 저장 실패:', err);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center px-6 relative">
+      {/* 탭 (고정) */}
       <div className="fixed left-0 w-full z-29 justify-center">
         <div className="w-full mt-[-1.3vh] px-4 py-2 bg-white">
           <RefrigeratorTab activeTab={activeTab} onChange={setActiveTab} />
@@ -119,6 +159,7 @@ export default function RefrigeratorPage() {
 
       <div className="h-[60px]" />
 
+      {/* 메인 영역 */}
       <div className="w-full max-w-[700px]">
         {activeTab === 'ingredient' ? (
           loading ? (
@@ -130,9 +171,15 @@ export default function RefrigeratorPage() {
                   <IngredientCard
                     key={item.userFoodId}
                     name={item.name}
-                    image="https://placehold.co/245x163"
+                    image={
+                      item.cropImage
+                        ? item.cropImage.startsWith('data:image')
+                          ? item.cropImage
+                          : `data:image/jpeg;base64,${item.cropImage}`
+                        : 'https://placehold.co/245x163'
+                    }
                     date={new Date(item.expireDate).toLocaleDateString('ko-KR')}
-                    quantity={`${item.amount}${item.unit}`}
+                    quantity={`${item.amount}${item.unit ? ` ${item.unit}` : ''}`}
                   />
                 ))
               ) : (

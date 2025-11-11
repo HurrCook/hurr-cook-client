@@ -18,43 +18,30 @@ export default function UserInfoPage1_2() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ▼ UserInfoPage1에서 넘어온 재료 데이터
-
   // 타입 안전하게 처리
-  const state = location.state as { ingredients?: unknown };
-  const received = Array.isArray(state.ingredients)
-    ? (state.ingredients as DetectedIngredient[])
+  const state = location.state as { ingredients?: unknown } | null;
+  const received = Array.isArray(state?.ingredients)
+    ? (state!.ingredients as DetectedIngredient[])
     : undefined;
 
-  /**
-   * ✅ base64 crop_image가 내려올 때 처리
-   * 백엔드에서 { name: '당근', crop_image: '<base64문자열>' } 형태라면
-   * 자동으로 dataURL 변환해서 보여줌
-   */
+  // base64/URL/dataURL → 표시용 src로 정규화
+  const normalizeImage = (img?: string): string => {
+    if (!img) return 'https://placehold.co/152x152';
+    if (img.startsWith('data:image')) return img;
+    if (/^[A-Za-z0-9+/=]+$/.test(img)) return `data:image/jpeg;base64,${img}`;
+    if (img.startsWith('http')) return img;
+    return 'https://placehold.co/152x152';
+  };
+
   const initialIngredients: IngredientItem[] = useMemo(() => {
-    if (!Array.isArray(received) || received.length === 0) return [];
-    return received.map((it, idx) => {
-      let imgSrc = 'https://placehold.co/152x152';
-      if (it.image) {
-        // 1) 백엔드가 이미 data:image/... 형태로 줬으면 그대로
-        if (it.image.startsWith('data:image')) imgSrc = it.image;
-        // 2) base64 문자열만 줬으면 수동으로 변환
-        else if (/^[A-Za-z0-9+/=]+$/.test(it.image)) {
-          imgSrc = `data:image/jpeg;base64,${it.image}`;
-        }
-        // 3) URL이면 그대로 사용
-        else if (it.image.startsWith('http')) {
-          imgSrc = it.image;
-        }
-      }
-      return {
-        id: it.id || `${Date.now()}_${idx}`,
-        name: it.name || '재료',
-        image: imgSrc,
-        quantity: typeof it.quantity === 'number' ? it.quantity : 1,
-        unit: (it.unit as IngredientItem['unit']) || 'EA',
-      };
-    });
+    if (!received || received.length === 0) return [];
+    return received.map((it, idx) => ({
+      id: it.id || `${Date.now()}_${idx}`,
+      name: it.name || '재료',
+      image: normalizeImage(it.image),
+      quantity: typeof it.quantity === 'number' ? it.quantity : 1,
+      unit: (it.unit as IngredientItem['unit']) || 'EA',
+    }));
   }, [received]);
 
   const [ingredients, setIngredients] =
@@ -66,7 +53,7 @@ export default function UserInfoPage1_2() {
     number | string | null
   >(null);
 
-  /** 단위 포맷팅 */
+  /** 단위 포맷팅 (표시용) */
   const formatQuantity = (
     quantity: number,
     unit: 'EA' | 'g' | 'ml',
@@ -83,28 +70,22 @@ export default function UserInfoPage1_2() {
     }
   };
 
-  /** 모달 관련 함수 */
+  /** 모달 관련 */
   const handleOptionsModalClose = () => setIsOverlayVisible(false);
   const handleLaunchCamera = () => {
     setIsOverlayVisible(false);
     setCameraOn(true);
   };
   const handleLaunchLibrary = () => {
-    setIsOverlayVisible(false);
-    // TODO: 필요하면 갤러리 로직 추가
+    setIsOverlayVisible(false); /* 갤러리 로직 필요 시 추가 */
   };
   const handleCameraModalClose = () => setCameraOn(false);
 
-  /** 다음 페이지 이동 */
-  const handleNextClick = () => navigate('/userinfopage2');
-
-  /** 재료 카드 클릭 → 삭제 모달 열기 */
+  /** 재료 카드 클릭 → 삭제 모달 */
   const handleIngredientCardClick = (id: number | string) => {
     setSelectedIngredientId(id);
     setIsDeleteModalVisible(true);
   };
-
-  /** 삭제 모달 제어 */
   const handleDeleteModalClose = () => {
     setIsDeleteModalVisible(false);
     setSelectedIngredientId(null);
@@ -112,6 +93,19 @@ export default function UserInfoPage1_2() {
   const handleDeleteConfirm = () => {
     setIngredients((prev) => prev.filter((i) => i.id !== selectedIngredientId));
     handleDeleteModalClose();
+  };
+
+  /** ✅ 편집 페이지로 이동 (IngredientEditData 형태로 변환해서 전달) */
+  const handleNextClick = () => {
+    const editPayload = ingredients.map((it) => ({
+      id: it.id,
+      name: it.name,
+      image: it.image, // 이미 dataURL/URL로 정규화됨
+      date: '', // 유통기한 입력은 편집 페이지에서 하도록 공백
+      quantity: String(it.quantity), // 편집 컴포넌트가 string 처리
+      unit: it.unit,
+    }));
+    navigate('/userinfopage2', { state: { ingredients: editPayload } });
   };
 
   const selectedIngredientName =
@@ -161,8 +155,11 @@ export default function UserInfoPage1_2() {
         </div>
       )}
 
-      {/* 스크롤 영역 */}
-      <div className="flex w-full flex-grow justify-center overflow-y-auto">
+      {/* 스크롤 영역 (하단 블러에 안 가리도록 패딩) */}
+      <div
+        className="flex w-full flex-grow justify-center overflow-y-auto"
+        style={{ paddingBottom: '16vh' }}
+      >
         <div className="mt-[18.5px] flex w-full justify-center">
           <div className="w-[87.44%]">
             <IngredientList
@@ -170,7 +167,7 @@ export default function UserInfoPage1_2() {
               onCardClick={handleIngredientCardClick}
               formatQuantity={formatQuantity}
             />
-            <div className="h-[16vh]" />
+            <div className="h-[2vh]" />
           </div>
         </div>
       </div>

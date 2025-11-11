@@ -1,154 +1,159 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/pages/userinfo/UserInfoPage2.tsx
+import React, { useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import FooterButton from '/src/components/common/FooterButton';
 import IngredientEditList, {
   IngredientEditData,
 } from '@/components/common/IngredientEditList';
+// ✅ 공용 axios 인스턴스(api) 사용
+import api from '@/lib/axios';
 
-// 💡 Helper function: Ensures quantity is treated as a string for display/input
+// 숫자만 허용
 const parseQuantityValue = (value: string, field: string): string => {
-  if (field === 'quantity') {
-    // 숫자만 허용 (입력 필드에서 숫자가 아닌 문자를 막을 때 유용)
-    return value.replace(/[^0-9]/g, '');
-  }
+  if (field === 'quantity') return value.replace(/[^0-9]/g, '');
   return value;
 };
 
-// 💡 Helper function: Formats date from YYYY-MM-DD (input default) to YYYY.MM.DD
-const formatDateValue = (rawDate: string): string => {
-  if (rawDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return rawDate.replace(/-/g, '.');
-  }
-  return rawDate;
+// 오늘 날짜 YYYY-MM-DD
+const getTodayDate = (): string => {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
+
+type NavState = { ingredients?: IngredientEditData[] };
 
 export default function UserInfoPage2() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const incoming = (location.state as NavState | null)?.ingredients;
 
-  // 💡 데이터 정의 (수정 가능하도록 setIngredients 사용)
-  const [ingredients, setIngredients] = useState<IngredientEditData[]>([
-    {
-      id: 1,
-      name: '피망',
-      image: 'https://placehold.co/100x91',
-      date: '2025.08.30',
-      quantity: '3',
-      unit: 'EA',
-    },
-    {
-      id: 2,
-      name: '피망',
-      image: 'https://placehold.co/100x91',
-      date: '2025.08.30',
-      quantity: '3',
-      unit: 'EA',
-    },
-    {
-      id: 3,
-      name: '피망',
-      image: 'https://placehold.co/100x91',
-      date: '2025.08.30',
-      quantity: '3',
-      unit: 'EA',
-    },
-    {
-      id: 4,
-      name: '피망',
-      image: 'https://placehold.co/100x91',
-      date: '2025.08.30',
-      quantity: '3',
-      unit: 'EA',
-    },
-    {
-      id: 5,
-      name: '감자',
-      image: 'https://placehold.co/100x91',
-      date: '2025.08.30',
-      quantity: '5',
-      unit: 'g',
-    },
-    {
-      id: 6,
-      name: '배추',
-      image: 'https://placehold.co/100x91',
-      date: '2025.08.30',
-      quantity: '1',
-      unit: 'EA',
-    },
-    {
-      id: 7,
-      name: '고기',
-      image: 'https://placehold.co/100x91',
-      date: '2025.08.30',
-      quantity: '500',
-      unit: 'g',
-    },
-  ]);
+  // 초기 데이터 설정
+  const initial: IngredientEditData[] = useMemo(() => {
+    if (Array.isArray(incoming) && incoming.length > 0) {
+      return incoming.map((it, idx) => ({
+        id: it.id ?? `${Date.now()}_${idx}`,
+        name: it.name ?? '재료',
+        image: it.image ?? 'https://placehold.co/100x91',
+        date:
+          it.date && /^\d{4}-\d{2}-\d{2}$/.test(it.date)
+            ? it.date
+            : getTodayDate(),
+        quantity:
+          typeof it.quantity === 'string'
+            ? it.quantity
+            : String(it.quantity ?? '1'),
+        unit: (it.unit as IngredientEditData['unit']) ?? 'EA',
+      }));
+    }
+    // 기본 더미 1개(원하시면 []로 바꾸세요)
+    return [];
+  }, [incoming]);
 
-  // 💡 재료 데이터 업데이트 핸들러: IngredientEditItem에서 호출됩니다.
+  const [ingredients, setIngredients] = useState<IngredientEditData[]>(initial);
+
+  // 수정 핸들러
   const handleUpdateIngredient = (
     id: number | string,
     field: keyof IngredientEditData,
     value: string,
   ) => {
-    setIngredients((prevIngredients) =>
-      prevIngredients.map((ingredient) => {
-        if (ingredient.id === id) {
-          // 날짜 필드인 경우 포맷팅 적용
-          const updatedValue =
-            field === 'date'
-              ? formatDateValue(value)
-              : parseQuantityValue(value, field);
-
-          return {
-            ...ingredient,
-            [field]: updatedValue,
-          };
-        }
-        return ingredient;
-      }),
+    setIngredients((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              [field]:
+                field === 'quantity' ? parseQuantityValue(value, field) : value,
+            }
+          : item,
+      ),
     );
-    console.log(`Updated ingredient ${id}: set ${field} to ${value}`);
   };
 
-  // 💡 핸들러 함수들
-  const handleNextClick = () => {
-    // 💡 최종 데이터를 확인하고 다음 페이지로 이동
-    console.log('Final Ingredients:', ingredients);
-    navigate('/userinfopage3');
+  // 단위 정규화
+  const normalizeUnit = (u: string): 'EA' | 'G' | 'ML' => {
+    const v = (u || '').toUpperCase();
+    if (v === 'EA') return 'EA';
+    if (v === 'G' || v === 'GRAM') return 'G';
+    if (v === 'ML' || v === 'MILLILITER') return 'ML';
+    return 'EA';
+  };
+
+  // 날짜 ISO (빈 값이면 오늘)
+  const toISODateOrToday = (raw?: string) => {
+    if (!raw) return new Date().toISOString();
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
+  };
+
+  // 저장
+  const handleNextClick = async () => {
+    const payload = {
+      ingredients: ingredients.map((ing) => ({
+        name: ing.name,
+        amount: Number(ing.quantity ?? 0),
+        unit: normalizeUnit(ing.unit as string),
+        expireDate: toISODateOrToday(ing.date),
+      })),
+    };
+
+    console.log('📦 요청 보낼 payload:', payload);
+
+    try {
+      // ✅ 공용 api 사용 (Authorization/withCredentials 포함)
+      const postRes = await api.post('/ingredients', payload, {
+        headers: { 'Content-Type': 'application/json' },
+      });
+      console.log('✅ 서버 응답:', postRes.data);
+
+      if (!postRes.data?.success) {
+        console.warn('⚠️ 저장 실패:', postRes.data?.message);
+        alert(postRes.data?.message ?? '저장에 실패했습니다.');
+        return;
+      }
+
+      // 확인용 조회(선택)
+      const getRes = await api.get('/ingredients');
+      console.log('📦 현재 DB 재료 목록:', getRes.data?.data);
+
+      alert('✅ 재료가 성공적으로 저장되었습니다!');
+      navigate('/userinfopage3');
+    } catch (err) {
+      console.error('❌ 재료 업로드 실패:', err);
+      alert('업로드 중 오류가 발생했습니다.');
+    }
   };
 
   return (
     <div className="w-full h-full relative flex flex-col">
-      {/* 🚀 메인 스크롤 영역: 재료 목록 배치 */}
+      {/* 스크롤 영역 */}
       <div
         className="flex-grow overflow-y-auto w-full flex justify-center"
-        style={{ paddingBottom: '15.99%' }}
+        style={{ paddingBottom: '16vh' }}
       >
-        {/* 💡 재료 목록 영역 */}
         <div className="w-full flex justify-center mt-[0.5px]">
-          {' '}
-          {/* 타이틀 아래 간격 조정 */}
-          {/* 💡 너비 86.98% 컨테이너 (양옆 28px 간격 확보) */}
           <div className="w-[86.98%]">
             <IngredientEditList
               ingredients={ingredients}
-              onUpdate={handleUpdateIngredient} // 💡 onUpdate 핸들러 전달
+              onUpdate={handleUpdateIngredient}
             />
           </div>
         </div>
       </div>
 
-      {/* 푸터 영역 (fixed) */}
+      {/* 푸터 */}
       <div className="w-full bg-gradient-to-b from-white/0 to-white backdrop-blur-[2px] flex flex-col items-center h-[15.99%] fixed bottom-0 inset-x-0">
-        <div className="h-[26.17%] w-full"></div>
+        <div className="h-[26.17%] w-full" />
         <FooterButton
           className="w-[82.79%] h-[32.21%]"
           onClick={handleNextClick}
         >
           다음으로
         </FooterButton>
-        <div className="flex-grow w-full"></div>
+        <div className="flex-grow w-full" />
       </div>
     </div>
   );

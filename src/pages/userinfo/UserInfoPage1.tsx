@@ -1,8 +1,8 @@
+// /src/pages/userinfo/UserInfoPage1.tsx
 import React, { useRef, useState } from 'react';
 import FooterButton from '/src/components/common/FooterButton';
 import CameraModal from '/src/components/header/CameraModal';
 import ImageOptionsModal from '/src/components/modal/ImageOptionsModal';
-import ImagePreviewModal from '/src/components/modal/ImagePreviewModal';
 import axiosInstance from '@/apis/axiosInstance';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -12,7 +12,15 @@ export type DetectedIngredient = {
   name: string;
   quantity: number;
   unit: 'EA' | 'g' | 'ml';
-  image?: string;
+  image?: string; // base64 (dataURL or raw) or URL
+};
+
+// 백엔드 YOLO 응답 단일 아이템 타입
+type BackendIngredient = {
+  name?: string;
+  amount?: number | string;
+  crop_image?: string[]; // base64 문자열 배열
+  unit?: string;
 };
 
 export default function UserInfoPage1() {
@@ -21,11 +29,9 @@ export default function UserInfoPage1() {
   // 모달 상태
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // 이미지 상태
-  const [images, setImages] = useState<string[]>([]); // dataURL 배열
-  const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null); // 카메라 미리보기 용
+  // 이미지 상태(사용자가 추가한 원본 이미지들 dataURL)
+  const [images, setImages] = useState<string[]>([]);
 
   // YOLO 감지 결과 누적
   const [detectedIngredients, setDetectedIngredients] = useState<
@@ -50,7 +56,7 @@ export default function UserInfoPage1() {
     fileInputRef.current?.click();
   };
 
-  /** 파일 → base64 문자열 변환 */
+  /** 파일 → base64 문자열(DataURL) 변환 */
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -66,18 +72,20 @@ export default function UserInfoPage1() {
   ): DetectedIngredient[] => {
     const map = new Map<string, DetectedIngredient>();
 
+    // 기존 항목 먼저 입력
     for (const item of prev) {
       const key = item.name.trim();
       map.set(key, { ...item });
     }
 
+    // 새 항목 합산
     for (const item of incoming) {
       const key = item.name.trim();
       if (map.has(key)) {
         const exist = map.get(key)!;
         if (exist.unit !== item.unit) {
           console.warn(
-            `[merge] 단위 불일치 감지: '${exist.name}' (${exist.unit} vs ${item.unit}). 일단 수량만 합산합니다.`,
+            `[merge] 단위 불일치: '${exist.name}' (${exist.unit} vs ${item.unit}). 수량만 합산합니다.`,
           );
         }
         map.set(key, {
@@ -92,7 +100,7 @@ export default function UserInfoPage1() {
     return Array.from(map.values());
   };
 
-  /** YOLO 호출 (하나의 base64 이미지에 대해) */
+  /** YOLO 호출 (하나의 base64 이미지에 대해 즉시 전송) */
   const detectOne = async (base64DataUrl: string) => {
     try {
       const base64 = base64DataUrl.split(',')[1]; // data:image/...;base64, 제거
@@ -107,46 +115,45 @@ export default function UserInfoPage1() {
       const rawIngredients: unknown = data?.data?.ingredients ?? [];
 
       if (Array.isArray(rawIngredients)) {
-        rawIngredients.forEach((item: Record<string, unknown>, idx) => {
+        rawIngredients.forEach((item: BackendIngredient, idx: number) => {
           const name = typeof item.name === 'string' ? item.name : '이름없음';
           const amount =
             typeof item.amount === 'number'
               ? item.amount
               : Number(item.amount) || 0;
           const cropImage = Array.isArray(item.crop_image)
-            ? (item.crop_image as string[])
+            ? item.crop_image
             : [];
-
           console.log(
             `📦 [${idx}] 재료명:`,
             name,
             '\n📏 수량:',
             amount,
-            '\n🖼️ crop_image 배열:',
-            cropImage,
+            '\n🖼️ crop_image 배열 길이:',
+            cropImage.length,
           );
         });
       }
 
+      // 구조 변환 (crop_image 배열 → 첫 번째 이미지만 사용)
       const incoming: DetectedIngredient[] = Array.isArray(rawIngredients)
-        ? rawIngredients.map((item, idx) => {
-            const asAny = item as Record<string, unknown>;
-            const name = typeof asAny.name === 'string' ? asAny.name : '재료';
+        ? rawIngredients.map((item: BackendIngredient, idx: number) => {
+            const name = typeof item.name === 'string' ? item.name : '재료';
             const amount =
-              typeof asAny.amount === 'number'
-                ? asAny.amount
-                : Number(asAny.amount) || 1;
-            const cropImage = Array.isArray(asAny.crop_image)
-              ? (asAny.crop_image as string[])
+              typeof item.amount === 'number'
+                ? item.amount
+                : Number(item.amount) || 1;
+            const cropImageArr = Array.isArray(item.crop_image)
+              ? item.crop_image
               : [];
-            const firstImage = cropImage[0] ?? undefined;
+            const firstImage = cropImageArr[0];
 
             return {
               id: `${Date.now()}_${Math.random()}_${idx}`,
               name,
               quantity: amount,
               unit: 'EA',
-              image: firstImage,
+              image: firstImage, // base64(raw) or dataURL. 표시 시 처리 가능
             };
           })
         : [];
@@ -163,7 +170,16 @@ export default function UserInfoPage1() {
     }
   };
 
-  /** 갤러리 파일 선택 → 여러 장 처리 */
+  /** ✅ 카메라에서 캡처 → 즉시 서버 전송 */
+  const handleCapturedFromCamera = async (dataUrl: string) => {
+    setIsCameraOpen(false);
+    // 먼저 화면에 썸네일 반영
+    setImages((prev) => [...prev, dataUrl]);
+    // 즉시 YOLO 호출
+    await detectOne(dataUrl);
+  };
+
+  /** ✅ 갤러리 파일 선택 → 즉시 서버 전송 */
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = async (
     e,
   ) => {
@@ -174,36 +190,14 @@ export default function UserInfoPage1() {
     for (const file of files) {
       try {
         const base64 = await fileToBase64(file);
-        setImages((prev) => [...prev, base64]); // 그리드에 표시
-        await detectOne(base64); // 감지 + 병합 누적
+        setImages((prev) => [...prev, base64]); // 먼저 표시
+        await detectOne(base64); // 즉시 YOLO 요청
       } catch (err) {
         console.error('❌ 갤러리 업로드 실패:', err);
       }
     }
 
     if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
-  /** 카메라 촬영 완료 → 미리보기 모달 */
-  const handleCapturedFromCamera = (dataUrl: string) => {
-    setCapturedDataUrl(dataUrl);
-    setIsCameraOpen(false);
-    setIsPreviewOpen(true);
-  };
-
-  /** 다시 촬영하기 */
-  const handleRetake = () => {
-    setIsPreviewOpen(false);
-    setIsCameraOpen(true);
-  };
-
-  /** 미리보기 확정 → images에 추가 + YOLO 호출(병합) */
-  const handleConfirmPreview = async () => {
-    if (!capturedDataUrl) return;
-    const img = capturedDataUrl;
-    setIsPreviewOpen(false);
-    setImages((prev) => [...prev, img]);
-    await detectOne(img);
   };
 
   /** 다음으로 이동 (감지 결과 들고가기) */
@@ -218,23 +212,13 @@ export default function UserInfoPage1() {
   };
 
   return (
-    // ✅ 전체를 세로 플렉스 컨테이너로 만들고, 가운데 영역만 스크롤되게
+    // ✅ 전체 세로 플렉스 컨테이너, 가운데 영역만 스크롤
     <div className="relative flex h-full w-full flex-col">
       {/* 카메라 모달 */}
       {isCameraOpen && (
         <CameraModal
           onClose={() => setIsCameraOpen(false)}
-          onCapture={handleCapturedFromCamera}
-        />
-      )}
-
-      {/* 미리보기 모달 */}
-      {isPreviewOpen && capturedDataUrl && (
-        <ImagePreviewModal
-          imageDataUrl={capturedDataUrl}
-          onClose={() => setIsPreviewOpen(false)}
-          onRetake={handleRetake}
-          onConfirm={handleConfirmPreview}
+          onCapture={handleCapturedFromCamera} // 미리보기 없이 즉시 detect
         />
       )}
 
@@ -260,8 +244,8 @@ export default function UserInfoPage1() {
       <div
         className="flex w-full justify-center overflow-y-auto"
         style={{
-          marginTop: '0.5px', // UserInfoPage2와 동일한 시작 오프셋
-          paddingTop: '24px', // HurrCook 텍스트와 간격 맞춤
+          marginTop: '0.5px', // UserInfoPage2와 시작 오프셋 맞춤
+          paddingTop: '24px', // 상단 텍스트(레이아웃)에 맞는 간격
           paddingBottom: '16vh', // 🔒 푸터 높이만큼 하단 여백
         }}
       >
