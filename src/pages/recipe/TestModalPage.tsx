@@ -49,7 +49,7 @@ export default function TestModalPage() {
           onStartCooking={handleStartCooking}
           onSave={(updated) => console.log('저장됨', updated)}
           recipe={dummyRecipe}
-          skipEnterAnimation={skipRecipeEnterAnimation} // 🔽 여기!
+          skipEnterAnimation={skipRecipeEnterAnimation}
         />
       )}
 

@@ -21,13 +21,22 @@ export interface Recipe {
 
 export const getRecipeList = async (): Promise<Recipe[]> => {
   try {
-    const { data } = await axiosInstance.get<ApiResponse<Recipe[]>>('/recipes');
+    const { data } =
+      await axiosInstance.get<ApiResponse<{ recipes: Recipe[] }>>('/recipes');
     console.log('✅ 서버 응답:', data);
 
-    // null or object 보호
-    if (!data.data) return [];
-    if (!Array.isArray(data.data)) return [data.data];
-    return data.data;
+    // ✅ data.data 안에 recipes 배열이 있는 구조
+    if (data.success && data.data && Array.isArray(data.data.recipes)) {
+      return data.data.recipes.map((r) => ({
+        id: r.id,
+        name: r.name,
+        image: r.image,
+        ingredients: [], // 목록에서는 재료 불필요하므로 빈 배열
+        instructions: [],
+      }));
+    }
+
+    return [];
   } catch (error: unknown) {
     console.error('❌ 레시피 목록 API 에러:', error);
     return [];
