@@ -1,6 +1,6 @@
 import React from 'react';
 import Button from '@/components/common/Button';
-import IngredientItem from '@/pages/receipt/components/IngredientItem';
+import IngredientItem from '@/pages/recipe/components/IngredientItem';
 
 interface Ingredient {
   name: string;

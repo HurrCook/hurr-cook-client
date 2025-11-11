@@ -1,13 +1,13 @@
-import React from 'react';
+/* eslint-disable react/prop-types */
 import Button from '@/components/common/Button';
-import SubtractCard from '@/pages/receipt/components/SubtractCard';
+import SubtractCard from '@/pages/recipe/components/SubtractCard';
 
 interface InventoryItem {
   id: number;
   name: string;
-  image: string; // 재고 이미지 (선택사항)
+  image: string;
   quantity: string;
-  expiryDate: string; // 유통기한 예시
+  expiryDate: string;
 }
 
 interface SubtractModalProps {
@@ -22,7 +22,6 @@ interface SubtractModalProps {
   };
 }
 
-// 목업 재고 데이터
 const MOCK_INVENTORY_ITEMS: InventoryItem[] = [
   {
     id: 101,
@@ -43,13 +42,6 @@ const MOCK_INVENTORY_ITEMS: InventoryItem[] = [
     name: '간장',
     image: 'https://placehold.co/40x40/333333/FFFFFF?text=S',
     quantity: '1병',
-    expiryDate: '2026.01.01',
-  },
-  {
-    id: 104,
-    name: '간장',
-    image: 'https://placehold.co/40x40/333333/FFFFFF?text=S',
-    quantity: '2병',
     expiryDate: '2026.01.01',
   },
 ];
@@ -73,15 +65,12 @@ const SubtractModal: React.FC<SubtractModalProps> = ({
   };
 
   return (
-    // 배경 오버레이 및 중앙 정렬
     <div className="fixed inset-0 bg-black/50 flex justify-center z-50 px-5 py-40">
       <div className="w-full bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
-        {/* 모달 상단 헤더 */}
         <div className="p-5 flex justify-between items-center">
           <h2 className="text-neutral-800 text-xl font-normal">재료 차감</h2>
         </div>
 
-        {/* 모달 내용 스크롤: Subtraction List */}
         <div className="p-6 pt-0 flex-1 overflow-y-auto custom-scrollbar">
           <div className="flex flex-col gap-[10px]">
             {itemsToSubtract.length > 0 ? (
@@ -96,7 +85,6 @@ const SubtractModal: React.FC<SubtractModalProps> = ({
           </div>
         </div>
 
-        {/* 푸터 버튼 (이전, 완료) */}
         <div className="p-4 flex justify-between gap-3">
           <Button color="cancel" onClick={onBack}>
             이전

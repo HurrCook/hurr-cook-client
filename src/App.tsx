@@ -10,7 +10,7 @@ import LoginCallbackPage from './pages/login/LoginCallbackPage';
 import ChatbotPage from './pages/chat/ChatbotPage';
 import AppLayout from './components/layout/AppLayout';
 import RefrigeratorPage from './pages/refrigerator/RefrigeratorPage';
-import RecipePage from './pages/receipt/RecipePage';
+import RecipePage from '@/pages/recipe/RecipePage';
 
 import UserInfoPage1 from '@/pages/userinfo/UserInfoPage1';
 import UserInfoPage1_2 from '@/pages/userinfo/UserInfoPage1_2';
@@ -30,6 +30,7 @@ import IngredientPhotoAddPage from './pages/refrigerator/IngredientPhotoAddPage'
 import IngredientAddPage from './pages/refrigerator/IngredientAddPage';
 
 import RequireAuth from './routes/RequireAuth';
+import React from 'react';
 
 const queryClient = new QueryClient();
 
