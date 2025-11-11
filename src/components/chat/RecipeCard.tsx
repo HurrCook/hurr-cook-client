@@ -2,6 +2,21 @@ import React, { useState } from 'react';
 import LikeOff from '@/assets/좋아요1.svg';
 import LikeOn from '@/assets/좋아요2.svg';
 import RecipeModal from '@/components/common/RecipeModal';
+import api from '@/lib/axios';
+
+interface Ingredient {
+  name: string;
+  amount: number;
+  unit: string;
+}
+
+interface RecipePayload {
+  title: string;
+  ingredients: Ingredient[];
+  steps: string[];
+  time: string;
+  image: string;
+}
 
 export default function RecipeCard({
   imageUrl,
@@ -16,20 +31,54 @@ export default function RecipeCard({
 }) {
   const [liked, setLiked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  // ✅ RecipeModal에 맞는 더미 데이터
-  const dummyRecipe = {
-    id: 1,
-    name: title,
-    image: imageUrl,
-    ingredients: ingredients.split(',').map((item) => {
-      const [name, quantity] = item.trim().split(' ');
-      return { name, quantity: quantity ?? '' };
-    }),
-    instructions: steps.split('\n'),
+  const handleLikeClick = async () => {
+    const newLiked = !liked;
+    setLiked(newLiked);
+    if (!newLiked) return;
+
+    setSaving(true);
+    try {
+      const payload: RecipePayload = {
+        title,
+        ingredients: ingredients.split(',').map((item) => {
+          const [name, amountUnit] = item.trim().split(' ');
+          const [amount, unit] = amountUnit
+            ? [
+                amountUnit.replace(/[^0-9]/g, ''),
+                amountUnit.replace(/[0-9]/g, ''),
+              ]
+            : [1, ''];
+          return { name, amount: Number(amount) || 1, unit: unit || '' };
+        }),
+        steps: steps
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean),
+        time: '15분',
+        image: imageUrl,
+      };
+
+      const res = await api.post('/recipes', payload, {
+        headers: { Authorization: undefined }, // 인증 필요 없음
+      });
+
+      const { success, message } = res.data;
+      if (success) {
+        alert('레시피가 저장되었습니다.');
+      } else {
+        alert(message || '응답 형식이 올바르지 않습니다.');
+      }
+    } catch (err) {
+      console.error('API Error:', err);
+      alert('서버 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -50,7 +99,6 @@ export default function RecipeCard({
           overflow: 'hidden',
         }}
       >
-        {/* 상단 영역 */}
         <div style={{ display: 'flex', gap: 12 }}>
           <div
             style={{
@@ -99,14 +147,15 @@ export default function RecipeCard({
               <img
                 src={liked ? LikeOn : LikeOff}
                 alt="좋아요"
-                onClick={() => setLiked((prev) => !prev)}
+                onClick={saving ? undefined : handleLikeClick}
                 style={{
                   width: 23,
                   height: 20,
-                  cursor: 'pointer',
+                  cursor: saving ? 'not-allowed' : 'pointer',
                   userSelect: 'none',
                   transition: 'transform 0.15s ease-in-out',
                   transform: liked ? 'scale(1.1)' : 'scale(1)',
+                  opacity: saving ? 0.6 : 1,
                 }}
               />
             </div>
@@ -125,7 +174,6 @@ export default function RecipeCard({
           </div>
         </div>
 
-        {/* 만드는 순서 */}
         <div
           style={{
             position: 'relative',
@@ -147,7 +195,6 @@ export default function RecipeCard({
           {steps}
         </div>
 
-        {/* 버튼 */}
         <button
           onClick={handleOpenModal}
           style={{
@@ -167,7 +214,6 @@ export default function RecipeCard({
         </button>
       </div>
 
-      {/* ✅ 모달 렌더링 */}
       {isModalOpen && (
         <RecipeModal
           isOpen={isModalOpen}
@@ -176,7 +222,15 @@ export default function RecipeCard({
             alert('재료 차감 완료!');
             handleCloseModal();
           }}
-          recipe={dummyRecipe}
+          recipe={{
+            name: title,
+            image: imageUrl,
+            ingredients: ingredients.split(',').map((item) => {
+              const [name, quantity] = item.trim().split(' ');
+              return { name, quantity: quantity ?? '' };
+            }),
+            instructions: steps.split('\n'),
+          }}
         />
       )}
     </>

@@ -1,5 +1,5 @@
 // src/components/common/IngredientEditItem.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import { IngredientEditData } from './IngredientEditList';
 
 const UNIT_OPTIONS = ['EA', 'g', 'ml'];
@@ -24,6 +24,8 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
   onUpdate,
   onOpenCamera,
 }) => {
+  const [isUnitOpen, setIsUnitOpen] = useState(false);
+
   const handleChange = (field: keyof IngredientEditData, value: string) => {
     if (field === 'quantity') {
       const numericValue = value.replace(/[^0-9]/g, '');
@@ -33,9 +35,14 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
     }
   };
 
+  const handleUnitSelect = (value: string) => {
+    onUpdate(id, 'unit', value);
+    setIsUnitOpen(false);
+  };
+
   return (
     <div
-      className="w-full h-28 flex bg-white rounded-lg outline outline-[0.51px] outline-stone-300 overflow-hidden pl-[9px] pt-[7px] pb-[11px]"
+      className="w-full h-28 flex bg-white rounded-lg outline outline-[0.51px] outline-stone-300 pl-[9px] pt-[7px] pb-[11px]"
       style={{ outlineOffset: '-0.51px' }}
     >
       <div
@@ -76,7 +83,7 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-start items-start gap-[3.26%] w-full">
+        <div className="flex justify-start items-start gap-[3.26%] w-full relative">
           <div className="flex flex-col gap-[2px] items-start flex-1 w-0">
             <div className="text-zinc-500 text-[9.27px] font-light">
               갯수/용량
@@ -89,17 +96,33 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
             />
           </div>
 
-          <div className="flex flex-col gap-[2px] items-start flex-1 w-0 mr-[2.09%]">
+          {/* 단위 드롭다운 */}
+          <div className="flex flex-col gap-[2px] items-start flex-1 w-0 mr-[2.09%] relative">
             <div className="text-zinc-500 text-[9.27px] font-light">단위</div>
-            <select
-              value={unit}
-              onChange={(e) => handleChange('unit', e.target.value)}
-              className="w-full h-7 bg-white rounded border-[0.46px] border-stone-300 px-2 text-zinc-800 text-xs font-light appearance-none"
+
+            {/* 선택 박스 */}
+            <button
+              type="button"
+              onClick={() => setIsUnitOpen((prev) => !prev)}
+              className="w-full h-7 bg-white rounded border-[0.46px] border-stone-300 px-2 text-zinc-800 text-xs font-light text-left relative z-10"
             >
-              {UNIT_OPTIONS.map((opt) => (
-                <option key={opt}>{opt}</option>
-              ))}
-            </select>
+              {unit || '단위 선택'}
+            </button>
+
+            {/* 드롭다운 메뉴 */}
+            {isUnitOpen && (
+              <ul className="absolute left-0 top-full mt-[2px] w-full bg-white border border-stone-300 rounded shadow z-20">
+                {UNIT_OPTIONS.map((opt) => (
+                  <li
+                    key={opt}
+                    onClick={() => handleUnitSelect(opt)}
+                    className="px-2 py-1 text-xs text-zinc-800 hover:bg-gray-100 cursor-pointer"
+                  >
+                    {opt}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>
