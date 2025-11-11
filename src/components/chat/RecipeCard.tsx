@@ -3,19 +3,28 @@ import LikeOff from '@/assets/좋아요1.svg';
 import LikeOn from '@/assets/좋아요2.svg';
 import RecipeModal from '@/components/common/RecipeModal';
 import api from '@/lib/axios';
+import { AxiosError } from 'axios';
 
 interface Ingredient {
   name: string;
   amount: number;
   unit: string;
+  userFoodId?: string;
 }
 
 interface RecipePayload {
   title: string;
+  image: string;
   ingredients: Ingredient[];
   steps: string[];
   time: string;
-  image: string;
+}
+
+interface RecipeCardProps {
+  imageUrl: string;
+  title: string;
+  ingredients: string;
+  steps: string;
 }
 
 export default function RecipeCard({
@@ -23,12 +32,7 @@ export default function RecipeCard({
   title,
   ingredients,
   steps,
-}: {
-  imageUrl: string;
-  title: string;
-  ingredients: string;
-  steps: string;
-}) {
+}: RecipeCardProps) {
   const [liked, setLiked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -36,46 +40,57 @@ export default function RecipeCard({
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleLikeClick = async () => {
+  const parseIngredientItem = (item: string): Ingredient => {
+    const trimmed = item.trim();
+    if (!trimmed) return { name: '', amount: 1, unit: 'EA' };
+
+    const parts = trimmed.split(/\s+/);
+    const last = parts[parts.length - 1];
+    const name = parts.slice(0, -1).join(' ') || parts[0];
+
+    const amountMatch = last.match(/[\d.]+/);
+    const amount = amountMatch ? Number(amountMatch[0]) : 1;
+    const unitRaw = last.replace(/[\d.]/g, '').trim();
+
+    const unit = unitRaw && unitRaw.length > 0 ? unitRaw : 'EA';
+    return { name, amount, unit, userFoodId: `${name}_${Date.now()}` };
+  };
+
+  const handleLikeClick = async (): Promise<void> => {
     const newLiked = !liked;
     setLiked(newLiked);
     if (!newLiked) return;
 
     setSaving(true);
     try {
+      const ingArray: Ingredient[] = ingredients
+        .split(',')
+        .map((it) => it.trim())
+        .filter(Boolean)
+        .map(parseIngredientItem);
+
       const payload: RecipePayload = {
         title,
-        ingredients: ingredients.split(',').map((item) => {
-          const [name, amountUnit] = item.trim().split(' ');
-          const [amount, unit] = amountUnit
-            ? [
-                amountUnit.replace(/[^0-9]/g, ''),
-                amountUnit.replace(/[0-9]/g, ''),
-              ]
-            : [1, ''];
-          return { name, amount: Number(amount) || 1, unit: unit || '' };
-        }),
+        image: imageUrl,
+        ingredients: ingArray,
         steps: steps
           .split('\n')
           .map((s) => s.trim())
           .filter(Boolean),
         time: '15분',
-        image: imageUrl,
       };
 
-      const res = await api.post('/recipes', payload, {
-        headers: { Authorization: undefined }, // 인증 필요 없음
-      });
-
-      const { success, message } = res.data;
-      if (success) {
-        alert('레시피가 저장되었습니다.');
-      } else {
-        alert(message || '응답 형식이 올바르지 않습니다.');
+      const res = await api.post('/recipes', payload);
+      console.log('[RecipeCard] POST /recipes success:', res.data);
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      console.error('[RecipeCard] API 오류:', err.message);
+      if (err.response) {
+        console.error('[RecipeCard] 응답 본문:', err.response.data);
+        if (err.response.status === 401) {
+          console.warn('인증 실패: 다시 로그인 필요');
+        }
       }
-    } catch (err) {
-      console.error('API Error:', err);
-      alert('서버 오류가 발생했습니다.');
     } finally {
       setSaving(false);
     }
@@ -139,6 +154,10 @@ export default function RecipeCard({
                   fontFamily: 'Pretendard',
                   fontWeight: 600,
                   color: '#212121',
+                  maxWidth: '100px',
+                  wordBreak: 'break-word',
+                  whiteSpace: 'normal',
+                  lineHeight: '1.3',
                 }}
               >
                 {title}
@@ -218,16 +237,17 @@ export default function RecipeCard({
         <RecipeModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onNext={() => {
-            alert('재료 차감 완료!');
-            handleCloseModal();
-          }}
           recipe={{
+            id: Date.now(),
             name: title,
             image: imageUrl,
             ingredients: ingredients.split(',').map((item) => {
-              const [name, quantity] = item.trim().split(' ');
-              return { name, quantity: quantity ?? '' };
+              const parsed = parseIngredientItem(item);
+              return {
+                name: parsed.name,
+                quantity: parsed.amount.toString(),
+                userFoodId: parsed.userFoodId,
+              };
             }),
             instructions: steps.split('\n'),
           }}

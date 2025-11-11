@@ -14,7 +14,7 @@ interface ChatMessageData {
     cuisine_type?: string;
     time?: string;
     tools?: string[];
-    ingredients?: { name: string; amount: string | number; units: string }[];
+    ingredients?: { name: string; amount: string | number; unit: string }[]; // note: unit (singular)
     steps?: string[];
   };
 }
@@ -36,9 +36,10 @@ export default function ChatMessages({
         messages.map((msg, index) => {
           if (msg.type === 'recipe' && msg.data) {
             const d = msg.data;
+            // <-- 여기서 units가 아니라 unit를 사용해야 함 (서버 스펙과 일치)
             const ingredients =
               d.ingredients
-                ?.map((i) => `${i.name} ${i.amount}${i.units ? i.units : ''}`)
+                ?.map((i) => `${i.name} ${i.amount}${i.unit ? i.unit : ''}`)
                 .join(', ') || '재료 정보 없음';
             const steps = d.steps?.join('\n') || '조리 단계 정보 없음';
 

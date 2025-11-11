@@ -94,15 +94,20 @@ export default function IngredientPhotoAddPage() {
       const res = await api.post('/ingredients', payload);
       const { success, message } = res.data;
 
+      console.log(
+        '[IngredientPhotoAddPage] POST /ingredients payload:',
+        payload,
+      );
+      console.log('[IngredientPhotoAddPage] response:', res.data);
+
       if (success) {
-        alert('재료가 성공적으로 등록되었습니다.');
-        navigate('/fridge');
+        console.log('재료 등록 성공:', message);
+        navigate('/refrigerator');
       } else {
-        alert(`등록 실패: ${message || '알 수 없는 오류'}`);
+        console.log('재료 등록 실패:', message || '알 수 없는 오류');
       }
     } catch (err) {
       console.error('재료 등록 실패:', err);
-      alert('서버 요청 중 오류가 발생했습니다.');
     }
   };
 
@@ -137,7 +142,7 @@ export default function IngredientPhotoAddPage() {
 
       {isCameraOpen && <CameraModal onClose={() => setIsCameraOpen(false)} />}
 
-      <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-white border-t border-gray-200 py-4">
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-white py-4">
         <button
           onClick={handleSaveIngredients}
           className="w-[90%] max-w-[600px] bg-[#FF8800] text-white py-3 rounded-lg font-medium hover:bg-[#ff7b00] active:scale-[0.98] transition-all shadow-md"
