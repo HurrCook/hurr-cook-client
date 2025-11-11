@@ -5,7 +5,6 @@ export type Ingredient = {
   id: number | string;
   name: string;
   image: string;
-  date: string;
   quantity: number;
   unit: 'EA' | 'g' | 'ml';
 };
@@ -27,13 +26,12 @@ const IngredientList: React.FC<IngredientListProps> = ({
         <div
           key={`${ingredient.id}-${index}`}
           className="w-[48.5%] cursor-pointer"
-          onClick={() => onCardClick(ingredient.id)} // 🔥 클릭 시 ID 전달
+          onClick={() => onCardClick(ingredient.id)}
         >
           <IngredientItem
             name={ingredient.name}
             image={ingredient.image}
-            date={ingredient.date}
-            quantity={formatQuantity(ingredient.quantity, ingredient.unit)}
+            quantity={formatQuantity(ingredient.quantity, ingredient.unit)} // ✅ 수량 표시 유지
           />
         </div>
       ))}
