@@ -3,11 +3,23 @@ import ChatIcon from '@/assets/채팅.svg';
 import ChatMessages from '@/components/chat/ChatMessages';
 import ChatEmptyCard from '@/components/chat/ChatEmptyCard';
 import ChatSuggestions from '@/components/chat/ChatSuggestions';
+import api from '@/lib/axios';
+
+interface RecipeData {
+  '레시피 명': string;
+  '레시피 유형': string;
+  카테고리: string;
+  '필요 재료': { '재료 명': string; 양: number | string; 단위: string }[];
+  '레시피 단계': string[];
+  '조리 시간': string;
+  추천점수: string;
+}
 
 interface Message {
   id: number;
-  type: 'me' | 'other' | 'recipe';
+  type: 'me' | 'recipe';
   text?: string;
+  data?: RecipeData;
 }
 
 export default function ChatbotPage() {
@@ -20,38 +32,48 @@ export default function ChatbotPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, loading]);
 
-  const handleSend = (msg?: string) => {
+  const handleSend = async (msg?: string): Promise<void> => {
     const text = msg ?? input.trim();
     if (!text) return;
 
     const userMsg: Message = { id: messages.length + 1, type: 'me', text };
     setMessages((prev) => [...prev, userMsg]);
-
-    // "후르" 입력 시 응답
-    if (text === '후르') {
-      setLoading(true);
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          { id: prev.length + 1, type: 'other', text: '안녕하세요!' },
-        ]);
-        setLoading(false);
-      }, 1500);
-    }
-
-    // "레시피" 입력 시 레시피 카드 표시
-    if (text === '레시피') {
-      setLoading(true);
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          { id: prev.length + 1, type: 'recipe' },
-        ]);
-        setLoading(false);
-      }, 500);
-    }
-
     setInput('');
+    setLoading(true);
+
+    try {
+      const res = await api.post('/chats', { 프롬프트: text });
+      const { success, data, message } = res.data;
+
+      if (success && data) {
+        const recipeMsg: Message = {
+          id: messages.length + 2,
+          type: 'recipe',
+          data,
+        };
+        setMessages((prev) => [...prev, recipeMsg]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: messages.length + 2,
+            type: 'me',
+            text: message || '응답 형식이 올바르지 않습니다.',
+          },
+        ]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: messages.length + 2,
+          type: 'me',
+          text: '서버 오류가 발생했습니다.',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
