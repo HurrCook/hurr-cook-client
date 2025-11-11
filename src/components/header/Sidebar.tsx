@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// src/components/header/Sidebar.tsx
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Hurr3Icon from '@/assets/Hurr3.svg';
 import SidebarItem from './SidebarItem';
@@ -13,6 +14,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [userName, setUserName] = useState('사용자'); // ✅ 기본값
+
+  /** ✅ 로그인 이름 불러오기 */
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    if (storedName) setUserName(storedName);
+  }, []);
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -22,13 +30,14 @@ export default function Sidebar({ onClose }: SidebarProps) {
   /** ✅ 로그아웃 처리 로직 */
   const handleLogoutConfirm = () => {
     try {
-      // 1️⃣ 토큰 완전 제거
+      // 1️⃣ 토큰 + 유저정보 제거
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('userName');
       sessionStorage.removeItem('accessToken');
       sessionStorage.removeItem('refreshToken');
 
-      // 2️⃣ 페이지 이동
+      // 2️⃣ 로그인 페이지로 이동
       navigate('/login', { replace: true });
     } catch (error) {
       console.error('❌ 로그아웃 에러:', error);
@@ -76,7 +85,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
         <div className="w-full h-[70px] bg-[#F0F0F0] flex items-center px-5">
           <div className="w-[30px] h-[30px] bg-[#A7A7A7] rounded-md" />
           <span className="ml-2 mt-1 text-[#212121] font-[Gretoon] text-[16px]">
-            사용자
+            {userName}
           </span>
           <img
             src={LogoutIcon}

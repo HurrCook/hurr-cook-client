@@ -1,108 +1,78 @@
-import React, { useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
 
 type CameraModalProps = {
   onClose: () => void;
-  redirectToLoading?: boolean; // ✅ 헤더에서만 true로 전달
+  onCapture: (dataUrl: string) => void; // 촬영 결과를 dataURL로 부모에 전달
 };
 
-export default function CameraModal({
-  onClose,
-  redirectToLoading = false, // 기본값 false
-}: CameraModalProps) {
+export default function CameraModal({ onClose, onCapture }: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const startCamera = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 430 },
-            height: { ideal: 932 },
-            aspectRatio: 430 / 932,
-          },
+          video: { facingMode: 'environment', width: 430, height: 932 },
+          audio: false,
         });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
+        if (videoRef.current) videoRef.current.srcObject = stream;
       } catch (err) {
         console.error('카메라 접근 실패:', err);
         alert('카메라 권한이 필요합니다.');
         onClose();
       }
     };
-
     startCamera();
 
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((track) => track.stop());
-      }
+      const tracks = (
+        videoRef.current?.srcObject as MediaStream | null
+      )?.getTracks();
+      tracks?.forEach((t) => t.stop());
     };
   }, [onClose]);
 
-  const takePhoto = () => {
+  const handleTakePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
-    const video = videoRef.current;
     const canvas = canvasRef.current;
-
     canvas.width = 430;
     canvas.height = 932;
 
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
+    if (!ctx) return;
 
-      // ✅ 사진 저장
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `capture_${Date.now()}.png`;
-      link.click();
-
-      // ✅ redirectToLoading이 true일 때만 이동
-      if (redirectToLoading) {
-        navigate('/loading');
-      }
-
-      onClose();
-    }
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/png');
+    onCapture(dataUrl); // 촬영만 하고 저장은 상위에서 확정 시점에!
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex justify-center items-center z-[9999]">
-      <div className="relative w-[430px] h-[932px] bg-black overflow-hidden flex flex-col justify-between">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black">
+      <div className="relative h-[932px] w-[430px] overflow-hidden rounded-md bg-black">
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none scale-x-[-1]"
+          className="absolute inset-0 h-full w-full object-cover scale-x-[-1]"
         />
 
-        {/* 닫기 버튼 */}
-        <div className="relative z-20 flex justify-start p-4">
-          <button
-            onClick={onClose}
-            className="bg-black/20 text-white w-8 h-8 flex items-center justify-center rounded-full text-xl"
-          >
-            ✕
-          </button>
-        </div>
+        {/* 닫기 */}
+        <button
+          onClick={onClose}
+          className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white text-xl"
+        >
+          ✕
+        </button>
 
-        {/* 촬영 버튼 */}
-        <div className="relative z-20 flex justify-center p-6">
-          <button
-            onClick={takePhoto}
-            className="w-20 h-20 rounded-full border-4 border-white bg-black/40 flex items-center justify-center mb-10"
-          >
-            <div className="w-12 h-12 bg-white rounded-full" />
-          </button>
-        </div>
+        {/* 촬영 */}
+        <button
+          onClick={handleTakePhoto}
+          className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2 transform rounded-full border-[6px] border-white bg-white/10 p-2"
+        >
+          <div className="h-16 w-16 rounded-full bg-white" />
+        </button>
       </div>
-
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );
