@@ -1,9 +1,11 @@
+/* eslint-disable react/prop-types */
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/common/Button';
 import IngredientItem from '@/pages/recipe/components/IngredientItem';
 import Pen from '@/assets/연필.svg';
 import Trash from '@/assets/쓰레기통.svg';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getRecipeDetail, updateRecipe, deleteRecipe } from '@/apis/recipeApi'; // ✅ API 연결 추가
 
 interface Ingredient {
   name: string;
@@ -29,7 +31,6 @@ interface RecipeEditModalProps {
     ingredients: Ingredient[];
     instructions: string[];
   };
-  // 🔽 추가
   skipEnterAnimation?: boolean;
 }
 
@@ -40,10 +41,13 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
   onStartCooking: onStartSubtract,
   onSave,
   recipe,
-  skipEnterAnimation = false, // 기본은 애니메이션 O
+  skipEnterAnimation = false,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+
+  // API에서 가져올 실제 데이터
   const [editedName, setEditedName] = useState(recipe.name);
   const [editedInstructions, setEditedInstructions] = useState(
     recipe.instructions.join('\n'),
@@ -51,13 +55,22 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
   const [editedIngredients, setEditedIngredients] = useState<Ingredient[]>(
     recipe.ingredients,
   );
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
+  // 모달 열릴 때 상세 레시피 데이터 새로 불러오기
   useEffect(() => {
-    setEditedName(recipe.name);
-    setEditedInstructions(recipe.instructions.join('\n'));
-    setEditedIngredients(recipe.ingredients);
-  }, [recipe]);
+    if (isOpen && recipe.id) {
+      (async () => {
+        try {
+          const data = await getRecipeDetail(recipe.id);
+          setEditedName(data.name);
+          setEditedInstructions(data.instructions.join('\n'));
+          setEditedIngredients(data.ingredients);
+        } catch (error) {
+          console.error('❌ 레시피 상세 불러오기 실패:', error);
+        }
+      })();
+    }
+  }, [isOpen, recipe.id]);
 
   const handleAnimatedClose = () => {
     setIsClosing(true);
@@ -71,24 +84,45 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     onStartSubtract(recipe.id);
   };
 
-  const handleSave = () => {
-    const updatedRecipeData = {
-      id: recipe.id,
-      name: editedName,
-      image: recipe.image,
-      instructions: editedInstructions.split('\n'),
-      ingredients: editedIngredients,
-    };
-    onSave(updatedRecipeData);
-    setIsEditing(false);
+  // 수정 저장 (API 연결)
+  const handleSave = async () => {
+    try {
+      const updatedRecipeData = {
+        id: recipe.id,
+        name: editedName,
+        image: recipe.image,
+        instructions: editedInstructions.split('\n'),
+        ingredients: editedIngredients,
+      };
+
+      const updated = await updateRecipe(recipe.id, updatedRecipeData);
+      console.log('레시피 수정 완료:', updated);
+
+      onSave(updated);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('❌ 레시피 수정 실패:', error);
+    }
   };
 
-  const handleDeleteConfirm = () => {
-    onDelete(recipe.id);
-    setIsDeleteConfirmOpen(false);
-    handleAnimatedClose();
+  // 삭제 버튼 (API 연결)
+  const handleDeleteConfirm = async () => {
+    try {
+      const success = await deleteRecipe(recipe.id);
+      if (success) {
+        console.log('레시피 삭제 완료');
+        onDelete(recipe.id);
+        setIsDeleteConfirmOpen(false);
+        handleAnimatedClose();
+      } else {
+        console.error('레시피 삭제 실패: 서버 응답 실패');
+      }
+    } catch (error) {
+      console.error('레시피 삭제 에러:', error);
+    }
   };
 
+  // 재료 변경 함수
   const handleIngredientChange = (
     index: number,
     field: 'name' | 'quantity',
@@ -114,7 +148,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
           <motion.div
             key="recipe-modal"
             className="fixed inset-0 bg-black/50 flex justify-center z-50 px-5 py-40"
-            // 🔽 처음 열릴 때 애니메이션 막고 싶으면 initial을 최종 상태와 같게
             initial={skipEnterAnimation ? { opacity: 1 } : { opacity: 0 }}
             animate={{ opacity: isClosing ? 0 : 1 }}
             exit={{ opacity: 0 }}
@@ -308,6 +341,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         )}
       </AnimatePresence>
 
+      {/* 삭제 확인 모달 */}
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
           <div className="bg-white rounded-[9.6px] inline-flex p-6 w-72 flex-col items-center gap-7">
