@@ -5,7 +5,7 @@ interface IngredientItemProps {
   amount: string; // 예: "3개" or "200g"
   isEditable?: boolean;
   onNameChange?: (value: string) => void;
-  onQuantityChange?: (value: string) => void;
+  onAmountChange?: (value: string) => void; // 변경됨
 }
 
 const IngredientItem: React.FC<IngredientItemProps> = ({
@@ -13,7 +13,7 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
   amount,
   isEditable = false,
   onNameChange,
-  onQuantityChange,
+  onAmountChange,
 }) => {
   // amount 문자열에서 숫자 부분과 단위 부분 분리
   const numberPart = amount?.match(/\d+(\.\d+)?/)?.[0] || '';
@@ -51,7 +51,7 @@ const IngredientItem: React.FC<IngredientItemProps> = ({
               value={numberPart}
               onChange={(e) => {
                 const newNum = e.target.value;
-                onQuantityChange?.(`${newNum}${unitPart}`); // 숫자만 바꾸고 단위 유지
+                onAmountChange?.(`${newNum}${unitPart}`); // 변경됨
               }}
               className="w-[60px] h-[30px] rounded border border-stone-300 px-2
                          text-zinc-800 text-sm font-light bg-white focus:outline-none focus:border-amber-500 transition"

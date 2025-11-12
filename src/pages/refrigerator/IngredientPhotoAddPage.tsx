@@ -5,7 +5,9 @@ import IngredientEditList, {
   IngredientEditData,
 } from '@/components/common/IngredientEditList';
 import CameraModal from '@/components/header/CameraModal';
+import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
+import DefaultGoodUrl from '@/assets/default_good.svg?url';
 import { AxiosError } from 'axios';
 
 type OcrItem = {
@@ -13,12 +15,13 @@ type OcrItem = {
   date?: string;
   quantity?: string;
   unit?: 'EA' | 'g' | 'ml';
-  imageUrl?: string; // 서버 응답은 prefix 없는 base64만 전달
+  imageUrl?: string;
 };
 
 interface LocationState {
   base64_images?: string[];
   detected?: OcrItem[];
+  type?: 'ingredient' | 'ocr';
 }
 
 export default function IngredientPhotoAddPage() {
@@ -26,8 +29,12 @@ export default function IngredientPhotoAddPage() {
   const location = useLocation() as { state?: LocationState };
 
   const [ingredients, setIngredients] = useState<IngredientEditData[]>([]);
-  const [isCameraOn, setIsCameraOn] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
+  const [selectedIngredientId, setSelectedIngredientId] = useState<
+    number | string | null
+  >(null);
 
   const base64Images = useMemo(
     () => location?.state?.base64_images ?? [],
@@ -37,169 +44,172 @@ export default function IngredientPhotoAddPage() {
     () => location?.state?.detected ?? [],
     [location?.state],
   );
+  const pageType = location?.state?.type ?? 'ingredient';
 
-  // ✅ 감지 결과 매핑
+  /** ✅ 초기 데이터 세팅 */
   useEffect(() => {
-    console.log('📥 location.state:', location.state);
-
-    if (
-      (!base64Images || base64Images.length === 0) &&
-      (!detectedItems || detectedItems.length === 0)
-    ) {
-      navigate('/fail');
+    if (!location?.state) {
+      console.warn(
+        '[IngredientPhotoAddPage] location.state 없음 → 초기화만 수행',
+      );
+      setIngredients([]);
       return;
     }
 
-    if (detectedItems && detectedItems.length > 0) {
-      const mapped: IngredientEditData[] = detectedItems.map((it, idx) => {
-        // 서버에서 받은 imageUrl이 없으면 base64 이미지로 대체
-        const rawBase64 = it.imageUrl || base64Images[idx] || '';
-        const imgSrc = rawBase64.startsWith('data:image')
+    console.log('[IngredientPhotoAddPage] location.state:', location.state);
+    console.log(`[IngredientPhotoAddPage] pageType: ${pageType}`);
+
+    const { base64_images, detected } = location.state;
+    if (
+      (!base64_images || base64_images.length === 0) &&
+      (!detected || detected.length === 0)
+    ) {
+      console.warn('[IngredientPhotoAddPage] 감지 데이터 없음 → 초기화만 수행');
+      setIngredients([]);
+      return;
+    }
+
+    const mapped: IngredientEditData[] = (detected ?? []).map((it, idx) => {
+      const rawBase64 = it.imageUrl || base64_images[idx] || '';
+      const imgSrc = rawBase64.startsWith('data:image')
+        ? rawBase64
+        : rawBase64.startsWith('http')
           ? rawBase64
           : rawBase64
             ? `data:image/png;base64,${rawBase64}`
-            : 'https://placehold.co/245x163';
+            : DefaultGoodUrl;
 
-        return {
-          id: idx + 1,
-          name: it.name || '이름없음',
-          image: imgSrc, // 화면 표시용 (prefix 포함)
-          imageUrl: rawBase64.startsWith('data:image')
-            ? rawBase64.split(',')[1]
-            : rawBase64, // 서버 전송용 (prefix 제거)
-          date: it.date || '',
-          quantity: it.quantity || '1',
-          unit: it.unit || 'EA',
-        };
-      });
+      const finalImage = pageType === 'ocr' ? DefaultGoodUrl : imgSrc;
 
-      console.log('🧩 매핑된 OCR 데이터:', mapped);
-      setIngredients(mapped);
-    } else if (base64Images && base64Images.length > 0) {
-      void runOCR(base64Images);
-    }
-  }, [detectedItems, base64Images, navigate]);
+      return {
+        id: idx + 1,
+        name: it.name || '이름없음',
+        image: finalImage,
+        imageUrl:
+          pageType === 'ocr'
+            ? null
+            : rawBase64.startsWith('data:image')
+              ? rawBase64.split(',')[1]
+              : rawBase64 || null,
+        date: it.date || '',
+        quantity: it.quantity || '1',
+        unit: it.unit || 'EA',
+      };
+    });
 
-  // ✅ OCR 요청 (서버는 prefix 없는 base64만 받음)
-  const runOCR = async (images: string[]) => {
-    console.log('🚀 OCR 요청 시작');
-    setLoading(true);
-    try {
-      const strippedImages = images.map((img) =>
-        img.startsWith('data:image') ? img.split(',')[1] : img,
-      );
+    console.log('[IngredientPhotoAddPage] 감지된 재료 매핑 결과:', mapped);
+    setIngredients(mapped);
+  }, [detectedItems, base64Images, navigate, pageType]);
 
-      const { data } = await api.post('/ingredients/ocr', {
-        base64_images: strippedImages,
-      });
+  /** ✅ 파일 -> base64 변환 */
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
-      console.log('✅ OCR 응답:', data);
-      const list: OcrItem[] = data?.items ?? [];
+  /** ✅ 갤러리에서 이미지 선택 */
+  const handleSelectPhoto = async (file: File) => {
+    const base64 = await fileToBase64(file);
+    if (!selectedIngredientId) return;
 
-      const mapped: IngredientEditData[] = list.map((it, idx) => {
-        const raw = it.imageUrl || strippedImages[idx];
-        return {
-          id: idx + 1,
-          name: it.name || '이름없음',
-          image: `data:image/png;base64,${raw}`,
-          imageUrl: raw,
-          date: it.date || '',
-          quantity: it.quantity || '1',
-          unit: it.unit || 'EA',
-        };
-      });
-
-      console.log('🧩 OCR 매핑 결과:', mapped);
-      setIngredients(mapped);
-    } catch (error) {
-      const err = error as AxiosError;
-      console.error('❌ OCR 실패:', err.response?.data || err.message);
-      navigate('/fail');
-    } finally {
-      setLoading(false);
-    }
+    console.log('📸 선택된 이미지(base64 앞 80자):', base64.slice(0, 80));
+    setIngredients((prev) =>
+      prev.map((item) =>
+        item.id === selectedIngredientId
+          ? { ...item, image: base64, imageUrl: base64.split(',')[1] }
+          : item,
+      ),
+    );
   };
 
-  // ✅ 이미지 직접 선택
-  const handleSelectPhoto = (file: File) => {
-    console.log('📸 선택된 파일:', file.name);
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      const stripped = base64.split(',')[1];
-      console.log('📸 선택 이미지 base64(앞 80자):', stripped.slice(0, 80));
+  /** ✅ 이미지 옵션 모달 열기 */
+  const handleOpenImageOptions = (id: number | string) => {
+    setSelectedIngredientId(id);
+    setIsImageOptionOpen(true);
+  };
 
-      setIngredients((prev) =>
-        prev.map((item, i) =>
-          i === 0 ? { ...item, image: base64, imageUrl: stripped } : item,
-        ),
-      );
+  /** ✅ 카메라 실행 */
+  const handleLaunchCamera = () => {
+    setIsImageOptionOpen(false);
+    setTimeout(() => setIsCameraOpen(true), 100);
+  };
+
+  /** ✅ 앨범 실행 */
+  const handleLaunchLibrary = () => {
+    setIsImageOptionOpen(false);
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e: Event | React.ChangeEvent<HTMLInputElement>) => {
+      const target = e.target as HTMLInputElement | null;
+      const file = target?.files?.[0];
+      if (file) await handleSelectPhoto(file);
     };
-    reader.onerror = () => navigate('/fail');
-    reader.readAsDataURL(file);
+    input.click();
   };
 
-  // ✅ 저장 시 prefix 제거 보정 포함
+  /** ✅ 저장 */
   const handleSaveIngredients = async () => {
-    console.log('📝 저장 전 ingredients:', ingredients);
-
-    const payload = {
-      ingredients: ingredients.map((i, idx) => {
-        // imageUrl이 비었을 경우 image에서 base64 추출
-        let finalBase64: string | null = null;
-
-        if (i.imageUrl && i.imageUrl.trim().length > 0) {
-          finalBase64 = i.imageUrl;
-        } else if (i.image && i.image.startsWith('data:image')) {
-          finalBase64 = i.image.split(',')[1];
-        }
-
-        console.log(
-          `📦 [${idx}] 최종 전송 imageUrl(앞 80자):`,
-          finalBase64?.slice(0, 80),
-        );
-
-        return {
-          name: i.name.trim(),
-          amount: Number(i.quantity) || 0,
-          unit: i.unit.toUpperCase(),
-          expireDate: i.date
-            ? new Date(i.date).toISOString()
-            : new Date().toISOString(),
-          imageUrl: finalBase64 || null,
-        };
-      }),
-    };
-
-    console.log('📤 최종 전송 payload:', payload);
-
     try {
+      setLoading(true);
+      console.log('📝 저장 전 ingredients:', ingredients);
+
+      const payload = {
+        ingredients: ingredients.map((item, idx) => {
+          let imageBase64: string | null = null;
+          if (item.image && item.image.startsWith('data:image')) {
+            imageBase64 = item.image.split(',')[1];
+          } else if (item.image) {
+            imageBase64 = item.image;
+          }
+
+          console.log(
+            `📦 [${idx}] imageBase64(앞 80자):`,
+            imageBase64?.slice(0, 80),
+          );
+          return {
+            name: item.name.trim(),
+            amount: Number(item.quantity) || 0,
+            unit: item.unit.toUpperCase(),
+            expireDate: item.date
+              ? new Date(item.date).toISOString()
+              : new Date().toISOString(),
+            imageUrl: imageBase64 || null,
+          };
+        }),
+      };
+
+      console.log('📤 최종 전송 payload:', payload);
       const res = await api.post('/ingredients', payload, {
         headers: { 'Content-Type': 'application/json' },
         maxBodyLength: 15 * 1024 * 1024,
       });
+
       console.log('✅ /ingredients 응답:', res.data);
 
-      if (res.data?.success) {
+      if (res.data.success) {
         console.log('🎉 저장 성공 → 냉장고 페이지 이동');
         navigate('/refrigerator', { state: { refresh: true } });
       } else {
         console.warn('⚠️ 저장 실패:', res.data);
         navigate('/fail');
       }
-    } catch (error) {
-      console.error('❌ 저장 오류:', error);
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      if (err.response)
+        console.error('❌ [POST /ingredients 오류]', err.response.data);
+      else console.error('❌ 요청 실패:', err.message);
       navigate('/fail');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ✅ 렌더링 시 실제 이미지 확인
-  useEffect(() => {
-    console.log(
-      '🖼️ 렌더링 시 이미지 리스트:',
-      ingredients.map((i) => i.image),
-    );
-  }, [ingredients]);
+  /** ✅ state 없으면 렌더 차단 */
+  if (!location?.state) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-white relative">
@@ -217,12 +227,47 @@ export default function IngredientPhotoAddPage() {
                   prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
                 )
               }
-              onOpenCamera={() => setIsCameraOn(true)}
+              onOpenCamera={handleOpenImageOptions}
               onSelectPhoto={handleSelectPhoto}
             />
           )}
         </div>
       </main>
+
+      {/* 이미지 옵션 모달 */}
+      <ImageOptionsModal
+        isVisible={isImageOptionOpen}
+        onClose={() => setIsImageOptionOpen(false)}
+        onLaunchCamera={handleLaunchCamera}
+        onLaunchLibrary={handleLaunchLibrary}
+      />
+
+      {/* 카메라 모달 */}
+      {isCameraOpen && (
+        <CameraModal
+          onClose={() => setIsCameraOpen(false)}
+          onCapture={(dataUrl: string) => {
+            console.log(
+              '📷 카메라 캡처 base64(앞 80자):',
+              dataUrl.slice(0, 80),
+            );
+            if (selectedIngredientId && dataUrl) {
+              setIngredients((prev) =>
+                prev.map((item) =>
+                  item.id === selectedIngredientId
+                    ? {
+                        ...item,
+                        image: dataUrl,
+                        imageUrl: dataUrl.split(',')[1],
+                      }
+                    : item,
+                ),
+              );
+            }
+            setIsCameraOpen(false);
+          }}
+        />
+      )}
 
       {/* 저장 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-white py-4 shadow-inner">
@@ -233,33 +278,12 @@ export default function IngredientPhotoAddPage() {
           className={`w-[90%] max-w-[600px] py-3 rounded-lg font-medium transition-all shadow-md ${
             loading
               ? 'bg-[#FFD3A5] text-white cursor-not-allowed'
-              : 'bg-[#FF8800] text-white hover:bg-[#ff7b00]'
+              : 'bg-[#FF8800] text-white hover:bg-[#ff7b00] active:scale-[0.98]'
           }`}
         >
           {loading ? '저장 중...' : '저장하기'}
         </button>
       </div>
-
-      {/* 카메라 모달 */}
-      {isCameraOn && (
-        <CameraModal
-          onClose={() => setIsCameraOn(false)}
-          onCaptured={(images: string[]) => {
-            const base64 = images[0];
-            const stripped = base64.split(',')[1];
-            console.log(
-              '📷 CameraModal 캡처 base64(앞 80자):',
-              stripped.slice(0, 80),
-            );
-
-            setIngredients((prev) =>
-              prev.map((item, i) =>
-                i === 0 ? { ...item, image: base64, imageUrl: stripped } : item,
-              ),
-            );
-          }}
-        />
-      )}
     </div>
   );
 }

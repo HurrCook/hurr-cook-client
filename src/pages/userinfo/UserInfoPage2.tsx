@@ -1,3 +1,4 @@
+// src/pages/userinfo/UserInfoPage2.tsx
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import FooterButton from '/src/components/common/FooterButton';
@@ -6,23 +7,15 @@ import IngredientEditList, {
 } from '@/components/common/IngredientEditList';
 import api from '@/lib/axios';
 
-// 🔧 IngredientEditData에 imageUrl을 optional로 포함해 주세요.
-// type IngredientEditData = {
-//   id: number | string;
-//   name: string;
-//   image?: string;      // UI 표시용
-//   imageUrl?: string;   // ✅ 서버로 보낼 값
-//   date: string;        // 'YYYY-MM-DD'
-//   quantity: string;    // 문자열
-//   unit: 'EA' | 'g' | 'ml';
-// };
-
 const parseQuantityValue = (value: string, field: string): string =>
   field === 'quantity' ? value.replace(/[^0-9]/g, '') : value;
 
 const getTodayDate = (): string => {
   const t = new Date();
-  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(
+    2,
+    '0',
+  )}-${String(t.getDate()).padStart(2, '0')}`;
 };
 
 type NavState = { ingredients?: IngredientEditData[] };
@@ -32,14 +25,13 @@ export default function UserInfoPage2() {
   const location = useLocation();
   const incoming = (location.state as NavState | null)?.ingredients;
 
-  // ✅ incoming.imageUrl 유지 (없으면 image에서 대체)
   const initial: IngredientEditData[] = useMemo(() => {
     if (Array.isArray(incoming) && incoming.length > 0) {
       return incoming.map((it, idx) => ({
         id: it.id ?? `${Date.now()}_${idx}`,
         name: it.name ?? '재료',
-        image: it.image, // UI 표시용
-        imageUrl: it.imageUrl ?? it.image, // ✅ 서버용
+        image: it.image,
+        imageUrl: it.imageUrl ?? it.image,
         date:
           it.date && /^\d{4}-\d{2}-\d{2}$/.test(it.date)
             ? it.date
@@ -51,7 +43,7 @@ export default function UserInfoPage2() {
         unit: (it.unit as IngredientEditData['unit']) ?? 'EA',
       }));
     }
-    return []; // 더미 제거
+    return [];
   }, [incoming]);
 
   const [ingredients, setIngredients] = useState<IngredientEditData[]>(initial);
@@ -60,7 +52,7 @@ export default function UserInfoPage2() {
     id: number | string,
     field: keyof IngredientEditData,
     value: string,
-  ) => {
+  ): void => {
     setIngredients((prev) =>
       prev.map((item) =>
         item.id === id
@@ -82,48 +74,35 @@ export default function UserInfoPage2() {
     return 'EA';
   };
 
-  const toISODateOrToday = (raw?: string) => {
+  const toISODateOrToday = (raw?: string): string => {
     if (!raw) return new Date().toISOString();
     const d = new Date(raw);
     return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
   };
 
-  const handleNextClick = async () => {
+  const handleNextClick = async (): Promise<void> => {
     const payload = {
       ingredients: ingredients.map((ing) => ({
         name: ing.name,
         amount: Number(ing.quantity ?? 0),
         unit: normalizeUnit(ing.unit as string),
         expireDate: toISODateOrToday(ing.date),
-        imageUrl: ing.imageUrl ?? null, // ✅ 그대로 보냄 (data:... 또는 http...)
+        imageUrl: ing.imageUrl ?? null,
       })),
     };
 
-    console.log('📦 /ingredients POST payload:', payload);
-
     try {
-      // 🔹 1) 재료 등록
       const res = await api.post('/ingredients', payload, {
         headers: { 'Content-Type': 'application/json' },
         maxBodyLength: Infinity,
       });
-      console.log('✅ 서버 응답:', res.data);
 
-      if (!res.data?.success) {
-        console.warn('⚠️ 저장 실패:', res.data?.message);
-        alert(res.data?.message ?? '저장에 실패했습니다.');
-        return;
-      }
+      if (!res.data?.success) return;
 
-      // 🔹 2) 저장 후 DB 목록 확인
-      const getRes = await api.get('/ingredients');
-      console.log('📦 현재 DB 재료 목록:', getRes.data);
-
-      alert('✅ 재료가 성공적으로 저장되었습니다!');
+      await api.get('/ingredients');
       navigate('/userinfopage3');
     } catch (err) {
-      console.error('❌ 재료 업로드 실패:', err);
-      alert('업로드 중 오류가 발생했습니다.');
+      console.error('[UserInfoPage2] POST /ingredients error:', err);
     }
   };
 

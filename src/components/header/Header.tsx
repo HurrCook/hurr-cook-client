@@ -1,4 +1,3 @@
-// src/components/header/Header.tsx
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import TabIcon from '@/assets/탭.svg';
@@ -8,6 +7,7 @@ import PencilIcon from '@/assets/연필.svg';
 import ArrowIcon from '@/assets/arrow.svg';
 import HeaderImageOptionsModal from '@/components/modal/HeaderImageOptionsModal';
 import CameraModal from '@/components/header/CameraModal';
+import ReceiptCameraModal from '@/components/header/ReceiptCameraModal';
 
 interface HeaderProps {
   onOpenSidebar: () => void;
@@ -20,8 +20,8 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
 
   const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isReceiptCameraOpen, setIsReceiptCameraOpen] = useState(false); // ✅ 추가
 
-  // 뒤로가기 또는 냉장고 복귀 버튼
   if (
     location.pathname.startsWith('/loading') ||
     location.pathname.startsWith('/refrigerator/photo-add') ||
@@ -55,8 +55,9 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
     );
   }
 
-  // 페이지별 오른쪽 버튼 렌더링
   const renderRightButtons = () => {
+    if (location.pathname.startsWith('/recipe')) return null;
+
     if (location.pathname.startsWith('/chat')) {
       return (
         <button onClick={onOpenModal}>
@@ -109,17 +110,25 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
         <div className="ml-auto">{renderRightButtons()}</div>
       </header>
 
-      {/* 이미지 선택 모달 */}
+      {/* ✅ 이미지 선택 모달 */}
       <HeaderImageOptionsModal
         isVisible={isImageOptionOpen}
         onClose={() => setIsImageOptionOpen(false)}
-        onLaunchCamera={() => {
+        onLaunchCamera={(type) => {
           setIsImageOptionOpen(false);
-          setTimeout(() => setIsCameraOpen(true), 100);
+          setTimeout(() => {
+            if (type === 'receipt') {
+              console.log('[Header] 영수증 카메라 실행');
+              setIsReceiptCameraOpen(true);
+            } else {
+              console.log('[Header] 재료 카메라 실행');
+              setIsCameraOpen(true);
+            }
+          }, 100);
         }}
       />
 
-      {/* 카메라 모달 */}
+      {/* ✅ 재료 카메라 */}
       {isCameraOpen && (
         <CameraModal
           onClose={() => setIsCameraOpen(false)}
@@ -129,12 +138,19 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
               const pureBase64 = dataUrl.startsWith('data:')
                 ? dataUrl.split(',')[1]
                 : dataUrl;
-              navigate('/loading', { state: { base64_images: [pureBase64] } });
+              navigate('/loading', {
+                state: { base64_images: [pureBase64], type: 'ingredient' },
+              });
             } else {
               navigate('/fail');
             }
           }}
         />
+      )}
+
+      {/* ✅ 영수증 카메라 */}
+      {isReceiptCameraOpen && (
+        <ReceiptCameraModal onClose={() => setIsReceiptCameraOpen(false)} />
       )}
     </>
   );

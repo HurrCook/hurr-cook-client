@@ -6,6 +6,8 @@ import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
+import DefaultGoodUrl from '@/assets/default_good.svg?url'; // ✅ 추가
+import DefaultBadUrl from '@/assets/default_bad.svg?url'; // ✅ 추가
 
 interface IngredientDetailModalProps {
   isOpen: boolean;
@@ -155,7 +157,7 @@ export default function IngredientDetailModal({
   const parsedDate = editData.date
     ? new Date(editData.date.replace(/\./g, '-'))
     : today;
-  const isExpired = parsedDate < today;
+  const isExpired = parsedDate < today; // ✅ 유통기한 비교
 
   return (
     <>
@@ -207,9 +209,12 @@ export default function IngredientDetailModal({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="flex items-center justify-center w-full h-full text-gray-400 text-sm">
-                    이미지 추가
-                  </div>
+                  // ✅ 기본 이미지 표시 분기 (유통기한 지난 경우 bad)
+                  <img
+                    src={isExpired ? DefaultBadUrl : DefaultGoodUrl}
+                    alt="기본 재료 이미지"
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
 

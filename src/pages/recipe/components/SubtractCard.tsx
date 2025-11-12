@@ -5,36 +5,52 @@ interface SubtractCardProps {
     id: string | number;
     name: string;
     image: string;
-    quantity: string; // 예: "3개" or "200g"
+    amount: number;
+    unit: string;
     expiryDate: string;
+    requiredAmount?: number;
   };
-  onChangeUsed?: (id: string | number, used: number) => void; // 상위로 전달할 콜백
+  onChangeUsed?: (id: string | number, usedAmount: number) => void;
 }
 
 const SubtractCard: React.FC<SubtractCardProps> = ({ item, onChangeUsed }) => {
-  // 숫자와 단위 분리
-  const quantityMatch = item.quantity.match(
-    /^(\d+(?:\.\d+)?)([a-zA-Z가-힣]*)$/,
-  );
-  const owned = quantityMatch ? parseFloat(quantityMatch[1]) : 0;
-  const unit = quantityMatch && quantityMatch[2] ? quantityMatch[2] : '';
+  const owned = item.amount || 0;
+  const unit = item.unit || '';
+  const initialUsed =
+    item.requiredAmount && item.requiredAmount <= owned
+      ? item.requiredAmount
+      : 0;
 
-  const [usedQuantity, setUsedQuantity] = useState(0);
-  const [remaining, setRemaining] = useState(owned);
-
-  // focus 감지
+  const [usedAmount, setUsedAmount] = useState(initialUsed);
+  const [remaining, setRemaining] = useState(owned - initialUsed);
   const [isFocused, setIsFocused] = useState(false);
 
-  // 선택 수량이 바뀔 때마다 남은 수량 및 상위 알림
   useEffect(() => {
-    setRemaining(Math.max(owned - usedQuantity, 0));
-    onChangeUsed?.(item.id, usedQuantity); // 상위 모달로 전달
-  }, [usedQuantity, owned]);
+    const newRemaining = Math.max(owned - usedAmount, 0);
+    setRemaining(newRemaining);
+
+    if (typeof onChangeUsed === 'function') {
+      onChangeUsed(item.id, usedAmount);
+    }
+  }, [usedAmount, owned]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    const validValue = Math.min(Math.max(value, 0), owned);
+    setUsedAmount(validValue);
+  };
+
+  // ✅ 유통기한 지난 재료 여부
+  const isExpired = new Date(item.expiryDate) < new Date();
 
   return (
     <div
-      className={`w-full flex items-center gap-4 p-2 bg-white rounded-xl transition-colors duration-300 ${
-        isFocused ? 'border-amber-500' : 'border-stone-300'
+      className={`w-full flex items-center gap-4 p-2 rounded-xl transition-colors duration-300 ${
+        isFocused
+          ? 'border-amber-500'
+          : isExpired
+            ? 'border-red-500 bg-red-50' // ✅ 만료 시 배경색만 붉게
+            : 'border-stone-300 bg-white'
       }`}
     >
       {/* 이미지 */}
@@ -46,6 +62,7 @@ const SubtractCard: React.FC<SubtractCardProps> = ({ item, onChangeUsed }) => {
 
       {/* 내용 */}
       <div className="flex flex-col flex-1 gap-1">
+        {/* 이름 + 유통기한 */}
         <div className="flex justify-between items-center">
           <span className="text-neutral-800 text-base font-medium">
             {item.name}
@@ -55,34 +72,30 @@ const SubtractCard: React.FC<SubtractCardProps> = ({ item, onChangeUsed }) => {
           </span>
         </div>
 
-        {/* 수량 선택 */}
-        <div className="flex gap-2 items-center">
+        {/* 수량 입력줄 */}
+        <div className="flex items-center justify-between">
           <span className="text-xs text-neutral-500">
             보유: {owned}
             {unit}
           </span>
 
-          <select
-            value={usedQuantity}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onChange={(e) => setUsedQuantity(Number(e.target.value))}
-            className="h-[28px] px-2 rounded-md border border-stone-300 text-xs text-neutral-800
-                       focus:border-amber-500 focus:outline-none cursor-pointer transition"
-          >
-            <option value={0}>0{unit}</option>
-            {Array.from({ length: Math.floor(owned) }, (_, i) => i + 1).map(
-              (num) => (
-                <option key={num} value={num}>
-                  {num}
-                  {unit}
-                </option>
-              ),
-            )}
-          </select>
+          <div className="flex justify-center flex-1">
+            <input
+              type="number"
+              min={0}
+              max={owned}
+              step={1}
+              value={usedAmount}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onChange={handleInputChange}
+              className="h-[28px] w-16 px-2 rounded-md border border-stone-300 text-xs text-neutral-800
+                         focus:border-amber-500 focus:outline-none text-center transition"
+            />
+          </div>
 
-          <span className="text-xs text-neutral-500">
-            남은 수량: {remaining}
+          <span className="text-xs text-neutral-500 text-right">
+            남은: {remaining}
             {unit}
           </span>
         </div>

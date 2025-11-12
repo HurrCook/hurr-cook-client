@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Hurr3Icon from '@/assets/Hurr3.svg';
 import SidebarItem from './SidebarItem';
 import LogoutIcon from '@/assets/로그아웃.svg';
+import ProfileIcon from '@/assets/profile.svg'; // ✅ 추가
 import Button from '../common/Button';
 
 type SidebarProps = {
@@ -14,7 +15,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [userName, setUserName] = useState('사용자'); // ✅ 기본값
+  const [userName, setUserName] = useState('사용자');
 
   /** ✅ 로그인 이름 불러오기 */
   useEffect(() => {
@@ -30,14 +31,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
   /** ✅ 로그아웃 처리 로직 */
   const handleLogoutConfirm = () => {
     try {
-      // 1️⃣ 토큰 + 유저정보 제거
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('userName');
       sessionStorage.removeItem('accessToken');
       sessionStorage.removeItem('refreshToken');
-
-      // 2️⃣ 로그인 페이지로 이동
       navigate('/login', { replace: true });
     } catch (error) {
       console.error('❌ 로그아웃 에러:', error);
@@ -81,9 +79,15 @@ export default function Sidebar({ onClose }: SidebarProps) {
           </nav>
         </div>
 
-        {/* 하단 프로필 */}
+        {/* ✅ 하단 프로필 */}
         <div className="w-full h-[70px] bg-[#F0F0F0] flex items-center px-5">
-          <div className="w-[30px] h-[30px] bg-[#A7A7A7] rounded-md" />
+          <div className="w-[30px] h-[30px] bg-[#A7A7A7] rounded-md overflow-hidden">
+            <img
+              src={ProfileIcon}
+              alt="프로필 아이콘"
+              className="w-full h-full object-cover"
+            />
+          </div>
           <span className="ml-2 mt-1 text-[#212121] font-[Gretoon] text-[16px]">
             {userName}
           </span>
@@ -91,7 +95,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             src={LogoutIcon}
             alt="로그아웃"
             className="ml-auto w-6 h-6 cursor-pointer"
-            onClick={() => setIsLogoutModalOpen(true)} // 모달 열기
+            onClick={() => setIsLogoutModalOpen(true)}
           />
         </div>
       </aside>

@@ -17,14 +17,11 @@ type IngredientItem = {
 export default function UserInfoPage1_2() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // 타입 안전하게 처리
   const state = location.state as { ingredients?: unknown } | null;
   const received = Array.isArray(state?.ingredients)
     ? (state!.ingredients as DetectedIngredient[])
     : undefined;
 
-  // base64/URL/dataURL → 표시용 src로 정규화
   const normalizeImage = (img?: string): string => {
     if (!img) return 'https://placehold.co/152x152';
     if (img.startsWith('data:image')) return img;
@@ -53,7 +50,6 @@ export default function UserInfoPage1_2() {
     number | string | null
   >(null);
 
-  /** 단위 포맷팅 (표시용) */
   const formatQuantity = (
     quantity: number,
     unit: 'EA' | 'g' | 'ml',
@@ -70,18 +66,14 @@ export default function UserInfoPage1_2() {
     }
   };
 
-  /** 모달 관련 */
   const handleOptionsModalClose = () => setIsOverlayVisible(false);
   const handleLaunchCamera = () => {
     setIsOverlayVisible(false);
     setCameraOn(true);
   };
-  const handleLaunchLibrary = () => {
-    setIsOverlayVisible(false); /* 갤러리 로직 필요 시 추가 */
-  };
+  const handleLaunchLibrary = () => setIsOverlayVisible(false);
   const handleCameraModalClose = () => setCameraOn(false);
 
-  /** 재료 카드 클릭 → 삭제 모달 */
   const handleIngredientCardClick = (id: number | string) => {
     setSelectedIngredientId(id);
     setIsDeleteModalVisible(true);
@@ -95,20 +87,16 @@ export default function UserInfoPage1_2() {
     handleDeleteModalClose();
   };
 
-  /** ✅ 편집 페이지로 이동 (IngredientEditData 형태로 변환해서 전달) */
-  /** ✅ 편집 페이지로 이동 (IngredientEditData 형태로 변환해서 전달) */
   const handleNextClick = () => {
     const editPayload = ingredients.map((it) => ({
       id: it.id,
       name: it.name,
-      image: it.image, // UI 표시용
-      imageUrl: it.image, // ✅ DB로 보낼 값(데이터 URI/URL 그대로)
-      date: '', // 유통기한은 다음 단계에서 입력
+      image: it.image,
+      imageUrl: it.image,
+      date: '',
       quantity: String(it.quantity),
       unit: it.unit,
     }));
-
-    console.log('📦 1_2 → 2로 전달:', editPayload);
     navigate('/userinfopage2', { state: { ingredients: editPayload } });
   };
 
@@ -126,7 +114,6 @@ export default function UserInfoPage1_2() {
         onLaunchLibrary={handleLaunchLibrary}
       />
 
-      {/* 삭제 모달 */}
       {isDeleteModalVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div
@@ -159,7 +146,6 @@ export default function UserInfoPage1_2() {
         </div>
       )}
 
-      {/* 스크롤 영역 (하단 블러에 안 가리도록 패딩) */}
       <div
         className="flex w-full flex-grow justify-center overflow-y-auto"
         style={{ paddingBottom: '16vh' }}
@@ -176,7 +162,6 @@ export default function UserInfoPage1_2() {
         </div>
       </div>
 
-      {/* 고정 푸터 */}
       <div className="fixed inset-x-0 bottom-0 flex h-[15.99%] w-full flex-col items-center bg-gradient-to-b from-white/0 to-white backdrop-blur-[2px]">
         <div className="h-[26.17%] w-full" />
         <FooterButton
