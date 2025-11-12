@@ -1,8 +1,10 @@
+// src/pages/recipe/components/SubtractModal.tsx
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/common/Button';
 import SubtractCard from './SubtractCard';
 import api from '@/lib/axios';
 import DefaultBad from '@/assets/default_bad.svg';
+import DefaultGood from '@/assets/default_good.svg'; // ✅ 추가
 
 interface IngredientResponse {
   success: boolean;
@@ -34,6 +36,17 @@ interface SubtractModalProps {
     ingredients: RecipeIngredient[];
   };
 }
+
+// ✅ 스켈레톤 컴포넌트 추가
+const SkeletonCard = () => (
+  <div className="w-full rounded-xl p-3 border border-gray-200 bg-gray-100 animate-pulse flex items-center gap-4">
+    <div className="w-16 h-16 bg-gray-300 rounded-lg" />
+    <div className="flex flex-col gap-2 flex-1">
+      <div className="w-1/2 h-4 bg-gray-300 rounded" />
+      <div className="w-1/3 h-4 bg-gray-300 rounded" />
+    </div>
+  </div>
+);
 
 export default function SubtractModal({
   isOpen,
@@ -80,16 +93,31 @@ export default function SubtractModal({
       const inv = inventory.find(
         (item) => normalize(item.name) === normalize(rIng.name),
       );
+
       const parsedRequiredAmount =
         Number(rIng.amount.replace(/[^0-9.]/g, '')) || 0;
+
+      const isExpired = inv ? new Date(inv.expireDate) < new Date() : false; // ✅ 유통기한 체크
+
+      // ✅ 이미지 결정 로직
+      let imageSrc = DefaultGood;
+      if (inv?.imageUrl) {
+        if (
+          inv.imageUrl.startsWith('http') ||
+          inv.imageUrl.startsWith('data:')
+        ) {
+          imageSrc = inv.imageUrl;
+        } else {
+          imageSrc = `data:image/png;base64,${inv.imageUrl}`;
+        }
+      } else {
+        imageSrc = isExpired ? DefaultBad : DefaultGood;
+      }
+
       return {
         id: inv?.userFoodId || `${rIng.name}-noid`,
         name: rIng.name,
-        image: inv?.imageUrl
-          ? inv.imageUrl.startsWith('http')
-            ? inv.imageUrl
-            : `data:image/png;base64,${inv.imageUrl}`
-          : DefaultBad,
+        image: imageSrc, // ✅ 수정된 부분
         amount: inv?.amount || 0,
         unit: inv?.unit || '',
         expiryDate: inv?.expireDate || new Date().toISOString(),
@@ -173,7 +201,6 @@ export default function SubtractModal({
 
         {/* 내용 */}
         <div className="p-6 pt-0 flex-1 overflow-y-auto custom-scrollbar">
-          {/* 상단 경고 문구 (항목이 존재할 때만) */}
           {(hasShortage || hasExpired) && (
             <div className="mb-3 space-y-1">
               {hasShortage && (
@@ -190,31 +217,39 @@ export default function SubtractModal({
             </div>
           )}
 
-          {/* 재료 카드 목록 */}
-          <div className="flex flex-col gap-[10px]">
-            {matchedItems.length > 0 ? (
-              matchedItems.map((item) => {
-                const isExpired = new Date(item.expiryDate) < new Date();
-                const isInsufficient = item.amount < item.requiredAmount;
-                return (
-                  <div
-                    key={item.id}
-                    className={`rounded-xl p-3 flex items-center transition-colors duration-300 ${
-                      isExpired || isInsufficient
-                        ? 'border border-red-500 bg-red-50'
-                        : 'border border-gray-200 hover:border-amber-300'
-                    }`}
-                  >
-                    <SubtractCard item={item} />
-                  </div>
-                );
-              })
-            ) : (
-              <p className="text-center text-neutral-500 py-10">
-                냉장고에 일치하는 재료가 없습니다.
-              </p>
-            )}
-          </div>
+          {/* ✅ 로딩 상태: 스켈레톤 표시 */}
+          {loading ? (
+            <div className="flex flex-col gap-[10px] py-4">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <SkeletonCard key={idx} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-[10px]">
+              {matchedItems.length > 0 ? (
+                matchedItems.map((item) => {
+                  const isExpired = new Date(item.expiryDate) < new Date();
+                  const isInsufficient = item.amount < item.requiredAmount;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`rounded-xl p-3 flex items-center transition-colors duration-300 ${
+                        isExpired || isInsufficient
+                          ? 'border border-red-500 bg-red-50'
+                          : 'border border-gray-200 hover:border-amber-300'
+                      }`}
+                    >
+                      <SubtractCard item={item} />
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-center text-neutral-500 py-10">
+                  냉장고에 일치하는 재료가 없습니다.
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 하단 버튼 */}

@@ -9,6 +9,7 @@ import IngredientDetailModal from '@/components/common/IngredientDetailModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
 import DefaultGoodUrl from '@/assets/default_good.svg?url';
+import DefaultBadUrl from '@/assets/default_bad.svg?url';
 
 function IngredientSkeletonCard() {
   return <div className="w-44 h-52 bg-gray-200 rounded-xl animate-pulse" />;
@@ -193,8 +194,9 @@ export default function RefrigeratorPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {ingredients.length > 0 ? (
                 ingredients.map((item, index) => {
-                  // ✅ 기본 이미지 로직 통합
-                  let imageSrc = DefaultGoodUrl;
+                  const isExpired = new Date(item.expireDate) < new Date(); // ✅ 유통기한 비교
+                  let imageSrc = isExpired ? DefaultBadUrl : DefaultGoodUrl; // ✅ 기본 이미지 조건 분기
+
                   if (item.imageUrl) {
                     if (item.imageUrl.startsWith('data:image')) {
                       imageSrc = item.imageUrl;

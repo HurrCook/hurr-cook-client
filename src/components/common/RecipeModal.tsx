@@ -45,7 +45,8 @@ export default function RecipeModal({
   recipe,
 }: RecipeModalProps) {
   const [loading] = useState(false);
-  const [setUserIngredients] = useState<UserIngredient[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [userIngredients, setUserIngredients] = useState<UserIngredient[]>([]);
   const [statusMessage, setStatusMessage] = useState('');
   const [showUsedBanner, setShowUsedBanner] = useState(false);
   const [showSubtractModal, setShowSubtractModal] = useState(false);

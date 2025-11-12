@@ -40,10 +40,17 @@ const SubtractCard: React.FC<SubtractCardProps> = ({ item, onChangeUsed }) => {
     setUsedAmount(validValue);
   };
 
+  // ✅ 유통기한 지난 재료 여부
+  const isExpired = new Date(item.expiryDate) < new Date();
+
   return (
     <div
-      className={`w-full flex items-center gap-4 p-2 bg-white rounded-xl transition-colors duration-300 ${
-        isFocused ? 'border-amber-500' : 'border-stone-300'
+      className={`w-full flex items-center gap-4 p-2 rounded-xl transition-colors duration-300 ${
+        isFocused
+          ? 'border-amber-500'
+          : isExpired
+            ? 'border-red-500 bg-red-50' // ✅ 만료 시 배경색만 붉게
+            : 'border-stone-300 bg-white'
       }`}
     >
       {/* 이미지 */}
@@ -65,15 +72,13 @@ const SubtractCard: React.FC<SubtractCardProps> = ({ item, onChangeUsed }) => {
           </span>
         </div>
 
-        {/* 수량 입력줄 (보유 - 인풋 - 남은 중앙정렬) */}
+        {/* 수량 입력줄 */}
         <div className="flex items-center justify-between">
-          {/* 왼쪽: 보유 */}
           <span className="text-xs text-neutral-500">
             보유: {owned}
             {unit}
           </span>
 
-          {/* 가운데: 입력창 */}
           <div className="flex justify-center flex-1">
             <input
               type="number"
@@ -89,7 +94,6 @@ const SubtractCard: React.FC<SubtractCardProps> = ({ item, onChangeUsed }) => {
             />
           </div>
 
-          {/* 오른쪽: 남은 수량 */}
           <span className="text-xs text-neutral-500 text-right">
             남은: {remaining}
             {unit}
