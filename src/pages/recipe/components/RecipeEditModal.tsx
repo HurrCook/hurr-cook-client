@@ -5,32 +5,20 @@ import IngredientItem from '@/pages/recipe/components/IngredientItem';
 import Pen from '@/assets/연필.svg';
 import Trash from '@/assets/쓰레기통.svg';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getRecipeDetail, updateRecipe, deleteRecipe } from '@/apis/recipeApi'; // ✅ API 연결 추가
-
-interface Ingredient {
-  name: string;
-  quantity: string;
-}
+import {
+  getRecipeDetail,
+  updateRecipe,
+  deleteRecipe,
+  type Recipe,
+} from '@/apis/recipeApi';
 
 interface RecipeEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onDelete: (recipeId: number) => void;
-  onStartCooking: (recipeId: number) => void;
-  onSave: (updatedRecipe: {
-    id: number;
-    name: string;
-    image: string;
-    instructions: string[];
-    ingredients: Ingredient[];
-  }) => void;
-  recipe: {
-    id: number;
-    name: string;
-    image: string;
-    ingredients: Ingredient[];
-    instructions: string[];
-  };
+  onDelete: (recipeId: string) => void;
+  onStartCooking: (updatedRecipe: Recipe) => void; // ← Recipe 그대로 전달
+  onSave: (updatedRecipe: Recipe) => void;
+  recipe: Recipe; // ← 통일
   skipEnterAnimation?: boolean;
 }
 
@@ -47,30 +35,37 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
   const [isClosing, setIsClosing] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
 
-  // API에서 가져올 실제 데이터
   const [editedName, setEditedName] = useState(recipe.name);
   const [editedInstructions, setEditedInstructions] = useState(
-    recipe.instructions.join('\n'),
+    (recipe.instructions ?? []).join('\n'),
   );
-  const [editedIngredients, setEditedIngredients] = useState<Ingredient[]>(
+  const [editedIngredients, setEditedIngredients] = useState(
     recipe.ingredients,
   );
 
-  // 모달 열릴 때 상세 레시피 데이터 새로 불러오기
   useEffect(() => {
-    if (isOpen && recipe.id) {
-      (async () => {
-        try {
-          const data = await getRecipeDetail(recipe.id);
-          setEditedName(data.name);
-          setEditedInstructions(data.instructions.join('\n'));
-          setEditedIngredients(data.ingredients);
-        } catch (error) {
-          console.error('❌ 레시피 상세 불러오기 실패:', error);
-        }
-      })();
+    if (!isOpen || !recipe.id) return;
+
+    //  이미 부모(RecipePage)에서 최신 데이터가 있으면 서버 요청 생략
+    if (recipe.ingredients?.length && recipe.instructions?.length) {
+      setEditedName(recipe.name);
+      setEditedInstructions((recipe.instructions ?? []).join('\n'));
+      setEditedIngredients(recipe.ingredients ?? []);
+      return;
     }
-  }, [isOpen, recipe.id]);
+
+    // 필요한 경우에만 서버에서 상세 정보 불러오기
+    (async () => {
+      try {
+        const full = await getRecipeDetail(recipe.id);
+        setEditedName(full.name);
+        setEditedInstructions((full.instructions ?? []).join('\n'));
+        setEditedIngredients(full.ingredients ?? []);
+      } catch (e) {
+        console.error('❌ 레시피 상세 불러오기 실패:', e);
+      }
+    })();
+  }, [isOpen, recipe]);
 
   const handleAnimatedClose = () => {
     setIsClosing(true);
@@ -80,14 +75,21 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     }, 250);
   };
 
+  // 재료차감 시작: 최신 edited 값으로 Recipe 만들어서 전달
   const handleStartSubtract = () => {
-    onStartSubtract(recipe.id);
+    onStartSubtract({
+      ...recipe,
+      name: editedName,
+      image: recipe.image,
+      instructions: editedInstructions.split('\n'),
+      ingredients: editedIngredients, // ← {name, amount}
+    });
   };
 
-  // 수정 저장 (API 연결)
+  // 저장
   const handleSave = async () => {
     try {
-      const updatedRecipeData = {
+      const updated: Recipe = {
         id: recipe.id,
         name: editedName,
         image: recipe.image,
@@ -95,51 +97,53 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         ingredients: editedIngredients,
       };
 
-      const updated = await updateRecipe(recipe.id, updatedRecipeData);
-      console.log('레시피 수정 완료:', updated);
+      const server = await updateRecipe(recipe.id, updated);
 
-      onSave(updated);
+      // ✅ 부모 상태 업데이트 (RecipePage에서 setRecipes 반영됨)
+      onSave(server);
+
+      // ✅ 모달 닫지 않고 수정모드만 종료
       setIsEditing(false);
-    } catch (error) {
-      console.error('❌ 레시피 수정 실패:', error);
+      console.log('✅ 레시피 수정 반영 완료');
+    } catch (e) {
+      console.error('❌ 레시피 수정 실패:', e);
     }
   };
 
-  // 삭제 버튼 (API 연결)
   const handleDeleteConfirm = async () => {
     try {
-      const success = await deleteRecipe(recipe.id);
-      if (success) {
-        console.log('레시피 삭제 완료');
+      const ok = await deleteRecipe(recipe.id);
+      if (ok) {
         onDelete(recipe.id);
         setIsDeleteConfirmOpen(false);
         handleAnimatedClose();
       } else {
         console.error('레시피 삭제 실패: 서버 응답 실패');
       }
-    } catch (error) {
-      console.error('레시피 삭제 에러:', error);
+    } catch (e) {
+      console.error('레시피 삭제 에러:', e);
     }
   };
 
-  // 재료 변경 함수
   const handleIngredientChange = (
     index: number,
-    field: 'name' | 'quantity',
+    field: 'name' | 'amount',
     value: string,
   ) => {
-    const newIngredients = [...editedIngredients];
-    newIngredients[index] = { ...newIngredients[index], [field]: value };
-    setEditedIngredients(newIngredients);
+    const next = [...editedIngredients];
+    next[index] = { ...next[index], [field]: value };
+    setEditedIngredients(next);
   };
 
   const handleAddIngredient = () => {
-    setEditedIngredients((prev) => [...prev, { name: '', quantity: '' }]);
+    setEditedIngredients((prev) => [...prev, { name: '', amount: '' }]);
   };
 
   const handleRemoveIngredient = (index: number) => {
     setEditedIngredients((prev) => prev.filter((_, i) => i !== index));
   };
+
+  if (!isOpen) return null;
 
   return (
     <>
@@ -215,11 +219,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                     요리명
                   </label>
                   {isEditing ? (
-                    <div
-                      className="w-full h-12 px-4 rounded-lg bg-white outline outline-1 outline-offset-[-1px]
-                                 flex items-center justify-between transition-colors outline-stone-300
-                                 focus-within:outline-amber-500"
-                    >
+                    <div className="w-full h-12 px-4 rounded-lg bg-white outline outline-1 outline-offset-[-1px] flex items-center justify-between transition-colors outline-stone-300 focus-within:outline-amber-500">
                       <input
                         type="text"
                         value={editedName}
@@ -241,23 +241,19 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                   <label className="text-neutral-400 text-xs font-normal">
                     필요한 재료
                   </label>
-                  <div
-                    className="w-full min-h-[80px] p-3 bg-white rounded-lg outline outline-1 outline-stone-300
-                               transition-colors outline-offset-[-1px] focus-within:outline-amber-500
-                               flex flex-col gap-3"
-                  >
+                  <div className="w-full min-h-[80px] p-3 bg-white rounded-lg outline outline-1 outline-stone-300 transition-colors outline-offset-[-1px] focus-within:outline-amber-500 flex flex-col gap-3">
                     {editedIngredients.map((item, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <div className="flex-1">
                           <IngredientItem
                             name={item.name}
-                            quantity={item.quantity}
+                            amount={item.amount}
                             isEditable={isEditing}
-                            onNameChange={(value) =>
-                              handleIngredientChange(index, 'name', value)
+                            onNameChange={(v) =>
+                              handleIngredientChange(index, 'name', v)
                             }
-                            onQuantityChange={(value) =>
-                              handleIngredientChange(index, 'quantity', value)
+                            onQuantityChange={(v) =>
+                              handleIngredientChange(index, 'amount', v)
                             }
                           />
                         </div>
@@ -279,8 +275,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                     {isEditing && (
                       <button
                         onClick={handleAddIngredient}
-                        className="w-full py-2 mt-2 rounded-xl border border-dashed border-amber-400
-                                   text-amber-500 text-sm font-medium hover:bg-amber-50 transition"
+                        className="w-full py-2 mt-2 rounded-xl border border-dashed border-amber-400 text-amber-500 text-sm font-medium hover:bg-amber-50 transition"
                       >
                         + 재료 추가
                       </button>
@@ -294,10 +289,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                     만드는 순서
                   </label>
                   {isEditing ? (
-                    <div
-                      className="w-full min-h-[288px] p-2 bg-white rounded-xl outline outline-1 outline-stone-300
-                                 transition-colors outline-offset-[-1px] focus-within:outline-amber-500"
-                    >
+                    <div className="w-full min-h-[288px] p-2 bg-white rounded-xl outline outline-1 outline-stone-300 transition-colors outline-offset-[-1px] focus-within:outline-amber-500">
                       <textarea
                         value={editedInstructions}
                         onChange={(e) => setEditedInstructions(e.target.value)}
