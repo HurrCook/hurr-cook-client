@@ -9,18 +9,19 @@ import ArrowIcon from '@/assets/arrow.svg';
 import HeaderImageOptionsModal from '@/components/modal/HeaderImageOptionsModal';
 import CameraModal from '@/components/header/CameraModal';
 
-type HeaderProps = {
+interface HeaderProps {
   onOpenSidebar: () => void;
   onOpenModal: () => void;
-};
+}
 
 export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
+
   const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
 
-  // 특정 경로에서는 헤더 간소화 (뒤로가기 + 로고만 표시)
+  // 뒤로가기 또는 냉장고 복귀 버튼
   if (
     location.pathname.startsWith('/loading') ||
     location.pathname.startsWith('/refrigerator/photo-add') ||
@@ -29,26 +30,32 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   ) {
     return (
       <header className="fixed left-0 right-0 h-13 bg-white flex items-center px-4 z-30">
-        {/* 뒤로가기 버튼 */}
-        <button onClick={() => navigate(-1)} className="z-10">
+        <button
+          onClick={() => {
+            if (location.pathname.startsWith('/fail')) {
+              navigate('/refrigerator');
+            } else {
+              navigate(-1);
+            }
+          }}
+        >
           <img
             src={ArrowIcon}
-            alt="뒤로가기 아이콘"
+            alt="뒤로가기"
             className="w-6 h-6 transform rotate-180"
           />
         </button>
 
-        {/* 중앙 로고 */}
         <h1 className="absolute left-1/2 transform -translate-x-1/2 text-[#FF8800] font-[Gretoon] text-xl font-normal">
           Hurr Cook
         </h1>
 
-        {/* 우측 빈 공간 확보 */}
         <div className="w-6 h-6" />
       </header>
     );
   }
 
+  // 페이지별 오른쪽 버튼 렌더링
   const renderRightButtons = () => {
     if (location.pathname.startsWith('/chat')) {
       return (
@@ -61,11 +68,16 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
     if (location.pathname.startsWith('/refrigerator')) {
       return (
         <div className="flex items-center space-x-3">
-          <button onClick={() => setIsImageOptionOpen(true)}>
+          <button
+            onClick={() => setIsImageOptionOpen(true)}
+            aria-label="카메라 열기"
+          >
             <img src={CameraIcon} alt="카메라 아이콘" className="w-7 h-7" />
           </button>
-
-          <button onClick={() => navigate('/refrigerator/add')}>
+          <button
+            onClick={() => navigate('/refrigerator/add')}
+            aria-label="재료 추가"
+          >
             <img
               src={PencilIcon}
               alt="연필 아이콘"
@@ -77,8 +89,8 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
     }
 
     return (
-      <button onClick={onOpenModal}>
-        <img src={SettingIcon} alt="세팅 아이콘" />
+      <button onClick={onOpenModal} aria-label="설정 열기">
+        <img src={SettingIcon} alt="세팅 아이콘" className="w-7 h-7" />
       </button>
     );
   };
@@ -86,7 +98,7 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   return (
     <>
       <header className="fixed left-0 right-0 h-13 bg-white flex items-center px-4 z-30">
-        <button onClick={onOpenSidebar} className="z-10">
+        <button onClick={onOpenSidebar} aria-label="사이드바 열기">
           <img src={TabIcon} alt="탭 아이콘" className="w-6 h-6" />
         </button>
 
@@ -94,7 +106,7 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
           Hurr Cook
         </h1>
 
-        <div className="ml-auto z-10">{renderRightButtons()}</div>
+        <div className="ml-auto">{renderRightButtons()}</div>
       </header>
 
       {/* 이미지 선택 모달 */}
@@ -103,7 +115,7 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
         onClose={() => setIsImageOptionOpen(false)}
         onLaunchCamera={() => {
           setIsImageOptionOpen(false);
-          setTimeout(() => setIsCameraOpen(true), 150);
+          setTimeout(() => setIsCameraOpen(true), 100);
         }}
       />
 
@@ -111,7 +123,17 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
       {isCameraOpen && (
         <CameraModal
           onClose={() => setIsCameraOpen(false)}
-          redirectToLoading={true}
+          onCapture={(dataUrl: string) => {
+            setIsCameraOpen(false);
+            if (dataUrl) {
+              const pureBase64 = dataUrl.startsWith('data:')
+                ? dataUrl.split(',')[1]
+                : dataUrl;
+              navigate('/loading', { state: { base64_images: [pureBase64] } });
+            } else {
+              navigate('/fail');
+            }
+          }}
         />
       )}
     </>

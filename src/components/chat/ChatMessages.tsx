@@ -1,7 +1,7 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import MyMessage from '@/components/chat/MyMessage';
 import HurrChat from '@/assets/HurrChat.png';
-import ChatLoading from '@/assets/ChatLoading.png';
 import RecipeCard from '@/components/chat/RecipeCard';
 
 interface ChatMessageData {
@@ -14,7 +14,7 @@ interface ChatMessageData {
     cuisine_type?: string;
     time?: string;
     tools?: string[];
-    ingredients?: { name: string; amount: string | number; unit: string }[]; // note: unit (singular)
+    ingredients?: { name: string; amount: string | number; unit: string }[];
     steps?: string[];
   };
 }
@@ -23,20 +23,23 @@ interface ChatMessagesProps {
   messages?: ChatMessageData[];
   loading: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  onRecipeSaved?: () => void;
+  onIngredientsUsed?: () => void;
 }
 
 export default function ChatMessages({
   messages = [],
   loading,
   messagesEndRef,
+  onRecipeSaved,
+  onIngredientsUsed,
 }: ChatMessagesProps) {
   return (
     <div className="flex flex-col gap-1">
-      {Array.isArray(messages) && messages.length > 0 ? (
+      {Array.isArray(messages) &&
         messages.map((msg, index) => {
           if (msg.type === 'recipe' && msg.data) {
             const d = msg.data;
-            // <-- 여기서 units가 아니라 unit를 사용해야 함 (서버 스펙과 일치)
             const ingredients =
               d.ingredients
                 ?.map((i) => `${i.name} ${i.amount}${i.unit ? i.unit : ''}`)
@@ -44,9 +47,19 @@ export default function ChatMessages({
             const steps = d.steps?.join('\n') || '조리 단계 정보 없음';
 
             return (
-              <div key={msg.id} className="flex items-start gap-2 mt-4">
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                className={`flex items-start gap-2 ${
+                  index > 0 && messages[index - 1].type === 'me'
+                    ? 'mt-6'
+                    : 'mt-4'
+                }`}
+              >
                 <img
-                  src={HurrChat || undefined}
+                  src={HurrChat}
                   alt="후르 프로필"
                   className="w-8 h-8 rounded-full"
                 />
@@ -56,38 +69,42 @@ export default function ChatMessages({
                     title={d.title || '이름 없는 레시피'}
                     ingredients={ingredients}
                     steps={steps}
+                    onSaved={onRecipeSaved}
+                    onIngredientsUsed={onIngredientsUsed}
                   />
                 </div>
-              </div>
+              </motion.div>
             );
           }
 
-          if (msg.type === 'me')
+          if (msg.type === 'me') {
             return (
-              <div key={msg.id}>
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+              >
                 <MyMessage
                   text={msg.text ?? ''}
-                  className={index === 0 ? 'mt-20' : ''}
+                  className={index === 0 ? 'mt-20' : 'mt-4'}
                 />
-              </div>
+              </motion.div>
             );
+          }
 
           return null;
-        })
-      ) : (
-        <p className="text-gray-400 text-sm text-center mt-10">
-          메시지가 없습니다.
-        </p>
-      )}
+        })}
 
+      {/* 로딩 중 */}
       {loading && (
         <div className="flex items-center gap-2 mt-6">
           <img
-            src={HurrChat || undefined}
+            src={HurrChat}
             alt="후르 프로필"
             className="w-8 h-8 rounded-full"
           />
-          <img src={ChatLoading || undefined} alt="로딩중" className="h-5" />
+          <div className="w-[100px] h-[20px] bg-gray-200 animate-pulse rounded-full" />
         </div>
       )}
 

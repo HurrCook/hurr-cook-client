@@ -19,7 +19,7 @@ interface IngredientEditListProps {
     field: keyof IngredientEditData,
     value: string,
   ) => void;
-  onOpenCamera: (id: number | string) => void; // ✅ 수정
+  onOpenCamera: (id: number | string) => void;
   onSelectPhoto: (file: File) => void;
 }
 

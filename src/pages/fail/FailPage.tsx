@@ -1,14 +1,12 @@
 // src/pages/refrigerator/FailPage.tsx
-
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import Hurr2 from '@/assets/Hurr2.svg';
+import HeaderImageOptionsModal from '@/components/modal/HeaderImageOptionsModal';
 
 export default function FailPage() {
-  const navigate = useNavigate();
+  const [showRetryModal, setShowRetryModal] = useState(false);
 
   useEffect(() => {
-    // 스크롤 잠금
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
@@ -17,30 +15,25 @@ export default function FailPage() {
   }, []);
 
   const handleRetry = () => {
-    navigate(-1); // 이전 페이지로 이동
+    setShowRetryModal(true);
   };
 
   return (
-    <div
-      className="flex flex-col items-center justify-center min-h-screen bg-white pb-32"
-      style={{ transform: 'translateY(-5rem)' }}
-    >
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white pb-32 relative">
       {/* 상단 이미지 */}
-      <img
-        src={Hurr2}
-        alt="후르 아이콘"
-        className="w-[140px] h-[140px] mt-30 mb-10"
-      />
+      <div className="mb-10 flex justify-center">
+        <img src={Hurr2} alt="후르 아이콘" className="w-[140px] h-[140px]" />
+      </div>
 
-      {/* 텍스트 */}
+      {/* 안내 문구 */}
       <p className="text-[#FF8800] text-center text-base font-normal font-[Pretendard] leading-relaxed mb-8">
         앗, 후르가 재료를 잘 못 알아봤어요...
         <br />
         다시 한 번만 보여줄래요?
       </p>
 
-      {/* 하단 고정 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-white py-4">
+      {/* 하단 버튼 */}
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-white py-4 z-20">
         <button
           onClick={handleRetry}
           className="w-[90%] max-w-[600px] bg-[#FF8800] text-white py-3 rounded-lg font-medium hover:bg-[#ff7b00] active:scale-[0.98] transition-all shadow-md"
@@ -48,6 +41,15 @@ export default function FailPage() {
           다시 시도하기
         </button>
       </div>
+      {showRetryModal && (
+        <div className="z-50 fixed inset-0">
+          <HeaderImageOptionsModal
+            isVisible={showRetryModal}
+            onClose={() => setShowRetryModal(false)}
+            onLaunchCamera={() => {}}
+          />
+        </div>
+      )}
     </div>
   );
 }
