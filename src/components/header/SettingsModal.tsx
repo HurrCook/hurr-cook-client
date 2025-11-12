@@ -32,17 +32,12 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
     fetchUserPreference();
   }, []);
 
-  // 저장 요청
+  // 저장 요청 (빈 입력 허용)
   const handleSubmit = async () => {
-    if (!inputValue.trim()) {
-      setStatusMessage('내용을 입력해주세요.');
-      return;
-    }
-
     try {
       setLoading(true);
       const res = await api.post('/users', {
-        personalPreference: inputValue.trim(),
+        personalPreference: inputValue.trim(), // 빈 문자열도 허용
       });
 
       if (res.data.success) {
@@ -57,7 +52,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       setStatusMessage('서버 요청 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
-      onClose(); // ✅ 저장 완료 후 모달 자동 닫기
+      onClose(); // 저장 후 모달 닫기
     }
   };
 

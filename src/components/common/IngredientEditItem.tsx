@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IngredientEditData } from './IngredientEditList';
+import DefaultGoodUrl from '@/assets/default_good.svg?url';
 
 const UNIT_OPTIONS = ['EA', 'g', 'ml'];
 
@@ -27,9 +28,11 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
 
   /** ✅ 이미지 렌더링 안전 처리 */
   const getImageSrc = (image: string) => {
-    if (!image) return 'https://placehold.co/245x163';
+    if (!image) return DefaultGoodUrl;
     if (image.startsWith('http')) return image;
     if (image.startsWith('data:image')) return image;
+    // ✅ assets 경로(DefaultGoodUrl 같은 URL)일 경우 그대로 사용
+    if (image.includes('/assets/')) return image;
     return `data:image/png;base64,${image}`;
   };
 

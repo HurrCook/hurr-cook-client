@@ -1,3 +1,4 @@
+// src/pages/chat/ChatbotPage.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ChatIcon from '@/assets/채팅.svg';
@@ -8,6 +9,27 @@ import ChatSuggestions from '@/components/chat/ChatSuggestions';
 import RecipeSavedBanner from '@/components/chat/RecipeSavedBanner';
 import IngredientUsedBanner from '@/components/chat/IngredientUsedBanner';
 import api from '@/lib/axios';
+
+interface Ingredient {
+  name: string;
+  amount: number;
+  unit: string;
+}
+
+interface RecipeData {
+  title?: string;
+  time?: string;
+  calories?: string;
+  ingredients: Ingredient[];
+  steps?: string[];
+}
+
+interface Message {
+  id: number;
+  type: 'me' | 'system' | 'recipe';
+  text?: string;
+  data?: RecipeData;
+}
 
 const RecipeSkeletonCard = () => (
   <motion.div
@@ -27,7 +49,7 @@ const RecipeSkeletonCard = () => (
 );
 
 export default function ChatbotPage() {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showRecipeSkeleton, setShowRecipeSkeleton] = useState(false);
@@ -54,7 +76,8 @@ export default function ChatbotPage() {
   const handleSend = async (msg?: string) => {
     const text = msg ?? input.trim();
     if (!text) return;
-    const userMsg = { id: messages.length + 1, type: 'me', text };
+
+    const userMsg: Message = { id: messages.length + 1, type: 'me', text };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setLoading(true);
@@ -64,35 +87,93 @@ export default function ChatbotPage() {
 
     try {
       const res = await api.post('/chats', { 프롬프트: text });
-      const { success, data } = res.data;
       clearTimeout(skeletonTimer);
       setShowRecipeSkeleton(false);
 
-      if (success && data) {
-        const recipeMsg = {
-          id: messages.length + 2,
-          type: 'recipe',
-          data,
-        };
-        setMessages((prev) => [...prev, recipeMsg]);
+      const { success, data, message } = res.data as {
+        success: boolean;
+        data?: unknown;
+        message?: string;
+      };
 
-        const randomMessage =
-          completionMessages[
-            Math.floor(Math.random() * completionMessages.length)
-          ];
-        setCompletionText(randomMessage);
+      if (!success || !data) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: messages.length + 2,
+            type: 'system',
+            text:
+              message?.includes('냉장고') || message?.includes('재료') || !data
+                ? '냉장고가 비어 있어요! 재료를 채워주세요!'
+                : '레시피를 생성할 수 없어요. 다시 시도해주세요!',
+          },
+        ]);
+        return;
       }
-    } catch {
+
+      const recipeData = data as Record<string, unknown> & {
+        ingredients?: Record<string, unknown>[];
+      };
+
+      const normalizedData: RecipeData = {
+        ...recipeData,
+        time:
+          (recipeData.time as string) ||
+          (recipeData['조리시간'] as string) ||
+          '',
+        calories:
+          (recipeData.calorie as string) ||
+          (recipeData['칼로리'] as string) ||
+          '',
+        ingredients: Array.isArray(recipeData.ingredients)
+          ? recipeData.ingredients.map((item) => ({
+              name: String(item.name || item['재료명'] || ''),
+              amount: Number(item.amount || item['양']) || 0,
+              unit: String(item.unit || item['단위'] || ''),
+            }))
+          : [],
+      };
+
+      const recipeMsg: Message = {
+        id: messages.length + 2,
+        type: 'recipe',
+        data: normalizedData,
+      };
+
+      setMessages((prev) => [...prev, recipeMsg]);
+
+      const randomMessage =
+        completionMessages[
+          Math.floor(Math.random() * completionMessages.length)
+        ];
+      setCompletionText(randomMessage);
+    } catch (err: unknown) {
       clearTimeout(skeletonTimer);
       setShowRecipeSkeleton(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: messages.length + 2,
-          type: 'me',
-          text: '서버 오류가 발생했습니다.',
-        },
-      ]);
+
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        (err as { response?: { status?: number } }).response?.status === 404
+      ) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: messages.length + 2,
+            type: 'system',
+            text: '냉장고가 비어 있어요! 재료를 채워 넣고 다시 시도해볼까요?',
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: messages.length + 2,
+            type: 'system',
+            text: '서버 오류가 발생했습니다.',
+          },
+        ]);
+      }
     } finally {
       setLoading(false);
     }
@@ -147,7 +228,6 @@ export default function ChatbotPage() {
         onHide={() => setShowBanner(false)}
         onClick={() => (window.location.href = '/recipe')}
       />
-
       <IngredientUsedBanner
         isVisible={showUsedBanner}
         onHide={() => setShowUsedBanner(false)}

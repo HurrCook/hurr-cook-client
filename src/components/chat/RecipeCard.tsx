@@ -1,4 +1,3 @@
-// src/components/chat/RecipeCard.tsx
 import React, { useState } from 'react';
 import LikeOff from '@/assets/좋아요1.svg';
 import LikeOn from '@/assets/좋아요2.svg';
@@ -26,13 +25,18 @@ interface RecipeCardProps {
   title: string;
   ingredients: string;
   steps: string;
+  time?: string;
+  calories?: string;
   onSaved?: () => void;
+  onIngredientsUsed?: () => void;
 }
 
 export default function RecipeCard({
   title,
   ingredients,
   steps,
+  time,
+  calories,
   onSaved,
 }: RecipeCardProps) {
   const [liked, setLiked] = useState(false);
@@ -73,13 +77,13 @@ export default function RecipeCard({
 
       const payload: RecipePayload = {
         title,
-        image: DefaultFoodImage, // ✅ 무조건 기본 이미지
+        image: DefaultFoodImage,
         ingredients: ingArray,
         steps: steps
           .split('\n')
           .map((s) => s.trim())
           .filter(Boolean),
-        time: '15분',
+        time: time || '15분',
       };
 
       await api.post('/recipes', payload);
@@ -111,7 +115,6 @@ export default function RecipeCard({
           overflow: 'hidden',
         }}
       >
-        {/* 이미지 + 제목 + 좋아요 */}
         <div style={{ display: 'flex', gap: 12 }}>
           <div
             style={{
@@ -124,7 +127,7 @@ export default function RecipeCard({
             }}
           >
             <img
-              src={DefaultFoodImage} // ✅ 기본 이미지로 고정
+              src={DefaultFoodImage}
               alt={title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -189,7 +192,6 @@ export default function RecipeCard({
           </div>
         </div>
 
-        {/* 만드는 순서 */}
         <div
           style={{
             position: 'relative',
@@ -211,7 +213,6 @@ export default function RecipeCard({
           {steps}
         </div>
 
-        {/* 요리하기 버튼 */}
         <button
           onClick={handleOpenModal}
           style={{
@@ -231,7 +232,6 @@ export default function RecipeCard({
         </button>
       </div>
 
-      {/* 레시피 모달 */}
       {isModalOpen && (
         <RecipeModal
           isOpen={isModalOpen}
@@ -239,7 +239,7 @@ export default function RecipeCard({
           recipe={{
             id: Date.now(),
             name: title,
-            image: DefaultFoodImage, // ✅ 모달에서도 기본 이미지로 고정
+            image: DefaultFoodImage,
             ingredients: ingredients.split(',').map((item) => {
               const parsed = parseIngredientItem(item);
               return {
@@ -252,6 +252,8 @@ export default function RecipeCard({
               .split('\n')
               .map((s) => s.trim())
               .filter(Boolean),
+            time: time || '',
+            calories: calories || '',
           }}
         />
       )}

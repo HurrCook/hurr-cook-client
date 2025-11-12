@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
@@ -28,6 +26,7 @@ import LoadingPage from './pages/loading/LoadingPage';
 import FailPage from './pages/fail/FailPage';
 import IngredientPhotoAddPage from './pages/refrigerator/IngredientPhotoAddPage';
 import IngredientAddPage from './pages/refrigerator/IngredientAddPage';
+import ReceiptLoadingPage from './pages/loading/ReceiptLoadingPage';
 
 import RequireAuth from './routes/RequireAuth';
 import React from 'react';
@@ -68,6 +67,11 @@ export default function App() {
             <Route path="recipe" element={<RecipePage />} />
             <Route path="chat" element={<ChatbotPage />} />
             <Route path="loading" element={<LoadingPage />} />
+            <Route
+              path="receipt-loading"
+              element={<ReceiptLoadingPage />}
+            />{' '}
+            {/* ✅ 추가 */}
             <Route path="fail" element={<FailPage />} />
             <Route
               path="refrigerator/photo-add"
@@ -76,6 +80,8 @@ export default function App() {
             <Route path="refrigerator/add" element={<IngredientAddPage />} />
           </Route>
         </Route>
+
+        {/* 404 리다이렉트 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </QueryClientProvider>

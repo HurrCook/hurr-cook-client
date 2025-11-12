@@ -8,6 +8,7 @@ import ToolItem from '@/components/common/ToolItem';
 import IngredientDetailModal from '@/components/common/IngredientDetailModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
+import DefaultGoodUrl from '@/assets/default_good.svg?url';
 
 function IngredientSkeletonCard() {
   return <div className="w-44 h-52 bg-gray-200 rounded-xl animate-pulse" />;
@@ -64,7 +65,6 @@ export default function RefrigeratorPage() {
   };
   const tools = Object.keys(toolMap);
 
-  // 재료 불러오기
   const fetchIngredients = useCallback(async () => {
     setLoading(true);
     try {
@@ -88,7 +88,6 @@ export default function RefrigeratorPage() {
     fetchIngredients();
   }, [fetchIngredients]);
 
-  // 새로고침 상태 감지
   useEffect(() => {
     if (location?.state?.refresh) {
       fetchIngredients();
@@ -96,7 +95,6 @@ export default function RefrigeratorPage() {
     }
   }, [location?.state?.refresh, fetchIngredients]);
 
-  // 도구 목록 불러오기
   const fetchTools = useCallback(async () => {
     setToolLoading(true);
     try {
@@ -125,7 +123,6 @@ export default function RefrigeratorPage() {
     fetchTools();
   }, [fetchTools]);
 
-  // 도구 선택 토글
   const handleToolClick = async (toolName: string) => {
     const updatedTools = selectedTools.includes(toolName)
       ? selectedTools.filter((t) => t !== toolName)
@@ -153,7 +150,6 @@ export default function RefrigeratorPage() {
     }
   };
 
-  // 재료 클릭 시 상세 모달 열기
   const handleIngredientClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>, id: string) => {
       e.stopPropagation();
@@ -177,7 +173,6 @@ export default function RefrigeratorPage() {
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      {/* 탭 헤더 */}
       <div className="fixed left-0 w-full z-30 justify-center">
         <div className="w-full mt-[-1.3vh] px-4 py-2 bg-white">
           <RefrigeratorTab activeTab={activeTab} onChange={setActiveTab} />
@@ -186,7 +181,6 @@ export default function RefrigeratorPage() {
 
       <div className="h-[60px]" />
 
-      {/* 본문 */}
       <div className="w-full max-w-[700px]">
         {activeTab === 'ingredient' ? (
           loading ? (
@@ -199,10 +193,17 @@ export default function RefrigeratorPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {ingredients.length > 0 ? (
                 ingredients.map((item, index) => {
-                  const imageSrc =
-                    item.imageUrl && !item.imageUrl.startsWith('http')
-                      ? `data:image/png;base64,${item.imageUrl}`
-                      : item.imageUrl || 'https://placehold.co/245x163';
+                  // ✅ 기본 이미지 로직 통합
+                  let imageSrc = DefaultGoodUrl;
+                  if (item.imageUrl) {
+                    if (item.imageUrl.startsWith('data:image')) {
+                      imageSrc = item.imageUrl;
+                    } else if (item.imageUrl.startsWith('http')) {
+                      imageSrc = item.imageUrl;
+                    } else if (/^[A-Za-z0-9+/=]+$/.test(item.imageUrl)) {
+                      imageSrc = `data:image/png;base64,${item.imageUrl}`;
+                    }
+                  }
 
                   return (
                     <motion.div
@@ -255,7 +256,6 @@ export default function RefrigeratorPage() {
         )}
       </div>
 
-      {/* 재료 상세 모달 */}
       {isModalOpen && selectedIngredientId && (
         <IngredientDetailModal
           isOpen={isModalOpen}

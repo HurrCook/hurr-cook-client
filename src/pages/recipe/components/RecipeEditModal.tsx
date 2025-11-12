@@ -11,14 +11,30 @@ import {
   deleteRecipe,
   type Recipe,
 } from '@/apis/recipeApi';
+import api from '@/lib/axios';
+
+interface Ingredient {
+  userFoodId: string;
+  name: string;
+  imageUrl?: string;
+  amount: number;
+  expireDate: string;
+  unit: string;
+}
+
+interface IngredientResponse {
+  success: boolean;
+  message: string | null;
+  data: Ingredient[];
+}
 
 interface RecipeEditModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDelete: (recipeId: string) => void;
-  onStartCooking: (updatedRecipe: Recipe) => void; // ← Recipe 그대로 전달
+  onStartCooking: (updatedRecipe: Recipe) => void;
   onSave: (updatedRecipe: Recipe) => void;
-  recipe: Recipe; // ← 통일
+  recipe: Recipe;
   skipEnterAnimation?: boolean;
 }
 
@@ -34,7 +50,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
   const [editedName, setEditedName] = useState(recipe.name);
   const [editedInstructions, setEditedInstructions] = useState(
     (recipe.instructions ?? []).join('\n'),
@@ -42,27 +57,66 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
   const [editedIngredients, setEditedIngredients] = useState(
     recipe.ingredients,
   );
+  const [inventory, setInventory] = useState<Ingredient[]>([]);
+  const [insufficientList, setInsufficientList] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchInventory = async () => {
+      try {
+        const res = await api.get<IngredientResponse>('/ingredients');
+        if (res.data.success && Array.isArray(res.data.data)) {
+          setInventory(res.data.data);
+        } else {
+          setInventory([]);
+        }
+      } catch {
+        setInventory([]);
+      }
+    };
+    fetchInventory();
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!inventory.length || !editedIngredients.length) return;
+    const normalize = (name: string) =>
+      name
+        ?.trim()
+        .toLowerCase()
+        .replace(/\([^)]*\)/g, '')
+        .replace(/\s+/g, '')
+        .normalize('NFC');
+    const insuff: string[] = [];
+    editedIngredients.forEach((r) => {
+      const inv = inventory.find(
+        (i) => normalize(i.name) === normalize(r.name),
+      );
+      const requiredAmount =
+        typeof r.amount === 'string'
+          ? Number(r.amount.replace(/[^0-9.]/g, '')) || 0
+          : Number(r.amount) || 0;
+      const owned = inv?.amount || 0;
+      if (!inv || owned < requiredAmount) insuff.push(r.name);
+    });
+    setInsufficientList(insuff);
+  }, [inventory, editedIngredients]);
 
   useEffect(() => {
     if (!isOpen || !recipe.id) return;
-
-    //  이미 부모(RecipePage)에서 최신 데이터가 있으면 서버 요청 생략
     if (recipe.ingredients?.length && recipe.instructions?.length) {
       setEditedName(recipe.name);
       setEditedInstructions((recipe.instructions ?? []).join('\n'));
       setEditedIngredients(recipe.ingredients ?? []);
       return;
     }
-
-    // 필요한 경우에만 서버에서 상세 정보 불러오기
     (async () => {
       try {
         const full = await getRecipeDetail(recipe.id);
         setEditedName(full.name);
         setEditedInstructions((full.instructions ?? []).join('\n'));
         setEditedIngredients(full.ingredients ?? []);
-      } catch (e) {
-        console.error('❌ 레시피 상세 불러오기 실패:', e);
+      } catch {
+        return;
       }
     })();
   }, [isOpen, recipe]);
@@ -75,18 +129,16 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     }, 250);
   };
 
-  // 재료차감 시작: 최신 edited 값으로 Recipe 만들어서 전달
   const handleStartSubtract = () => {
     onStartSubtract({
       ...recipe,
       name: editedName,
       image: recipe.image,
       instructions: editedInstructions.split('\n'),
-      ingredients: editedIngredients, // ← {name, amount}
+      ingredients: editedIngredients,
     });
   };
 
-  // 저장
   const handleSave = async () => {
     try {
       const updated: Recipe = {
@@ -96,17 +148,11 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         instructions: editedInstructions.split('\n'),
         ingredients: editedIngredients,
       };
-
       const server = await updateRecipe(recipe.id, updated);
-
-      // ✅ 부모 상태 업데이트 (RecipePage에서 setRecipes 반영됨)
       onSave(server);
-
-      // ✅ 모달 닫지 않고 수정모드만 종료
       setIsEditing(false);
-      console.log('✅ 레시피 수정 반영 완료');
-    } catch (e) {
-      console.error('❌ 레시피 수정 실패:', e);
+    } catch {
+      return;
     }
   };
 
@@ -117,11 +163,9 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         onDelete(recipe.id);
         setIsDeleteConfirmOpen(false);
         handleAnimatedClose();
-      } else {
-        console.error('레시피 삭제 실패: 서버 응답 실패');
       }
-    } catch (e) {
-      console.error('레시피 삭제 에러:', e);
+    } catch {
+      return;
     }
   };
 
@@ -172,7 +216,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', stiffness: 240, damping: 22 }}
             >
-              {/* 헤더 */}
               <div className="p-5 flex justify-between items-center">
                 <h2 className="text-neutral-800 text-xl font-normal">
                   레시피 확인
@@ -197,9 +240,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                 </div>
               </div>
 
-              {/* 내용 */}
               <div className="p-6 pt-0 flex flex-col overflow-y-auto gap-4 custom-scrollbar">
-                {/* 이미지 */}
                 <div className="flex flex-col items-start gap-2.5">
                   <div className="w-40 h-36 relative rounded-xl outline-1 outline-stone-300 overflow-hidden">
                     <img
@@ -208,12 +249,17 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <p className="text-amber-500 text-sm font-normal">
-                    만들 수 있어요!
-                  </p>
+                  {insufficientList.length > 0 ? (
+                    <p className="text-red-500 text-sm font-normal">
+                      재료가 부족해요 ({insufficientList.join(', ')})
+                    </p>
+                  ) : (
+                    <p className="text-amber-500 text-sm font-normal">
+                      만들 수 있어요!
+                    </p>
+                  )}
                 </div>
 
-                {/* 요리명 */}
                 <div className="w-full flex flex-col gap-2.5">
                   <label className="text-neutral-400 text-xs font-normal">
                     요리명
@@ -236,42 +282,55 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                   )}
                 </div>
 
-                {/* 필요한 재료 */}
                 <div className="w-full flex flex-col gap-2.5">
                   <label className="text-neutral-400 text-xs font-normal">
                     필요한 재료
                   </label>
                   <div className="w-full min-h-[80px] p-3 bg-white rounded-lg outline outline-1 outline-stone-300 transition-colors outline-offset-[-1px] focus-within:outline-amber-500 flex flex-col gap-3">
-                    {editedIngredients.map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="flex-1">
-                          <IngredientItem
-                            name={item.name}
-                            amount={item.amount}
-                            isEditable={isEditing}
-                            onNameChange={(v) =>
-                              handleIngredientChange(index, 'name', v)
-                            }
-                            onQuantityChange={(v) =>
-                              handleIngredientChange(index, 'amount', v)
-                            }
-                          />
-                        </div>
-                        {isEditing && (
-                          <button
-                            onClick={() => handleRemoveIngredient(index)}
-                            className="p-2 hover:bg-gray-100 rounded-full transition"
-                          >
-                            <img
-                              src="/src/assets/delete.svg"
-                              alt="삭제"
-                              className="w-5 h-5 opacity-70 hover:opacity-100"
+                    {editedIngredients.map((item, index) => {
+                      const isInsufficient = insufficientList.includes(
+                        item.name,
+                      );
+                      return (
+                        <div
+                          key={index}
+                          className={`flex items-center gap-2 ${
+                            isInsufficient ? 'opacity-70' : ''
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <IngredientItem
+                              name={item.name}
+                              amount={item.amount}
+                              isEditable={isEditing}
+                              onNameChange={(v) =>
+                                handleIngredientChange(index, 'name', v)
+                              }
+                              onQuantityChange={(v) =>
+                                handleIngredientChange(index, 'amount', v)
+                              }
                             />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-
+                          </div>
+                          {isInsufficient && !isEditing && (
+                            <span className="text-xs text-red-500 font-medium">
+                              부족
+                            </span>
+                          )}
+                          {isEditing && (
+                            <button
+                              onClick={() => handleRemoveIngredient(index)}
+                              className="p-2 hover:bg-gray-100 rounded-full transition"
+                            >
+                              <img
+                                src="/src/assets/delete.svg"
+                                alt="삭제"
+                                className="w-5 h-5 opacity-70 hover:opacity-100"
+                              />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                     {isEditing && (
                       <button
                         onClick={handleAddIngredient}
@@ -283,7 +342,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                   </div>
                 </div>
 
-                {/* 만드는 순서 */}
                 <div className="w-full flex flex-col gap-2.5">
                   <label className="text-neutral-400 text-xs font-normal">
                     만드는 순서
@@ -306,7 +364,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                 </div>
               </div>
 
-              {/* 하단 버튼 */}
               <div className="p-4 flex justify-between gap-3">
                 {isEditing ? (
                   <>
@@ -333,7 +390,6 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
         )}
       </AnimatePresence>
 
-      {/* 삭제 확인 모달 */}
       {isDeleteConfirmOpen && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
           <div className="bg-white rounded-[9.6px] inline-flex p-6 w-72 flex-col items-center gap-7">
