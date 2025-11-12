@@ -1,4 +1,3 @@
-// src/components/common/IngredientEditItem.tsx
 import React, { useState } from 'react';
 import { IngredientEditData } from './IngredientEditList';
 
@@ -26,6 +25,14 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
 }) => {
   const [isUnitOpen, setIsUnitOpen] = useState(false);
 
+  /** ✅ 이미지 렌더링 안전 처리 */
+  const getImageSrc = (image: string) => {
+    if (!image) return 'https://placehold.co/245x163';
+    if (image.startsWith('http')) return image;
+    if (image.startsWith('data:image')) return image;
+    return `data:image/png;base64,${image}`;
+  };
+
   const handleChange = (field: keyof IngredientEditData, value: string) => {
     if (field === 'quantity') {
       const numericValue = value.replace(/[^0-9]/g, '');
@@ -45,11 +52,16 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
       className="w-full h-28 flex bg-white rounded-lg outline outline-[0.51px] outline-stone-300 pl-[9px] pt-[7px] pb-[11px]"
       style={{ outlineOffset: '-0.51px' }}
     >
+      {/* ✅ 이미지 영역 */}
       <div
-        className="w-24 h-24 rounded overflow-hidden flex-shrink-0 mr-[5.58%] cursor-pointer"
+        className="w-24 h-24 rounded overflow-hidden flex-shrink-0 mr-[5.58%] cursor-pointer bg-gray-100"
         onClick={() => onOpenCamera(id)}
       >
-        <img className="w-full h-full object-cover" src={image} alt={name} />
+        <img
+          className="w-full h-full object-cover"
+          src={getImageSrc(image)}
+          alt={name || 'ingredient'}
+        />
       </div>
 
       {/* 우측 입력 필드 */}
@@ -100,7 +112,6 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
           <div className="flex flex-col gap-[2px] items-start flex-1 w-0 mr-[2.09%] relative">
             <div className="text-zinc-500 text-[9.27px] font-light">단위</div>
 
-            {/* 선택 박스 */}
             <button
               type="button"
               onClick={() => setIsUnitOpen((prev) => !prev)}
@@ -109,7 +120,6 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
               {unit || '단위 선택'}
             </button>
 
-            {/* 드롭다운 메뉴 */}
             {isUnitOpen && (
               <ul className="absolute left-0 top-full mt-[2px] w-full bg-white border border-stone-300 rounded shadow">
                 {UNIT_OPTIONS.map((opt) => (

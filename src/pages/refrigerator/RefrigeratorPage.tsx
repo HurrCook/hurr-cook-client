@@ -64,7 +64,7 @@ export default function RefrigeratorPage() {
   };
   const tools = Object.keys(toolMap);
 
-  /** 재료 불러오기 */
+  // 재료 불러오기
   const fetchIngredients = useCallback(async () => {
     setLoading(true);
     try {
@@ -88,7 +88,7 @@ export default function RefrigeratorPage() {
     fetchIngredients();
   }, [fetchIngredients]);
 
-  /** 새로고침 상태 감지 */
+  // 새로고침 상태 감지
   useEffect(() => {
     if (location?.state?.refresh) {
       fetchIngredients();
@@ -96,22 +96,20 @@ export default function RefrigeratorPage() {
     }
   }, [location?.state?.refresh, fetchIngredients]);
 
-  /** 도구 목록 불러오기 */
+  // 도구 목록 불러오기
   const fetchTools = useCallback(async () => {
     setToolLoading(true);
     try {
       const res = await api.get('/cookwares');
       if (res.data.success && res.data.data) {
         const activeTools = Object.entries(res.data.data)
-          .filter(([, value]) => Boolean(value))
+          .filter(([, value]) => value)
           .map(
             ([key]) =>
               Object.keys(toolMap).find((k) => toolMap[k] === key) || '',
           )
           .filter((v) => v !== '');
         setSelectedTools(activeTools);
-      } else {
-        setSelectedTools([]);
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
@@ -121,13 +119,13 @@ export default function RefrigeratorPage() {
     } finally {
       setToolLoading(false);
     }
-  }, [toolMap]);
+  }, []);
 
   useEffect(() => {
     fetchTools();
   }, [fetchTools]);
 
-  /** 도구 선택 토글 */
+  // 도구 선택 토글
   const handleToolClick = async (toolName: string) => {
     const updatedTools = selectedTools.includes(toolName)
       ? selectedTools.filter((t) => t !== toolName)
@@ -155,7 +153,7 @@ export default function RefrigeratorPage() {
     }
   };
 
-  /** 재료 클릭 시 상세 모달 열기 */
+  // 재료 클릭 시 상세 모달 열기
   const handleIngredientClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>, id: string) => {
       e.stopPropagation();
@@ -166,7 +164,6 @@ export default function RefrigeratorPage() {
     [isModalOpen],
   );
 
-  /** 상세 모달 닫기 */
   const handleCloseModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedIngredientId(null);

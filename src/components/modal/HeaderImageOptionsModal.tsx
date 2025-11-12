@@ -1,4 +1,3 @@
-// src/components/modal/HeaderImageOptionsModal.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -31,14 +30,10 @@ export default function HeaderImageOptionsModal({
       const reader = new FileReader();
       reader.onload = () => {
         const result = reader.result as string;
-        const base64 = result.startsWith('data:')
-          ? result.split(',')[1]
-          : result;
-        navigate('/loading', { state: { base64_images: [base64] } });
+        // ✅ prefix 제거하지 않고 그대로 전달
+        navigate('/loading', { state: { base64_images: [result] } });
       };
-      reader.onerror = () => {
-        navigate('/fail');
-      };
+      reader.onerror = () => navigate('/fail');
       reader.readAsDataURL(file);
     };
 
@@ -55,7 +50,6 @@ export default function HeaderImageOptionsModal({
         className="w-[93%] mb-[8vh] flex flex-col gap-3"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 촬영 / 선택 버튼 */}
         <div className="flex flex-col bg-white rounded-xl overflow-hidden shadow-md">
           <button
             type="button"
@@ -76,7 +70,6 @@ export default function HeaderImageOptionsModal({
           </button>
         </div>
 
-        {/* 취소 버튼 */}
         <button
           type="button"
           className="w-full bg-white rounded-xl py-4 text-sky-500 text-lg font-medium font-[Pretendard] shadow-sm active:bg-gray-50"

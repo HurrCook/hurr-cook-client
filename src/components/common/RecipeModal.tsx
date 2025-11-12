@@ -1,8 +1,10 @@
+// src/components/common/RecipeModal.tsx
 import React, { useState, useEffect } from 'react';
 import Button from '@/components/common/Button';
 import IngredientItem from '@/pages/recipe/components/IngredientItem';
 import IngredientUsedBanner from '@/components/chat/IngredientUsedBanner';
 import api from '@/lib/axios';
+import DefaultFoodImage from '@/assets/FoodImage.svg';
 
 interface Ingredient {
   name: string;
@@ -21,11 +23,11 @@ interface RecipeModalProps {
   };
 }
 
-const RecipeModal: React.FC<RecipeModalProps> = ({
+export default function RecipeModal({
   isOpen,
   onClose,
   recipe,
-}) => {
+}: RecipeModalProps) {
   const [loading, setLoading] = useState(false);
   const [userIngredients, setUserIngredients] = useState<
     {
@@ -40,9 +42,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
   const [showUsedBanner, setShowUsedBanner] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      fetchUserIngredients();
-    }
+    if (isOpen) void fetchUserIngredients();
   }, [isOpen]);
 
   const fetchUserIngredients = async () => {
@@ -52,11 +52,6 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
         const ingredients = res.data.data;
         setUserIngredients(ingredients);
         evaluateIngredientStatus(ingredients);
-      } else {
-        console.error(
-          '[RecipeModal] GET /ingredients invalid response:',
-          res.data,
-        );
       }
     } catch (err) {
       console.error('[RecipeModal] GET /ingredients error:', err);
@@ -72,10 +67,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
       recipeIngredientNames.includes(i.name.trim()),
     );
 
-    const hasExpired = matched.some((i) => {
-      const expire = new Date(i.expireDate);
-      return expire < today;
-    });
+    const hasExpired = matched.some((i) => new Date(i.expireDate) < today);
 
     if (hasExpired) {
       setStatusMessage('재료 유통기한이 지났어요..');
@@ -102,18 +94,12 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
             useAmount: Number(recipeItem.quantity) || 1,
           };
         })
-        .filter(Boolean);
+        .filter((it): it is { userFoodId: string; useAmount: number } => !!it);
 
       const payload = { ingredientUseList };
 
-      console.log('[RecipeModal] PUT /ingredients payload:', payload);
-      const res = await api.put('/ingredients', payload);
-      console.log('[RecipeModal] PUT /ingredients response:', res.data);
-
-      // ✅ 모달 즉시 닫기
+      await api.put('/ingredients', payload);
       onClose();
-
-      // ✅ 배너 표시
       setShowUsedBanner(true);
       setTimeout(() => setShowUsedBanner(false), 3000);
     } catch (error) {
@@ -139,7 +125,7 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
             <div className="flex flex-col items-start gap-2.5">
               <div className="w-40 h-36 relative rounded-xl outline-1 outline-stone-300 overflow-hidden">
                 <img
-                  src={recipe.image}
+                  src={DefaultFoodImage} // ✅ 무조건 기본 이미지 사용
                   alt={recipe.name}
                   className="w-full h-full object-cover cursor-default select-none opacity-90"
                   draggable={false}
@@ -212,6 +198,4 @@ const RecipeModal: React.FC<RecipeModalProps> = ({
       />
     </>
   );
-};
-
-export default RecipeModal;
+}

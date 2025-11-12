@@ -11,6 +11,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [statusMessage, setStatusMessage] = useState('');
 
   // 초기 사용자 설정 불러오기
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   // 저장 요청
   const handleSubmit = async () => {
     if (!inputValue.trim()) {
-      alert('내용을 입력해주세요.');
+      setStatusMessage('내용을 입력해주세요.');
       return;
     }
 
@@ -45,17 +46,18 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
       });
 
       if (res.data.success) {
-        alert('개인 맞춤 설정이 성공적으로 저장되었습니다.');
-        onClose();
+        console.log('[POST /users] 저장 성공:', res.data);
+        setStatusMessage('저장되었습니다.');
       } else {
-        alert(res.data.message || '저장에 실패했습니다.');
+        setStatusMessage(res.data.message || '저장에 실패했습니다.');
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
       if (err.response) console.error('[POST /users 오류]', err.response.data);
-      alert('서버 요청 중 오류가 발생했습니다.');
+      setStatusMessage('서버 요청 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
+      onClose(); // ✅ 저장 완료 후 모달 자동 닫기
     }
   };
 
@@ -93,8 +95,18 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
           className="mt-5 w-full h-[460px] border border-[#BEBEBE] rounded-xl p-3 resize-none focus:outline-none text-[15px] text-[#313131] leading-relaxed"
           placeholder="예: 매운 음식을 좋아하지 않아요. 단백질 위주로 추천해주세요."
           value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          onChange={(e) => {
+            setInputValue(e.target.value);
+            setStatusMessage('');
+          }}
         />
+
+        {/* 상태 메시지 */}
+        {statusMessage && (
+          <p className="mt-3 text-center text-[13px] text-[#888888] font-pretendard">
+            {statusMessage}
+          </p>
+        )}
 
         {/* 하단 버튼 영역 */}
         <div className="absolute bottom-0 left-0 w-full flex justify-between px-6 py-6 bg-gradient-to-t from-white via-white/90 to-transparent">

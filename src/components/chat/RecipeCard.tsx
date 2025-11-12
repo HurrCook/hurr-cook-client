@@ -23,7 +23,6 @@ interface RecipePayload {
 }
 
 interface RecipeCardProps {
-  imageUrl?: string;
   title: string;
   ingredients: string;
   steps: string;
@@ -31,7 +30,6 @@ interface RecipeCardProps {
 }
 
 export default function RecipeCard({
-  imageUrl,
   title,
   ingredients,
   steps,
@@ -44,7 +42,6 @@ export default function RecipeCard({
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  // 재료 문자열을 Ingredient 객체로 변환
   const parseIngredientItem = (item: string): Ingredient => {
     const trimmed = item.trim();
     if (!trimmed) return { name: '', amount: 1, unit: 'EA' };
@@ -76,7 +73,7 @@ export default function RecipeCard({
 
       const payload: RecipePayload = {
         title,
-        image: imageUrl || DefaultFoodImage,
+        image: DefaultFoodImage, // ✅ 무조건 기본 이미지
         ingredients: ingArray,
         steps: steps
           .split('\n')
@@ -127,7 +124,7 @@ export default function RecipeCard({
             }}
           >
             <img
-              src={imageUrl || DefaultFoodImage}
+              src={DefaultFoodImage} // ✅ 기본 이미지로 고정
               alt={title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -242,7 +239,7 @@ export default function RecipeCard({
           recipe={{
             id: Date.now(),
             name: title,
-            image: imageUrl || DefaultFoodImage,
+            image: DefaultFoodImage, // ✅ 모달에서도 기본 이미지로 고정
             ingredients: ingredients.split(',').map((item) => {
               const parsed = parseIngredientItem(item);
               return {
