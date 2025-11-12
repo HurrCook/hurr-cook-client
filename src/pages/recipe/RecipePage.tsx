@@ -6,8 +6,8 @@ import SubtractModal from './components/SubtractModal';
 import { motion } from 'framer-motion';
 
 export default function RecipePage() {
+  // 최초 localStorage에서 복원
   const [recipes, setRecipes] = useState<Recipe[]>(() => {
-    // localStorage에서 복원
     const saved = localStorage.getItem('recipes');
     return saved ? JSON.parse(saved) : [];
   });
@@ -20,16 +20,16 @@ export default function RecipePage() {
   const [skipRecipeEnterAnimation, setSkipRecipeEnterAnimation] =
     useState(false);
 
-  // 최초 렌더 시 API 호출 (localStorage 비어 있을 때만)
+  // 페이지 진입 시: localStorage → 화면 먼저 로드 후, 서버 fetch는 백그라운드로 갱신
   useEffect(() => {
-    if (recipes.length > 0) return;
-
     const fetchRecipes = async () => {
       try {
-        setLoading(true);
         const data = await getRecipeList();
-        setRecipes(data);
-        localStorage.setItem('recipes', JSON.stringify(data));
+        // 서버 데이터가 비어 있지 않으면 localStorage 업데이트
+        if (data && data.length > 0) {
+          setRecipes(data);
+          localStorage.setItem('recipes', JSON.stringify(data));
+        }
       } catch (err) {
         console.error('❌ 레시피 불러오기 실패:', err);
         setError(true);
@@ -37,26 +37,28 @@ export default function RecipePage() {
         setLoading(false);
       }
     };
-
     fetchRecipes();
   }, []);
 
-  // localStorage 동기화
+  //recipes 상태 바뀔 때마다 localStorage 동기화
   useEffect(() => {
     localStorage.setItem('recipes', JSON.stringify(recipes));
   }, [recipes]);
 
+  // 카드 클릭 시 모달 열기
   const handleCardClick = (recipe: Recipe) => {
     setSelectedRecipe(recipe);
     setSkipRecipeEnterAnimation(false);
     setIsModalOpen(true);
   };
 
+  //모달 닫기
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedRecipe(null);
   };
 
+  // 재료 차감 시작
   const handleStartSubtract = (updatedRecipe: Recipe) => {
     setSelectedRecipe(updatedRecipe);
     setSkipRecipeEnterAnimation(false);
@@ -64,23 +66,40 @@ export default function RecipePage() {
     setSubtractModalOpen(true);
   };
 
+  // 뒤로 가기
   const handleBackToRecipe = () => {
     setSkipRecipeEnterAnimation(true);
     setSubtractModalOpen(false);
     setIsModalOpen(true);
   };
 
+  // 저장 (신규 + 수정 모두)
   const handleSaveRecipe = (updatedRecipe: Recipe) => {
     if (!updatedRecipe || !updatedRecipe.id) return;
 
-    // 로컬에서 즉시 반영하고 localStorage 동기화됨
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === updatedRecipe.id ? updatedRecipe : r)),
-    );
+    setRecipes((prev) => {
+      const exists = prev.some((r) => r.id === updatedRecipe.id);
+      const updatedList = exists
+        ? prev.map((r) => (r.id === updatedRecipe.id ? updatedRecipe : r))
+        : [...prev, updatedRecipe]; // 새 레시피 추가
+      localStorage.setItem('recipes', JSON.stringify(updatedList));
+      return updatedList;
+    });
+
     setSelectedRecipe(updatedRecipe);
-    console.log('수정 반영 완료 (fetch 없이)');
+    console.log('✅ 레시피 저장됨 (localStorage 즉시 반영)');
   };
 
+  // 삭제
+  const handleDeleteRecipe = (id: string) => {
+    setRecipes((prev) => {
+      const updatedList = prev.filter((r) => r.id !== id);
+      localStorage.setItem('recipes', JSON.stringify(updatedList));
+      return updatedList;
+    });
+  };
+
+  // 종료
   const handleEndFlow = () => {
     setSubtractModalOpen(false);
     setIsModalOpen(false);
@@ -116,6 +135,7 @@ export default function RecipePage() {
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
+      {/* 목록 */}
       <div className="w-full max-w-[700px] grid grid-cols-2 md:grid-cols-3 gap-5">
         {recipes.map((recipe, index) => (
           <motion.div
@@ -133,13 +153,12 @@ export default function RecipePage() {
         ))}
       </div>
 
+      {/* 수정 모달 */}
       {isModalOpen && selectedRecipe && (
         <RecipeEditModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
-          onDelete={(id) => {
-            setRecipes((prev) => prev.filter((r) => r.id !== id));
-          }}
+          onDelete={handleDeleteRecipe}
           recipe={selectedRecipe}
           onStartCooking={handleStartSubtract}
           onSave={handleSaveRecipe}
@@ -147,6 +166,7 @@ export default function RecipePage() {
         />
       )}
 
+      {/* 차감 모달 */}
       {subtractModalOpen && selectedRecipe && (
         <SubtractModal
           isOpen={subtractModalOpen}
