@@ -6,8 +6,8 @@ type ChatSuggestionsProps = {
 
 export default function ChatSuggestions({ onSelect }: ChatSuggestionsProps) {
   return (
-    <div className="fixed bottom-12 left-0 right-0 bg-white pb-2 w-full">
-      <div className="flex gap-3 overflow-x-auto px-4 w-full scroll-hide">
+    <div className="fixed bottom-12 left-0 right-0 pb-2 w-full pointer-events-none">
+      <div className="flex gap-3 overflow-x-auto px-4 w-full scroll-hide pointer-events-auto">
         <style>
           {`
             .scroll-hide::-webkit-scrollbar {

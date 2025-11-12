@@ -104,14 +104,14 @@ const IngredientEditItem: React.FC<IngredientEditItemProps> = ({
             <button
               type="button"
               onClick={() => setIsUnitOpen((prev) => !prev)}
-              className="w-full h-7 bg-white rounded border-[0.46px] border-stone-300 px-2 text-zinc-800 text-xs font-light text-left relative z-10"
+              className="w-full h-7 bg-white rounded border-[0.46px] border-stone-300 px-2 text-zinc-800 text-xs font-light text-left relative"
             >
               {unit || '단위 선택'}
             </button>
 
             {/* 드롭다운 메뉴 */}
             {isUnitOpen && (
-              <ul className="absolute left-0 top-full mt-[2px] w-full bg-white border border-stone-300 rounded shadow z-20">
+              <ul className="absolute left-0 top-full mt-[2px] w-full bg-white border border-stone-300 rounded shadow">
                 {UNIT_OPTIONS.map((opt) => (
                   <li
                     key={opt}

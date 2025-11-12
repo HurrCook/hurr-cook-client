@@ -1,71 +1,90 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import ChatIcon from '@/assets/채팅.svg';
+import HurrChat from '@/assets/HurrChat.png';
 import ChatMessages from '@/components/chat/ChatMessages';
 import ChatEmptyCard from '@/components/chat/ChatEmptyCard';
 import ChatSuggestions from '@/components/chat/ChatSuggestions';
+import RecipeSavedBanner from '@/components/chat/RecipeSavedBanner';
+import IngredientUsedBanner from '@/components/chat/IngredientUsedBanner';
 import api from '@/lib/axios';
 
-interface RecipeData {
-  '레시피 명': string;
-  '레시피 유형': string;
-  카테고리: string;
-  '필요 재료': { '재료 명': string; 양: number | string; 단위: string }[];
-  '레시피 단계': string[];
-  '조리 시간': string;
-  추천점수: string;
-}
-
-interface Message {
-  id: number;
-  type: 'me' | 'recipe';
-  text?: string;
-  data?: RecipeData;
-}
+const RecipeSkeletonCard = () => (
+  <motion.div
+    initial={{ opacity: 0, y: 25 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.4 }}
+    className="flex items-start gap-2 mt-4"
+  >
+    <img src={HurrChat} alt="후르" className="w-8 h-8 rounded-full" />
+    <div className="flex flex-col gap-2">
+      <p className="text-gray-500 text-sm font-[Pretendard] mt-2">
+        후르가 맛있는 레시피를 준비하고 있어요!
+      </p>
+      <div className="w-74 h-60 bg-gray-200 rounded-2xl animate-pulse" />
+    </div>
+  </motion.div>
+);
 
 export default function ChatbotPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showRecipeSkeleton, setShowRecipeSkeleton] = useState(false);
+  const [showBanner, setShowBanner] = useState(false);
+  const [showUsedBanner, setShowUsedBanner] = useState(false);
+  const [completionText, setCompletionText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const completionMessages = [
+    '나도 한입만 주라 ㅠㅠ',
+    '이 맛, 벌써부터 기대되지 않아?',
+    '누가 봐도 오늘의 셰프는 너야!',
+    '후르가 감탄 중... 진짜 맛있겠다!',
+    '냉장고 재료가 이렇게 변신할 줄이야!',
+    '사진 찍어 자랑해도 되겠어.',
+    '따라하고 싶게 만드는 레시피.',
+    '오늘 저녁, 완벽한 한 끼 완성!',
+  ];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
+  }, [messages, showRecipeSkeleton]);
 
-  const handleSend = async (msg?: string): Promise<void> => {
+  const handleSend = async (msg?: string) => {
     const text = msg ?? input.trim();
     if (!text) return;
-
-    const userMsg: Message = { id: messages.length + 1, type: 'me', text };
+    const userMsg = { id: messages.length + 1, type: 'me', text };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setLoading(true);
+    setCompletionText('');
+
+    const skeletonTimer = setTimeout(() => setShowRecipeSkeleton(true), 800);
 
     try {
       const res = await api.post('/chats', { 프롬프트: text });
-      console.log('Response data:', res.data);
-
-      const { success, data, message } = res.data;
+      const { success, data } = res.data;
+      clearTimeout(skeletonTimer);
+      setShowRecipeSkeleton(false);
 
       if (success && data) {
-        const recipeMsg: Message = {
+        const recipeMsg = {
           id: messages.length + 2,
           type: 'recipe',
           data,
         };
         setMessages((prev) => [...prev, recipeMsg]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: messages.length + 2,
-            type: 'me',
-            text: message || '응답 형식이 올바르지 않습니다.',
-          },
-        ]);
+
+        const randomMessage =
+          completionMessages[
+            Math.floor(Math.random() * completionMessages.length)
+          ];
+        setCompletionText(randomMessage);
       }
-    } catch (err) {
-      console.error('API Error:', err);
+    } catch {
+      clearTimeout(skeletonTimer);
+      setShowRecipeSkeleton(false);
       setMessages((prev) => [
         ...prev,
         {
@@ -79,21 +98,60 @@ export default function ChatbotPage() {
     }
   };
 
+  const handleRecipeSaved = () => {
+    setShowBanner(true);
+    setTimeout(() => setShowBanner(false), 3000);
+  };
+
+  const handleIngredientsUsed = () => {
+    setShowUsedBanner(true);
+    setTimeout(() => setShowUsedBanner(false), 3000);
+  };
+
   return (
     <div className="relative w-full h-screen bg-white flex flex-col">
       <main className="flex-1 px-4 pb-40 overflow-y-auto">
         {messages.length === 0 && !loading ? (
           <ChatEmptyCard />
         ) : (
-          <ChatMessages
-            messages={messages}
-            loading={loading}
-            messagesEndRef={messagesEndRef}
-          />
+          <>
+            <ChatMessages
+              messages={messages}
+              loading={false}
+              messagesEndRef={messagesEndRef}
+              onRecipeSaved={handleRecipeSaved}
+              onIngredientsUsed={handleIngredientsUsed}
+            />
+
+            {showRecipeSkeleton && <RecipeSkeletonCard />}
+
+            {completionText && (
+              <motion.p
+                key={completionText}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="text-[#595959] text-[13px] font-[Pretendard] ml-10 mt-2"
+              >
+                {completionText}
+              </motion.p>
+            )}
+          </>
         )}
       </main>
 
       <ChatSuggestions onSelect={handleSend} />
+
+      <RecipeSavedBanner
+        isVisible={showBanner}
+        onHide={() => setShowBanner(false)}
+        onClick={() => (window.location.href = '/recipe')}
+      />
+
+      <IngredientUsedBanner
+        isVisible={showUsedBanner}
+        onHide={() => setShowUsedBanner(false)}
+      />
 
       <footer className="fixed bottom-0 left-0 right-0 px-4 py-2 bg-white">
         <div className="relative w-full">

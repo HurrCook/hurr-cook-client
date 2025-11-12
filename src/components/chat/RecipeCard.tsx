@@ -1,6 +1,8 @@
+// src/components/chat/RecipeCard.tsx
 import React, { useState } from 'react';
 import LikeOff from '@/assets/좋아요1.svg';
 import LikeOn from '@/assets/좋아요2.svg';
+import DefaultFoodImage from '@/assets/FoodImage.svg';
 import RecipeModal from '@/components/common/RecipeModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
@@ -21,10 +23,11 @@ interface RecipePayload {
 }
 
 interface RecipeCardProps {
-  imageUrl: string;
+  imageUrl?: string;
   title: string;
   ingredients: string;
   steps: string;
+  onSaved?: () => void;
 }
 
 export default function RecipeCard({
@@ -32,6 +35,7 @@ export default function RecipeCard({
   title,
   ingredients,
   steps,
+  onSaved,
 }: RecipeCardProps) {
   const [liked, setLiked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,6 +44,7 @@ export default function RecipeCard({
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
+  // 재료 문자열을 Ingredient 객체로 변환
   const parseIngredientItem = (item: string): Ingredient => {
     const trimmed = item.trim();
     if (!trimmed) return { name: '', amount: 1, unit: 'EA' };
@@ -51,8 +56,8 @@ export default function RecipeCard({
     const amountMatch = last.match(/[\d.]+/);
     const amount = amountMatch ? Number(amountMatch[0]) : 1;
     const unitRaw = last.replace(/[\d.]/g, '').trim();
-
     const unit = unitRaw && unitRaw.length > 0 ? unitRaw : 'EA';
+
     return { name, amount, unit, userFoodId: `${name}_${Date.now()}` };
   };
 
@@ -71,7 +76,7 @@ export default function RecipeCard({
 
       const payload: RecipePayload = {
         title,
-        image: imageUrl,
+        image: imageUrl || DefaultFoodImage,
         ingredients: ingArray,
         steps: steps
           .split('\n')
@@ -80,17 +85,13 @@ export default function RecipeCard({
         time: '15분',
       };
 
-      const res = await api.post('/recipes', payload);
-      console.log('[RecipeCard] POST /recipes success:', res.data);
+      await api.post('/recipes', payload);
+      onSaved?.();
     } catch (error: unknown) {
       const err = error as AxiosError;
       console.error('[RecipeCard] API 오류:', err.message);
-      if (err.response) {
+      if (err.response)
         console.error('[RecipeCard] 응답 본문:', err.response.data);
-        if (err.response.status === 401) {
-          console.warn('인증 실패: 다시 로그인 필요');
-        }
-      }
     } finally {
       setSaving(false);
     }
@@ -107,13 +108,13 @@ export default function RecipeCard({
           paddingBottom: 10,
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'flex-start',
           gap: 22,
           boxShadow: '0 1px 6px rgba(0,0,0,0.12)',
           maxHeight: 600,
           overflow: 'hidden',
         }}
       >
+        {/* 이미지 + 제목 + 좋아요 */}
         <div style={{ display: 'flex', gap: 12 }}>
           <div
             style={{
@@ -126,7 +127,7 @@ export default function RecipeCard({
             }}
           >
             <img
-              src={imageUrl}
+              src={imageUrl || DefaultFoodImage}
               alt={title}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
@@ -136,7 +137,6 @@ export default function RecipeCard({
             style={{
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'flex-start',
               flex: 1,
               gap: 18,
             }}
@@ -156,7 +156,6 @@ export default function RecipeCard({
                   color: '#212121',
                   maxWidth: '100px',
                   wordBreak: 'break-word',
-                  whiteSpace: 'normal',
                   lineHeight: '1.3',
                 }}
               >
@@ -193,6 +192,7 @@ export default function RecipeCard({
           </div>
         </div>
 
+        {/* 만드는 순서 */}
         <div
           style={{
             position: 'relative',
@@ -214,6 +214,7 @@ export default function RecipeCard({
           {steps}
         </div>
 
+        {/* 요리하기 버튼 */}
         <button
           onClick={handleOpenModal}
           style={{
@@ -233,6 +234,7 @@ export default function RecipeCard({
         </button>
       </div>
 
+      {/* 레시피 모달 */}
       {isModalOpen && (
         <RecipeModal
           isOpen={isModalOpen}
@@ -240,7 +242,7 @@ export default function RecipeCard({
           recipe={{
             id: Date.now(),
             name: title,
-            image: imageUrl,
+            image: imageUrl || DefaultFoodImage,
             ingredients: ingredients.split(',').map((item) => {
               const parsed = parseIngredientItem(item);
               return {
@@ -249,7 +251,10 @@ export default function RecipeCard({
                 userFoodId: parsed.userFoodId,
               };
             }),
-            instructions: steps.split('\n'),
+            instructions: steps
+              .split('\n')
+              .map((s) => s.trim())
+              .filter(Boolean),
           }}
         />
       )}

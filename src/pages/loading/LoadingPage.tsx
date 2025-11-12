@@ -1,39 +1,55 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Hurr1 from '@/assets/Hurr1.svg';
+import axiosInstance from '@/lib/axios';
 import './loading.css';
 
 export default function LoadingPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const base64Images = location.state?.base64_images || [];
 
   useEffect(() => {
-    // 스크롤 잠금
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const analyzeImage = async () => {
+      if (!base64Images || base64Images.length === 0) {
+        navigate('/fail');
+        return;
+      }
 
-    const timer = setTimeout(() => {
-      navigate('/refrigerator/photo-add');
-    }, 5000);
+      try {
+        const { data } = await axiosInstance.post('/chats/yolo', {
+          base64_images: base64Images,
+        });
 
-    return () => {
-      document.body.style.overflow = prevOverflow || '';
-      clearTimeout(timer);
+        const detected = data?.data?.ingredients ?? [];
+        const hasDetected = Array.isArray(detected) && detected.length > 0;
+
+        if (data?.success && hasDetected) {
+          navigate('/refrigerator/photo-add', {
+            state: { base64_images: base64Images, detected },
+          });
+        } else {
+          navigate('/fail');
+        }
+      } catch {
+        navigate('/fail');
+      }
     };
-  }, [navigate]);
+
+    analyzeImage();
+  }, [base64Images, navigate]);
 
   return (
     <div
       className="flex flex-col items-center justify-center min-h-screen bg-white"
       style={{ transform: 'translateY(-5rem)' }}
     >
-      {/* 상단 이미지 */}
       <img
         src={Hurr1}
         alt="후르 아이콘"
         className="w-[140px] h-[140px] mb-10"
       />
 
-      {/* 4개의 점 — 양방향으로 늘어나는 순차 애니메이션 */}
       <div className="flex items-center justify-center gap-3 mb-6 h-6">
         <span className="dot" style={{ animationDelay: '0ms' }} />
         <span className="dot" style={{ animationDelay: '150ms' }} />
@@ -41,7 +57,6 @@ export default function LoadingPage() {
         <span className="dot" style={{ animationDelay: '450ms' }} />
       </div>
 
-      {/* 텍스트 */}
       <p className="text-[#FF8800] text-center text-base font-normal font-[Pretendard] leading-relaxed">
         사진을 살펴보는 중이에요
         <br />

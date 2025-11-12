@@ -1,13 +1,83 @@
-import React from 'react';
+// src/components/header/SettingsModal.tsx
+import React, { useEffect, useState } from 'react';
+import api from '@/lib/axios';
+import { AxiosError } from 'axios';
 
-type SettingsModalProps = {
+interface SettingsModalProps {
   onClose: () => void;
-};
+}
 
 export default function SettingsModal({ onClose }: SettingsModalProps) {
+  const [inputValue, setInputValue] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // 초기 사용자 설정 불러오기
+  useEffect(() => {
+    const fetchUserPreference = async () => {
+      try {
+        const res = await api.get('/users');
+        if (res.data.success && res.data.data?.personalPreference) {
+          setInputValue(res.data.data.personalPreference);
+        }
+      } catch (error: unknown) {
+        const err = error as AxiosError;
+        if (err.response) console.error('[GET /users 오류]', err.response.data);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchUserPreference();
+  }, []);
+
+  // 저장 요청
+  const handleSubmit = async () => {
+    if (!inputValue.trim()) {
+      alert('내용을 입력해주세요.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await api.post('/users', {
+        personalPreference: inputValue.trim(),
+      });
+
+      if (res.data.success) {
+        alert('개인 맞춤 설정이 성공적으로 저장되었습니다.');
+        onClose();
+      } else {
+        alert(res.data.message || '저장에 실패했습니다.');
+      }
+    } catch (error: unknown) {
+      const err = error as AxiosError;
+      if (err.response) console.error('[POST /users 오류]', err.response.data);
+      alert('서버 요청 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (initialLoading) {
+    return (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/20">
+        <div className="bg-white rounded-2xl shadow-md px-10 py-6 text-[#555] text-sm">
+          불러오는 중...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center">
-      <div className="relative w-[394px] h-[620px] bg-white rounded-2xl shadow-lg flex flex-col p-6">
+    <div
+      className="absolute inset-0 z-50 flex items-center justify-center bg-black/20"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-[394px] h-[620px] bg-white rounded-2xl shadow-lg flex flex-col p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* 타이틀 */}
         <h2 className="text-[#212121] text-[20px] font-pretendard font-normal">
           개인 맞춤 설정
@@ -20,20 +90,27 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
 
         {/* 입력 영역 */}
         <textarea
-          className="mt-5 w-full h-[460px] border border-[#BEBEBE] rounded-xl p-3 resize-none focus:outline-none text-l"
-          placeholder="여기에 입력하세요..."
+          className="mt-5 w-full h-[460px] border border-[#BEBEBE] rounded-xl p-3 resize-none focus:outline-none text-[15px] text-[#313131] leading-relaxed"
+          placeholder="예: 매운 음식을 좋아하지 않아요. 단백질 위주로 추천해주세요."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
         />
 
         {/* 하단 버튼 영역 */}
-        <div className="absolute bottom-0 left-0 w-full h-0 mb-8 bg-gradient-to-b from-[rgba(255,255,255,0)] to-white backdrop-blur-sm flex items-center justify-between px-6">
+        <div className="absolute bottom-0 left-0 w-full flex justify-between px-6 py-6 bg-gradient-to-t from-white via-white/90 to-transparent">
           <button
             onClick={onClose}
-            className="px-10 py-1 bg-[#EDEDED] text-[#777777] text-l font-pretendard font-normal rounded-xl"
+            className="px-10 py-1 bg-[#EDEDED] text-[#777777] text-[15px] font-pretendard font-normal rounded-xl disabled:opacity-50"
+            disabled={loading}
           >
             취소
           </button>
-          <button className="px-10 py-1 bg-[#FF8800] text-white text-l font-pretendard font-normal rounded-xl">
-            적용
+          <button
+            onClick={handleSubmit}
+            className="px-10 py-1 bg-[#FF8800] text-white text-[15px] font-pretendard font-normal rounded-xl disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? '저장 중...' : '적용'}
           </button>
         </div>
       </div>
