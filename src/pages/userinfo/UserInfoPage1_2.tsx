@@ -96,15 +96,19 @@ export default function UserInfoPage1_2() {
   };
 
   /** ✅ 편집 페이지로 이동 (IngredientEditData 형태로 변환해서 전달) */
+  /** ✅ 편집 페이지로 이동 (IngredientEditData 형태로 변환해서 전달) */
   const handleNextClick = () => {
     const editPayload = ingredients.map((it) => ({
       id: it.id,
       name: it.name,
-      image: it.image, // 이미 dataURL/URL로 정규화됨
-      date: '', // 유통기한 입력은 편집 페이지에서 하도록 공백
-      quantity: String(it.quantity), // 편집 컴포넌트가 string 처리
+      image: it.image, // UI 표시용
+      imageUrl: it.image, // ✅ DB로 보낼 값(데이터 URI/URL 그대로)
+      date: '', // 유통기한은 다음 단계에서 입력
+      quantity: String(it.quantity),
       unit: it.unit,
     }));
+
+    console.log('📦 1_2 → 2로 전달:', editPayload);
     navigate('/userinfopage2', { state: { ingredients: editPayload } });
   };
 
