@@ -86,9 +86,9 @@ export default function UserInfoPage1() {
   };
 
   /** ✅ YOLO 호출: 요구 스키마 { "base64_images": ["<pure_base64>"] } */
+  /** ✅ YOLO 호출 */
   const detectOne = async (base64DataUrl: string) => {
     try {
-      // dataURL → 순수 base64
       const pureBase64 = base64DataUrl.startsWith('data:')
         ? base64DataUrl.split(',')[1]
         : base64DataUrl;
@@ -103,50 +103,32 @@ export default function UserInfoPage1() {
 
       console.log('✅ YOLO 전체 응답:', data);
 
-      const rawIngredients: unknown = data?.data?.ingredients ?? [];
+      const rawIngredients: BackendIngredient[] = data?.data?.ingredients ?? [];
 
-      if (Array.isArray(rawIngredients)) {
-        rawIngredients.forEach((item: BackendIngredient, idx: number) => {
-          const name = typeof item.name === 'string' ? item.name : '이름없음';
-          const amount =
-            typeof item.amount === 'number'
-              ? item.amount
-              : Number(item.amount) || 0;
-          const cropImage = Array.isArray(item.crop_image)
-            ? item.crop_image
-            : [];
-          console.log(
-            `📦 [${idx}] 재료명:`,
-            name,
-            '\n📏 수량:',
-            amount,
-            '\n🖼️ crop_image 배열 길이:',
-            cropImage.length,
-          );
-        });
-      }
+      const incoming: DetectedIngredient[] = rawIngredients.map((item, idx) => {
+        const name = typeof item.name === 'string' ? item.name : '재료';
+        const amount =
+          typeof item.amount === 'number'
+            ? item.amount
+            : Number(item.amount) || 1;
+        const cropImageArr = Array.isArray(item.crop_image)
+          ? item.crop_image
+          : [];
+        const firstImage = cropImageArr[0];
 
-      const incoming: DetectedIngredient[] = Array.isArray(rawIngredients)
-        ? rawIngredients.map((item: BackendIngredient, idx: number) => {
-            const name = typeof item.name === 'string' ? item.name : '재료';
-            const amount =
-              typeof item.amount === 'number'
-                ? item.amount
-                : Number(item.amount) || 1;
-            const cropImageArr = Array.isArray(item.crop_image)
-              ? item.crop_image
-              : [];
-            const firstImage = cropImageArr[0]; // base64(raw)
+        // 서버에서 바로 DB에 넣을 때 imageUrl로 사용 가능
+        const imageUrl = firstImage
+          ? `data:image/jpeg;base64,${firstImage}`
+          : undefined;
 
-            return {
-              id: `${Date.now()}_${Math.random()}_${idx}`,
-              name,
-              quantity: amount,
-              unit: 'EA',
-              image: firstImage, // 표시 시 dataURL 프리픽스 붙여서 보여줄 수 있음
-            };
-          })
-        : [];
+        return {
+          id: `${Date.now()}_${Math.random()}_${idx}`,
+          name,
+          quantity: amount,
+          unit: 'EA',
+          image: imageUrl, // ✅ 이제 image가 DB에 들어갈 imageUrl 형태
+        };
+      });
 
       setDetectedIngredients((prev) => mergeByName(prev, incoming));
     } catch (err: unknown) {
