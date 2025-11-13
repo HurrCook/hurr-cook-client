@@ -1,15 +1,14 @@
 // src/components/common/IngredientDetailModal.tsx
-
-import React, { useState, useEffect } from 'react'; // useMemo 제거
+import React, { useState, useEffect, useMemo } from 'react';
 import TrashIcon from '@/assets/쓰레기통.svg';
 import Button from '@/components/common/Button';
 import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
-// ✅ ?url 임포트로 복원 (IngredientPhotoAddPage 방식 차용)
-import DefaultGoodUrl from '@/assets/default_good.svg?url';
-import DefaultBadUrl from '@/assets/default_bad.svg?url';
+// ✅ ?raw를 사용하여 SVG 파일 내용을 문자열로 가져옵니다.
+import DefaultGoodContent from '@/assets/default_good.svg?raw';
+import DefaultBadContent from '@/assets/default_bad.svg?raw';
 
 interface IngredientDetailModalProps {
   isOpen: boolean;
@@ -25,7 +24,13 @@ interface IngredientEditData {
   imageUrl: string;
 }
 
-// ❌ svgContentToBase64 함수 제거
+// ✅ SVG XML 문자열을 Base64 Data URL로 변환하는 헬퍼 함수
+const svgContentToBase64 = (svgContent: string): string => {
+  // Base64 인코딩 시 발생하는 문제를 피하기 위해 unescape(encodeURIComponent) 사용
+  const base64 = btoa(unescape(encodeURIComponent(svgContent)));
+  // 💡 image/svg+xml MIME 타입을 사용하여 브라우저가 SVG로 정확히 해석하도록 함
+  return `data:image/svg+xml;base64,${base64}`;
+};
 
 export default function IngredientDetailModal({
   isOpen,
@@ -44,7 +49,14 @@ export default function IngredientDetailModal({
     imageUrl: '',
   });
 
-  // ❌ useMemo를 사용한 defaultGoodBase64/defaultBadBase64 변수 제거
+  // ✅ 기본 이미지를 useMemo를 사용하여 Base64 Data URL로 변환
+  const defaultGoodBase64 = useMemo(() => {
+    return svgContentToBase64(DefaultGoodContent);
+  }, []);
+
+  const defaultBadBase64 = useMemo(() => {
+    return svgContentToBase64(DefaultBadContent);
+  }, []);
 
   /** 재료 상세 데이터 불러오기 */
   useEffect(() => {
@@ -59,12 +71,10 @@ export default function IngredientDetailModal({
           const item = res.data.data;
           setEditData({
             name: item.name,
-            // 날짜 형식 통일: YYYY.MM.DD
             date: item.expireDate.split('T')[0].replace(/-/g, '.'),
             quantity: `${item.amount}${item.unit}`,
             imageUrl: item.imageUrl || '',
           });
-          // ✅ 디버그 로그: API에서 받은 이미지 URL 확인
           console.log('[API Image URL]', item.imageUrl || 'None');
         }
       } catch (error: unknown) {
@@ -98,7 +108,6 @@ export default function IngredientDetailModal({
         name: editData.name.trim(),
         amount,
         imageUrl: imageValue,
-        // YYYY.MM.DD 형식을 YYYY-MM-DD로 변경 후 ISOString 변환
         expireDate: new Date(editData.date.replace(/\./g, '-')).toISOString(),
       };
 
@@ -163,7 +172,7 @@ export default function IngredientDetailModal({
 
   if (!isOpen) return null;
 
-  // ✅ 유통기한 비교 로직 (유지)
+  // ✅ 유통기한 비교 로직
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -225,9 +234,9 @@ export default function IngredientDetailModal({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  // ✅ ?url 임포트로 가져온 변수를 사용
+                  // ✅ Base64 인코딩된 SVG 이미지를 기본 이미지로 사용
                   <img
-                    src={isExpired ? DefaultBadUrl : DefaultGoodUrl}
+                    src={isExpired ? defaultBadBase64 : defaultGoodBase64}
                     alt="기본 재료 이미지"
                     className="w-full h-full object-cover"
                   />
