@@ -118,18 +118,18 @@ export default function IngredientPhotoAddPage() {
           let expireDateIso: string;
 
           if (item.date) {
-            // YYYY.MM.DD 또는 YYYY-MM-DD를 YYYY/MM/DD로 통일하여 Date 객체 생성 시 오류 방지
-            const safeDateString = item.date.replace(/[.]/g, '/');
-            const dateObj = new Date(safeDateString);
+            // YYYY.MM.DD 또는 YYYY/MM/DD를 YYYY-MM-DD 형식으로 변환
+            const standardDateString = item.date.replace(/[./]/g, '-');
+            const dateObj = new Date(standardDateString);
 
             if (isNaN(dateObj.getTime())) {
               // ✅ Invalid Date인 경우: 오늘 날짜로 대체
               console.warn(
-                `[Save] Invalid Date detected for: ${item.name}. Using today's date.`,
+                `[Save] Invalid Date detected for: ${item.name} (${item.date}). Using today's date.`,
               );
               expireDateIso = new Date().toISOString();
             } else {
-              // ✅ 유효한 Date인 경우: ISOString으로 변환
+              // ✅ 유효한 Date인 경우: ISOString으로 변환 (백엔드 형식 충족)
               expireDateIso = dateObj.toISOString();
             }
           } else {
