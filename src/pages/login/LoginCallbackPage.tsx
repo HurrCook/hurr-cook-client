@@ -1,7 +1,6 @@
-// src/pages/login/LoginCallbackPage.tsx
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 
 type LoginResponse = {
@@ -18,15 +17,13 @@ type LoginResponse = {
 
 export default function LoginCallbackPage() {
   const navigate = useNavigate();
-  const didRunRef = useRef(false); // ✅ StrictMode로 인한 2번 실행 방지
+  const location = useLocation();
 
   const { mutate } = useMutation<LoginResponse, AxiosError, string>({
     mutationFn: async (code: string) => {
-      // ✅ 프론트 기준 /api → vercel 프록시 → 백엔드
       const url = `/api/auth/kakao/callback?code=${code}`;
       console.log('🔗 카카오 콜백 요청 URL:', url);
 
-      // 여기서는 axiosInstance(인터셉터) 쓰지 말고 생 axios 사용
       const { data } = await axios.get<LoginResponse>(url, {
         withCredentials: true,
       });
@@ -43,15 +40,13 @@ export default function LoginCallbackPage() {
 
       const { accessToken, refreshToken, firstLogin, name } = res.data;
 
-      // 토큰 저장
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userName', name);
 
-      // 새로고침 시 code로 다시 요청 안 가게 URL 정리
+      // URL 정리 (code 제거)
       window.history.replaceState({}, '', '/login/callback');
 
-      // 첫 로그인 여부에 따라 분기
       navigate(firstLogin ? '/userinfopage1' : '/chat', { replace: true });
     },
     onError: (err) => {
@@ -61,18 +56,19 @@ export default function LoginCallbackPage() {
     },
   });
 
+  // ⭐ location.search가 바뀔 때마다 실행됨
   useEffect(() => {
-    if (didRunRef.current) return;
-    didRunRef.current = true;
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
 
-    const code = new URLSearchParams(window.location.search).get('code');
-    console.log('🔹 카카오 인가 코드:', code);
+    console.log('🔹 감지된 카카오 code:', code);
     if (code) {
       mutate(code);
     } else {
       navigate('/login', { replace: true });
     }
-  }, [mutate, navigate]);
+  }, [location.search, mutate, navigate]);
+  // location.search 추가
 
   return (
     <div className="flex flex-col items-center justify-center h-screen text-center">
