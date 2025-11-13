@@ -5,7 +5,6 @@ import kakaologo from '@/assets/kakao_logo.svg';
 export default function LoginPage() {
   useEffect(() => {
     console.log('🔵 [LoginPage] 컴포넌트 마운트됨');
-    console.log('🌐 현재 페이지 URL:', window.location.href);
     console.log('📱 User Agent:', navigator.userAgent);
   }, []);
 
