@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import FooterButton from '/src/components/common/FooterButton';
-import CameraModal from '/src/components/header/CameraModal';
-import ImageOptionsModal from '/src/components/modal/ImageOptionsModal';
+import FooterButton from '@/components/common/FooterButton';
+import CameraModal from '@/components/header/CameraModal';
+import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import IngredientList from '@/components/common/IngredientList';
 import type { DetectedIngredient } from './UserInfoPage1';
 
