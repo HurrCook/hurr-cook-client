@@ -194,7 +194,7 @@ export default function RefrigeratorPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {ingredients.length > 0 ? (
                 ingredients.map((item, index) => {
-                  const isExpired = new Date(item.expireDate) < new Date();
+                  const isExpired = new Date(item.expireDate) < new Date(); // ✅ 유통기한 비교
                   let imageSrc = isExpired ? DefaultBadUrl : DefaultGoodUrl; // ✅ 기본 이미지 조건 분기
 
                   if (item.imageUrl) {
@@ -225,21 +225,22 @@ export default function RefrigeratorPage() {
                           'ko-KR',
                         )}
                         quantity={`${item.amount}${item.unit}`}
+                        expired={isExpired} // 🔥 추가
                       />
-                      <p className="text-[10px] text-blue-600 mt-1">
-                        raw: {item.expireDate}
-                        <br />
-                        parsed: {String(new Date(item.expireDate))}
-                        <br />
-                        timestamp: {new Date(item.expireDate).getTime()}
-                        <br />
-                        now: {Date.now()}
-                        <br />
-                        expired:{' '}
-                        {new Date(item.expireDate).getTime() < Date.now()
-                          ? 'YES'
-                          : 'NO'}
-                      </p>
+                      {/*<p className="text-[10px] text-blue-600 mt-1">*/}
+                      {/*  raw: {item.expireDate}*/}
+                      {/*  <br />*/}
+                      {/*  parsed: {String(new Date(item.expireDate))}*/}
+                      {/*  <br />*/}
+                      {/*  timestamp: {new Date(item.expireDate).getTime()}*/}
+                      {/*  <br />*/}
+                      {/*  now: {Date.now()}*/}
+                      {/*  <br />*/}
+                      {/*  expired:{' '}*/}
+                      {/*  {new Date(item.expireDate).getTime() < Date.now()*/}
+                      {/*    ? 'YES'*/}
+                      {/*    : 'NO'}*/}
+                      {/*</p>*/}
                     </motion.div>
                   );
                 })

@@ -5,6 +5,7 @@ interface IngredientCardProps {
   image: string;
   date: string;
   quantity: string;
+  expired: boolean; // 🔥 추가
 }
 
 const IngredientCard: React.FC<IngredientCardProps> = ({
@@ -12,10 +13,9 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
   image,
   date,
   quantity,
+  expired,
 }) => {
-  const today = new Date();
-  const parsedDate = new Date(date.replace(/\./g, '-'));
-  const isExpired = parsedDate < today;
+  const isExpired = expired;
 
   return (
     <div
