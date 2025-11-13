@@ -1,22 +1,32 @@
+// src/apis/axiosInstance.ts
 import axios from 'axios';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 const axiosInstance = axios.create({
-  baseURL: 'http://13.125.158.205:8080/api',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: false,
 });
 
+// ---------------------
+//  🔐 AccessToken 자동 첨부
+// ---------------------
 axiosInstance.interceptors.request.use(
   (config) => {
     const token =
       localStorage.getItem('accessToken') ||
       sessionStorage.getItem('accessToken');
+
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error),
 );
 
+// ---------------------
+//  ♻️ Refresh Token 로직
+// ---------------------
 let isRefreshing = false;
 let pendingQueue: Array<(token: string) => void> = [];
 
@@ -34,10 +44,8 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 401 처리 (한 번만 재시도)
     original._retry = true;
 
-    // 이미 갱신 중이면 큐에서 대기
     if (isRefreshing) {
       return new Promise((resolve) => {
         pendingQueue.push((token: string) => {
@@ -53,9 +61,9 @@ axiosInstance.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) throw new Error('No refreshToken');
 
-      // 백엔드 사양: POST /auth/reissuance  body: { refreshToken }
+      // 🔥 환경변수 기반으로 재발급 주소도 자동 생성
       const { data } = await axios.post(
-        'http://13.125.158.205:8080/api/auth/reissuance',
+        `${BASE_URL}/auth/reissuance`,
         { refreshToken },
         {
           headers: {
@@ -69,19 +77,15 @@ axiosInstance.interceptors.response.use(
 
       if (!newAccess) throw new Error('No new access token');
 
-      // 저장 & 기본 헤더 갱신
       localStorage.setItem('accessToken', newAccess);
       if (newRefresh) localStorage.setItem('refreshToken', newRefresh);
-      axiosInstance.defaults.headers.Authorization = `Bearer ${newAccess}`;
 
-      // 대기중 요청 재시도
+      axiosInstance.defaults.headers.Authorization = `Bearer ${newAccess}`;
       flushQueue(newAccess);
 
-      // 원 요청 재실행
       original.headers.Authorization = `Bearer ${newAccess}`;
       return axiosInstance(original);
     } catch (e) {
-      // 재발급 실패 → 로그인 페이지
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       window.location.href = '/login';
