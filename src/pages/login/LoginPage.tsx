@@ -9,13 +9,9 @@ export default function LoginPage() {
   }, []);
 
   const handleKakaoLogin = () => {
-    const redirectUrl = '/api/auth/kakao/login';
+    window.location.href = 'https://hurrcook.shop/api/auth/kakao/login';
 
     console.log('🟡 [LoginPage] 카카오 로그인 버튼 클릭됨');
-    console.log('➡️ 이동 요청 URL:', redirectUrl);
-
-    // 실제 이동
-    window.location.href = redirectUrl;
   };
 
   return (
