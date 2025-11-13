@@ -114,17 +114,37 @@ export default function IngredientPhotoAddPage() {
             imageBase64 = item.image;
           }
 
-          // 💡 날짜 유효성 검사 및 변환 강화
+          // 💡 날짜 유효성 검사 및 변환 최종 강화
           let expireDateIso: string;
 
           if (item.date) {
-            // YYYY.MM.DD 또는 YYYY/MM/DD를 YYYY-MM-DD 형식으로 변환
-            const standardDateString = item.date.replace(/[./]/g, '-');
-            const dateObj = new Date(standardDateString);
+            // YYYY.MM.DD 또는 YYYY/MM/DD에서 숫자 부분만 추출
+            const dateParts = item.date
+              .split(/[./]/)
+              .map((p) => parseInt(p.trim(), 10));
 
-            // 🚨 핵심 디버그 로그 추가
+            let dateObj: Date;
+
+            if (dateParts.length === 3 && !dateParts.some(isNaN)) {
+              // ✅ 연/월/일 추출 성공 시, 로컬 시간 기준 Date 객체 생성 (월은 0-indexed)
+              // ex: new Date(2025, 11-1, 14, 0, 0, 0)
+              dateObj = new Date(
+                dateParts[0],
+                dateParts[1] - 1,
+                dateParts[2],
+                0,
+                0,
+                0,
+                0,
+              );
+            } else {
+              // 파싱 실패 시, Invalid Date로 설정
+              dateObj = new Date(NaN);
+            }
+
+            // 🚨 핵심 디버그 로그 추가 (날짜 파싱 결과 확인)
             console.log(
-              `[DATE DEBUG] Input: ${item.date}, Standard: ${standardDateString}, isNaN: ${isNaN(dateObj.getTime())}`,
+              `[DATE DEBUG] Input: ${item.date}, Parts: ${dateParts}, Date Obj Valid: ${!isNaN(dateObj.getTime())}`,
             );
 
             if (isNaN(dateObj.getTime())) {
@@ -171,18 +191,23 @@ export default function IngredientPhotoAddPage() {
         console.log('🎉 저장 성공 → 냉장고 페이지 이동');
         navigate('/refrigerator', { state: { refresh: true } });
       } else {
+        // 💡 API는 200 OK를 보냈으나 success: false인 경우
         console.warn('⚠️ 저장 실패:', res.data);
         navigate('/fail');
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
-      if (err.response)
+      if (err.response) {
+        // 💡 4xx, 5xx 에러가 난 경우
         console.error(
-          '❌ [POST /ingredients 오류]',
+          '❌ [POST /ingredients 오류] Status:',
           err.response.status,
+          'Data:',
           err.response.data,
         );
-      else console.error('❌ 요청 실패:', err.message);
+      } else {
+        console.error('❌ 요청 실패:', err.message);
+      }
       navigate('/fail');
     } finally {
       setLoading(false);
