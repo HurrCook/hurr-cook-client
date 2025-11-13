@@ -9,9 +9,12 @@ export default function LoginPage() {
   }, []);
 
   const handleKakaoLogin = () => {
-    window.location.href =
-      'https://hurrcook.shop/api/auth/kakao/login?prompt=login';
-    console.log('🟡 [LoginPage] 카카오 로그인 버튼 클릭됨');
+    const REST_API_KEY = import.meta.env.VITE_KAKAO_REST_KEY;
+    const LOGOUT_REDIRECT_URI = 'https://hurrcook.shop/login';
+
+    const kakaoLogoutUrl = `https://kauth.kakao.com/oauth/logout?client_id=${REST_API_KEY}&logout_redirect_uri=${LOGOUT_REDIRECT_URI}`;
+
+    window.location.href = kakaoLogoutUrl;
   };
 
   return (
