@@ -69,7 +69,7 @@ export default function RefrigeratorPage() {
   const fetchIngredients = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/ingredients');
+      const res = await api.get('/api/ingredients');
       if (res.data.success && Array.isArray(res.data.data)) {
         setIngredients(res.data.data);
       } else {
