@@ -6,6 +6,7 @@ import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
+// ✅ ?raw를 사용하여 SVG 파일 내용을 문자열로 가져옵니다.
 import DefaultGoodContent from '@/assets/default_good.svg?raw';
 import DefaultBadContent from '@/assets/default_bad.svg?raw';
 
@@ -30,19 +31,22 @@ const svgContentToBase64 = (svgContent: string): string => {
   return `data:image/svg+xml;base64,${base64}`;
 };
 
-// ✅ 이미지 소스를 안전하게 결정하는 헬퍼 함수 (유저 요청 반영)
+// ✅ 이미지 소스를 안전하게 결정하는 헬퍼 함수 (최종 수정)
 const getSafeImageSrc = (imageUrl: string): string => {
   if (!imageUrl) return '';
   if (imageUrl.startsWith('http')) return imageUrl;
   if (imageUrl.startsWith('data:image')) return imageUrl;
 
+  // 💡 수정된 부분: /assets/ 경로가 포함된 문자열을 그대로 반환하여 URL로 사용
+  if (imageUrl.includes('/assets/')) return imageUrl;
+
   // 순수한 Base64 문자열로 추정되면 PNG Data URL 프리픽스 붙여 반환
-  // 길이와 문자열 패턴(A-Z, a-z, 0-9, +, /, =)을 검사하여 Base64로 간주
   if (imageUrl.length > 50 && imageUrl.match(/^[A-Za-z0-9+/=]+$/)) {
+    // 🚨 API에서 순수 Base64 문자열이 왔다면 PNG로 간주하고 프리픽스를 붙임
     return `data:image/png;base64,${imageUrl}`;
   }
 
-  // 그 외의 잘못된 경로 문자열 등은 빈 문자열로 반환하여 기본 이미지 렌더링을 유도
+  // 그 외의 잘못된 형식은 빈 문자열로 반환하여 기본 이미지 렌더링 유도
   return '';
 };
 
@@ -72,7 +76,7 @@ export default function IngredientDetailModal({
     return svgContentToBase64(DefaultBadContent);
   }, []);
 
-  // 💡 디버그용
+  // 💡 디버그 로그 (유지)
   useEffect(() => {
     if (isOpen) {
       console.log('--- 기본 이미지 Base64 확인 ---');
