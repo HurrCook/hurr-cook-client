@@ -1,14 +1,15 @@
 // src/pages/login/LoginPage.tsx
 import React from 'react';
 import kakaologo from '@/assets/kakao_logo.svg';
+
 export default function LoginPage() {
   const handleKakaoLogin = () => {
-    // ✅ 백엔드에서 카카오 인증 URL로 리다이렉트 → 카카오 로그인 → (프론트 콜백) /login/callback?code=...
     window.location.href = 'http://13.125.158.205:8080/api/auth/kakao/login';
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-white">
+    // 🔥 여기 수정: min-h-screen → min-h-[100dvh]
+    <div className="flex justify-center items-center min-h-[100dvh] bg-white">
       <div className="flex flex-col items-center justify-center w-full max-w-md px-10">
         {/* 타이틀 */}
         <div className="flex flex-col items-center gap-6 mb-10">
