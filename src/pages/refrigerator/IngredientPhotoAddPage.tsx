@@ -126,7 +126,7 @@ export default function IngredientPhotoAddPage() {
             let dateObj: Date;
 
             if (dateParts.length === 3 && !dateParts.some(isNaN)) {
-              // ✅ 연/월/일 추출 성공 시, 로컬 시간 기준 Date 객체 생성 (월은 0-indexed)
+              // 연/월/일 추출 성공 시, 로컬 시간 기준 Date 객체 생성
               dateObj = new Date(
                 dateParts[0],
                 dateParts[1] - 1,
@@ -137,7 +137,7 @@ export default function IngredientPhotoAddPage() {
                 0,
               );
 
-              // 🚨 핵심 수정: UTC 자정으로 강제 설정하여 시간대 오류와 유효성 검사 실패 방지
+              // 🚨 UTC 자정으로 강제 설정하여 시간대 오류와 유효성 검사 실패 방지
               dateObj.setUTCHours(0, 0, 0, 0);
             } else {
               // 파싱 실패 시, Invalid Date로 설정
@@ -150,13 +150,13 @@ export default function IngredientPhotoAddPage() {
             );
 
             if (isNaN(dateObj.getTime())) {
-              // ✅ Invalid Date인 경우: 오늘 날짜로 대체
+              // Invalid Date인 경우: 오늘 날짜로 대체
               console.warn(
                 `[Save] Invalid Date detected for: ${item.name} (${item.date}). Using today's date.`,
               );
               expireDateIso = new Date().toISOString();
             } else {
-              // ✅ 유효한 Date인 경우: ISOString으로 변환 (백엔드 형식 충족)
+              // 유효한 Date인 경우: ISOString으로 변환
               expireDateIso = dateObj.toISOString();
             }
           } else {
@@ -170,11 +170,16 @@ export default function IngredientPhotoAddPage() {
             imageBase64?.slice(0, 80),
           );
 
+          // 🚨 디버그 로그 추가: 페이로드에 들어갈 name/amount/unit 확인
+          console.log(
+            `[PAYLOAD DEBUG ${idx}] Name: '${item.name.trim()}', Amount: ${Number(item.quantity) || 0}, Unit: ${item.unit.toUpperCase()}`,
+          );
+
           return {
             name: item.name.trim(),
-            amount: Number(item.quantity) || 0,
+            amount: Number(item.quantity) || 0, // 0이 유효하지 않으면 null로 변경해야 할 수 있음
             unit: item.unit.toUpperCase(),
-            expireDate: expireDateIso, // ✅ 안전하게 처리된 날짜 사용
+            expireDate: expireDateIso,
             imageUrl: imageBase64 || null,
           };
         }),
@@ -193,14 +198,13 @@ export default function IngredientPhotoAddPage() {
         console.log('🎉 저장 성공 → 냉장고 페이지 이동');
         navigate('/refrigerator', { state: { refresh: true } });
       } else {
-        // 💡 API는 200 OK를 보냈으나 success: false인 경우
         console.warn('⚠️ 저장 실패:', res.data);
         navigate('/fail');
       }
     } catch (error: unknown) {
       const err = error as AxiosError;
       if (err.response) {
-        // 💡 4xx, 5xx 에러가 난 경우
+        // 🚨 서버 응답 상세 오류 로그 출력
         console.error(
           '❌ [POST /ingredients 오류] Status:',
           err.response.status,
