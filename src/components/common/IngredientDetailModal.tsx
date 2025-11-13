@@ -153,11 +153,18 @@ export default function IngredientDetailModal({
 
   if (!isOpen) return null;
 
+  // ✅ 유통기한 비교 로직 수정 시작
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정하여 날짜만 비교
+
   const parsedDate = editData.date
     ? new Date(editData.date.replace(/\./g, '-'))
     : today;
-  const isExpired = parsedDate < today; // ✅ 유통기한 비교
+  parsedDate.setHours(0, 0, 0, 0); // 시간을 00:00:00으로 설정
+
+  // 유통기한이 오늘 날짜와 같거나 이미 지난 경우 isExpired = true
+  const isExpired = parsedDate <= today;
+  // ✅ 유통기한 비교 로직 수정 끝
 
   return (
     <>
@@ -209,7 +216,7 @@ export default function IngredientDetailModal({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  // ✅ 기본 이미지 표시 분기 (유통기한 지난 경우 bad)
+                  // ✅ 기본 이미지 표시 분기 적용
                   <img
                     src={isExpired ? DefaultBadUrl : DefaultGoodUrl}
                     alt="기본 재료 이미지"
