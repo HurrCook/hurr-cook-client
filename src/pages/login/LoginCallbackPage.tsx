@@ -4,11 +4,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 
-// 로컬: VITE_API_URL 사용 (예: http://13.125.158.205:8080/api)
-// 배포(Vercel): VITE_API_URL 안 넣으면 "/api" 사용 → vercel.json이 백엔드로 프록시
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) || '/api';
-
 type LoginResponse = {
   success: boolean;
   message: string | null;
@@ -23,11 +18,11 @@ type LoginResponse = {
 
 export default function LoginCallbackPage() {
   const navigate = useNavigate();
-  const didRunRef = useRef(false); // ✅ 중복 실행 방지
+  const didRunRef = useRef(false);
 
   const { mutate } = useMutation<LoginResponse, AxiosError, string>({
     mutationFn: async (code: string) => {
-      const url = `${API_BASE_URL}/auth/kakao/callback?code=${code}`;
+      const url = `/api/auth/kakao/callback?code=${code}`;
       console.log('🔗 카카오 콜백 요청 URL:', url);
 
       const { data } = await axios.get<LoginResponse>(url, {
@@ -46,15 +41,12 @@ export default function LoginCallbackPage() {
 
       const { accessToken, refreshToken, firstLogin, name } = res.data;
 
-      // 토큰/유저 정보 저장
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userName', name);
 
-      // ✅ URL에서 code 제거 (새로고침 시 재호출 방지)
       window.history.replaceState({}, '', '/login/callback');
 
-      // 첫 로그인 여부 분기
       navigate(firstLogin ? '/userinfopage1' : '/chat', { replace: true });
     },
     onError: (err) => {
@@ -65,7 +57,7 @@ export default function LoginCallbackPage() {
   });
 
   useEffect(() => {
-    if (didRunRef.current) return; // ✅ StrictMode 2회 호출 차단
+    if (didRunRef.current) return;
     didRunRef.current = true;
 
     const code = new URLSearchParams(window.location.search).get('code');
