@@ -122,6 +122,11 @@ export default function IngredientPhotoAddPage() {
             const standardDateString = item.date.replace(/[./]/g, '-');
             const dateObj = new Date(standardDateString);
 
+            // 🚨 핵심 디버그 로그 추가
+            console.log(
+              `[DATE DEBUG] Input: ${item.date}, Standard: ${standardDateString}, isNaN: ${isNaN(dateObj.getTime())}`,
+            );
+
             if (isNaN(dateObj.getTime())) {
               // ✅ Invalid Date인 경우: 오늘 날짜로 대체
               console.warn(
