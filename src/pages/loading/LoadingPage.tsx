@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Hurr1 from '@/assets/Hurr1.svg';
 import axiosInstance from '@/lib/axios';
+import axios from 'axios'; // ✅ axios import 추가
 import './loading.css';
 
 export default function LoadingPage() {
@@ -24,16 +25,19 @@ export default function LoadingPage() {
 
       try {
         console.log('[LoadingPage] POST 요청 시작 → /chats/yolo');
-        console.log('[요청 데이터]', {
-          base64_images: base64Images,
-          total: base64Images.length,
-        });
 
-        const { data } = await axiosInstance.post('/chats/yolo', {
-          base64_images: base64Images,
-        });
+        // 💡 API 호출 시, 데이터 전송 용량 제한 회피를 위해 maxBodyLength 설정 유지 권장
+        const { data, status } = await axiosInstance.post(
+          '/chats/yolo',
+          { base64_images: base64Images },
+          {
+            // 💡 Base64 데이터가 매우 클 경우를 대비해 설정 유지
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+          },
+        );
 
-        console.log('[LoadingPage] API 응답 수신 완료');
+        console.log(`[LoadingPage] API 응답 수신 완료 (Status: ${status})`);
         console.log('▶ 응답 데이터:', data);
 
         const detected = data?.data?.ingredients ?? [];
@@ -52,11 +56,23 @@ export default function LoadingPage() {
             },
           });
         } else {
-          console.warn('[LoadingPage] 감지 실패 → /fail 이동');
+          // 💡 API는 성공했으나 감지된 재료가 없는 경우
+          console.warn(
+            '[LoadingPage] 감지 실패 (API 성공, 재료 0개) → /fail 이동',
+          );
           navigate('/fail');
         }
       } catch (err) {
-        console.error('[LoadingPage] API 요청 중 오류:', err);
+        // 💡 API 요청 자체에서 오류가 난 경우 (네트워크, 4xx, 5xx)
+        if (axios.isAxiosError(err)) {
+          console.error(
+            '[LoadingPage] API 요청 실패:',
+            err.response?.status,
+            err.response?.data,
+          );
+        } else {
+          console.error('[LoadingPage] 기타 API 요청 중 오류:', err);
+        }
         navigate('/fail');
       }
     };

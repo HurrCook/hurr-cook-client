@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Hurr1 from '@/assets/Hurr1.svg';
 import axiosInstance from '@/lib/axios';
+import axios from 'axios'; // ✅ axios import 추가
 import './loading.css';
 
 export default function ReceiptLoadingPage() {
@@ -19,25 +20,38 @@ export default function ReceiptLoadingPage() {
       console.log('===============================');
 
       if (!base64Images || base64Images.length === 0) {
+        console.warn(
+          '[ReceiptLoadingPage] base64Images가 비어 있음 → /fail 이동',
+        );
         navigate('/fail');
         return;
       }
 
       try {
         console.log('[ReceiptLoadingPage] POST 요청 시작 → /chats/ocr');
-        console.log('[요청 본문 데이터]', { base64_images: base64Images });
 
-        const { data } = await axiosInstance.post('/chats/ocr', {
-          base64_images: base64Images,
-        });
+        // 💡 API 호출 시, 데이터 전송 용량 제한 회피를 위해 설정 유지
+        const { data, status } = await axiosInstance.post(
+          '/chats/ocr',
+          { base64_images: base64Images },
+          {
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+          },
+        );
 
-        console.log('[ReceiptLoadingPage] API 응답 수신 완료');
+        console.log(
+          `[ReceiptLoadingPage] API 응답 수신 완료 (Status: ${status})`,
+        );
         console.log('▶ 응답 데이터:', data);
 
         const detected = data?.data?.ingredients ?? [];
         const hasDetected = Array.isArray(detected) && detected.length > 0;
 
         if (data?.success && hasDetected) {
+          console.log(
+            '[ReceiptLoadingPage] 감지 성공 → /refrigerator/photo-add 이동',
+          );
           navigate('/refrigerator/photo-add', {
             state: {
               base64_images: [defaultReceiptImage],
@@ -46,11 +60,23 @@ export default function ReceiptLoadingPage() {
             },
           });
         } else {
-          console.warn('[ReceiptLoadingPage] 감지 실패 → /fail 이동');
+          // 💡 API는 성공했으나 감지된 재료가 없는 경우
+          console.warn(
+            '[ReceiptLoadingPage] 감지 실패 (API 성공, 재료 0개) → /fail 이동',
+          );
           navigate('/fail');
         }
       } catch (err) {
-        console.error('[ReceiptLoadingPage] API 호출 실패:', err);
+        // 💡 API 요청 자체에서 오류가 난 경우
+        if (axios.isAxiosError(err)) {
+          console.error(
+            '[ReceiptLoadingPage] API 요청 실패:',
+            err.response?.status,
+            err.response?.data,
+          );
+        } else {
+          console.error('[ReceiptLoadingPage] 기타 API 요청 중 오류:', err);
+        }
         navigate('/fail');
       }
     };
