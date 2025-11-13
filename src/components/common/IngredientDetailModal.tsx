@@ -248,18 +248,20 @@ export default function IngredientDetailModal({
           ) : (
             <div className="px-5 pb-6 flex flex-col gap-6 overflow-y-auto max-h-[70vh]">
               {/* 이미지 */}
+              {/* 이미지 */}
               <div
                 className="w-[162px] h-[162px] bg-[#F5F5F5] rounded-[10px] overflow-hidden cursor-pointer"
                 onClick={() => setIsImageOptionOpen(true)}
               >
-                {imageSrc ? ( // ✅ imageSrc가 유효하면 (비어 있지 않으면)
+                {imageSrc && imageSrc.trim() !== '' ? (
+                  // 실제 이미지 있는 경우
                   <img
-                    src={imageSrc} // ✅ 안전하게 처리된 URL 사용
+                    src={imageSrc}
                     alt={editData.name || '재료 이미지'}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  // ✅ imageSrc가 비어있으면 기본 이미지 사용
+                  // 기본 이미지 (유통기한 기준)
                   <img
                     src={isExpired ? defaultBadBase64 : defaultGoodBase64}
                     alt="기본 재료 이미지"
