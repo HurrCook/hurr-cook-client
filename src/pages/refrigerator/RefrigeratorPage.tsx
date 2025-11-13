@@ -1,4 +1,5 @@
 // src/pages/refrigerator/RefrigeratorPage.tsx
+// ㅎㅇ
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
