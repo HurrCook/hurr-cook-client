@@ -307,8 +307,12 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                               onNameChange={(v) =>
                                 handleIngredientChange(index, 'name', v)
                               }
-                              onQuantityChange={(v) =>
-                                handleIngredientChange(index, 'amount', v)
+                              onAmountChange={(v) =>
+                                handleIngredientChange(
+                                  index,
+                                  'amount',
+                                  String(v),
+                                )
                               }
                             />
                           </div>

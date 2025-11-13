@@ -5,7 +5,7 @@ interface IngredientItemProps {
   amount: string; // 예: "3개" or "200g"
   isEditable?: boolean;
   onNameChange?: (value: string) => void;
-  onAmountChange?: (value: string) => void; // 변경됨
+  onAmountChange?: (value: string) => void;
 }
 
 const IngredientItem: React.FC<IngredientItemProps> = ({
