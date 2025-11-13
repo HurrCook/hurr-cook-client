@@ -63,16 +63,16 @@ export default function Sidebar({ onClose }: SidebarProps) {
       // 4) (선택) 카카오 로그아웃까지 같이 태우고 싶으면 여기서 호출
       //    → 카카오 세션까지 지우고 싶을 때
       /*
-        const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
-        if (KAKAO_REST_API_KEY) {
-          const redirectUri = encodeURIComponent('https://hurrcook.shop/login');
-          const kakaoLogoutUrl =
-            `https://kauth.kakao.com/oauth/logout` +
-            `?client_id=${KAKAO_REST_API_KEY}&logout_redirect_uri=${redirectUri}`;
-          window.location.href = kakaoLogoutUrl;
-          return; // 여기서 함수 종료
-        }
-        */
+          const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+          if (KAKAO_REST_API_KEY) {
+            const redirectUri = encodeURIComponent('https://hurrcook.shop/login');
+            const kakaoLogoutUrl =
+              `https://kauth.kakao.com/oauth/logout` +
+              `?client_id=${KAKAO_REST_API_KEY}&logout_redirect_uri=${redirectUri}`;
+            window.location.href = kakaoLogoutUrl;
+            return; // 여기서 함수 종료
+          }
+          */
 
       // 5) 우리 앱 로그인 페이지로 이동
       navigate('/login', { replace: true });
