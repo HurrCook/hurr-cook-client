@@ -2,26 +2,22 @@
 import React from 'react';
 import kakaologo from '@/assets/kakao_logo.svg';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL as string; // e.g. "https://api.hurrcook.shop/api"
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) || '/api';
 
 export default function LoginPage() {
   const handleKakaoLogin = () => {
-    if (!API_BASE_URL) {
-      console.error('❌ VITE_API_URL 이 설정되어 있지 않습니다.');
-      alert('서버 설정 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
-      return;
-    }
+    // 사용될 URL 예:
+    // 로컬 개발 → http://13.125.158.205:8080/api/auth/kakao/login
+    // 배포(Vercel) → https://hurrcook.shop/api/auth/kakao/login (Vercel이 프록시)
+    const loginUrl = `${API_BASE_URL}/auth/kakao/login`;
 
-    // 백엔드 카카오 로그인 엔드포인트로 이동
-    window.location.href = `${API_BASE_URL}/auth/kakao/login`;
+    window.location.href = loginUrl;
   };
 
   return (
-    // ✅ 전체 뷰포트 기준 가로/세로 중앙 정렬
     <div className="min-h-[100dvh] w-screen flex items-center justify-center bg-white">
-      {/* ✅ 가운데 정렬 + 최대 폭 + 자동 중앙정렬 */}
       <div className="w-full max-w-sm mx-auto px-6 flex flex-col items-center justify-center text-center">
-        {/* 타이틀 */}
         <div className="flex flex-col items-center gap-6 mb-10">
           <h1 className="text-amber-500 text-5xl font-['Gretoon']">
             Hurr Cook
@@ -31,7 +27,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* 카카오 로그인 버튼 */}
         <button
           onClick={handleKakaoLogin}
           className="relative flex items-center justify-center w-full h-12 bg-[#FEE500] rounded-lg hover:brightness-95 transition shadow-md"

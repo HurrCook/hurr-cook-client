@@ -4,7 +4,10 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL as string; // e.g. "https://api.hurrcook.shop/api"
+// 로컬: VITE_API_URL 사용 (예: http://13.125.158.205:8080/api)
+// 배포(Vercel): VITE_API_URL 안 넣으면 "/api" 사용 → vercel.json이 백엔드로 프록시
+const API_BASE_URL =
+  (import.meta.env.VITE_API_URL as string | undefined) || '/api';
 
 type LoginResponse = {
   success: boolean;
@@ -24,10 +27,6 @@ export default function LoginCallbackPage() {
 
   const { mutate } = useMutation<LoginResponse, AxiosError, string>({
     mutationFn: async (code: string) => {
-      if (!API_BASE_URL) {
-        throw new Error('VITE_API_URL 이 설정되어 있지 않습니다.');
-      }
-
       const url = `${API_BASE_URL}/auth/kakao/callback?code=${code}`;
       console.log('🔗 카카오 콜백 요청 URL:', url);
 
@@ -47,6 +46,7 @@ export default function LoginCallbackPage() {
 
       const { accessToken, refreshToken, firstLogin, name } = res.data;
 
+      // 토큰/유저 정보 저장
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userName', name);
@@ -54,7 +54,7 @@ export default function LoginCallbackPage() {
       // ✅ URL에서 code 제거 (새로고침 시 재호출 방지)
       window.history.replaceState({}, '', '/login/callback');
 
-      // 첫 로그인 여부에 따라 페이지 분기
+      // 첫 로그인 여부 분기
       navigate(firstLogin ? '/userinfopage1' : '/chat', { replace: true });
     },
     onError: (err) => {
