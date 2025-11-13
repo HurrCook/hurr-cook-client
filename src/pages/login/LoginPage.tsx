@@ -18,8 +18,7 @@ export default function LoginPage() {
       return;
     }
 
-    const kakaoLogoutThenLoginUrl = `https://kauth.kakao.com/oauth/logout?client_id=${REST_API_KEY}&logout_redirect_uri=https://hurrcook.shop/api/auth/kakao/login`;
-
+    const kakaoLogoutThenLoginUrl = `https://kauth.kakao.com/oauth/logout?client_id=${REST_API_KEY}&logout_redirect_uri=https://hurrcook.shop/login`;
     window.location.href = kakaoLogoutThenLoginUrl;
   };
 
