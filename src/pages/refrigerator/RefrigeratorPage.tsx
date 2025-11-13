@@ -226,6 +226,20 @@ export default function RefrigeratorPage() {
                         )}
                         quantity={`${item.amount}${item.unit}`}
                       />
+                      <p className="text-[10px] text-blue-600 mt-1">
+                        raw: {item.expireDate}
+                        <br />
+                        parsed: {String(new Date(item.expireDate))}
+                        <br />
+                        timestamp: {new Date(item.expireDate).getTime()}
+                        <br />
+                        now: {Date.now()}
+                        <br />
+                        expired:{' '}
+                        {new Date(item.expireDate).getTime() < Date.now()
+                          ? 'YES'
+                          : 'NO'}
+                      </p>
                     </motion.div>
                   );
                 })
