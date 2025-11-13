@@ -127,7 +127,6 @@ export default function IngredientPhotoAddPage() {
 
             if (dateParts.length === 3 && !dateParts.some(isNaN)) {
               // ✅ 연/월/일 추출 성공 시, 로컬 시간 기준 Date 객체 생성 (월은 0-indexed)
-              // ex: new Date(2025, 11-1, 14, 0, 0, 0)
               dateObj = new Date(
                 dateParts[0],
                 dateParts[1] - 1,
@@ -137,6 +136,9 @@ export default function IngredientPhotoAddPage() {
                 0,
                 0,
               );
+
+              // 🚨 핵심 수정: UTC 자정으로 강제 설정하여 시간대 오류와 유효성 검사 실패 방지
+              dateObj.setUTCHours(0, 0, 0, 0);
             } else {
               // 파싱 실패 시, Invalid Date로 설정
               dateObj = new Date(NaN);
