@@ -1,8 +1,10 @@
+// src/pages/userinfo/ReceiptLoadingPage.tsx
+
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Hurr1 from '@/assets/Hurr1.svg';
 import axiosInstance from '@/lib/axios';
-import axios from 'axios'; // ✅ axios import 추가
+import axios from 'axios';
 import './loading.css';
 
 export default function ReceiptLoadingPage() {
@@ -23,7 +25,7 @@ export default function ReceiptLoadingPage() {
         console.warn(
           '[ReceiptLoadingPage] base64Images가 비어 있음 → /fail 이동',
         );
-        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
+        navigate('/fail', { replace: true });
         return;
       }
 
@@ -55,15 +57,15 @@ export default function ReceiptLoadingPage() {
             state: {
               base64_images: [defaultReceiptImage],
               detected,
-              type: 'ocr', // ✅ 영수증 명시
+              type: 'ocr',
             },
-            replace: true, // ✅ 핵심 수정: 로딩 페이지를 히스토리에서 제거
+            replace: true, // ✅ 성공 시 핵심 수정: 로딩 페이지를 히스토리에서 제거
           });
         } else {
           console.warn(
             '[ReceiptLoadingPage] 감지 실패 (API 성공, 재료 0개) → /fail 이동',
           );
-          navigate('/fail', { replace: true }); // ✅ 히스토리 정리
+          navigate('/fail', { replace: true });
         }
       } catch (err) {
         if (axios.isAxiosError(err)) {
@@ -75,7 +77,7 @@ export default function ReceiptLoadingPage() {
         } else {
           console.error('[ReceiptLoadingPage] 기타 API 요청 중 오류:', err);
         }
-        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
+        navigate('/fail', { replace: true });
       }
     };
 

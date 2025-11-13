@@ -1,8 +1,10 @@
+// src/pages/userinfo/LoadingPage.tsx
+
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Hurr1 from '@/assets/Hurr1.svg';
 import axiosInstance from '@/lib/axios';
-import axios from 'axios'; // ✅ axios import 추가
+import axios from 'axios';
 import './loading.css';
 
 export default function LoadingPage() {
@@ -19,7 +21,7 @@ export default function LoadingPage() {
 
       if (!base64Images || base64Images.length === 0) {
         console.warn('[LoadingPage] base64Images가 비어 있음 → /fail 이동');
-        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
+        navigate('/fail', { replace: true });
         return;
       }
 
@@ -52,13 +54,13 @@ export default function LoadingPage() {
               detected,
               type: 'ingredient',
             },
-            replace: true, // ✅ 핵심 수정: 로딩 페이지를 히스토리에서 제거
+            replace: true, // ✅ 성공 시 핵심 수정
           });
         } else {
           console.warn(
             '[LoadingPage] 감지 실패 (API 성공, 재료 0개) → /fail 이동',
           );
-          navigate('/fail', { replace: true }); // ✅ 히스토리 정리
+          navigate('/fail', { replace: true });
         }
       } catch (err) {
         if (axios.isAxiosError(err)) {
@@ -70,7 +72,7 @@ export default function LoadingPage() {
         } else {
           console.error('[LoadingPage] 기타 API 요청 중 오류:', err);
         }
-        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
+        navigate('/fail', { replace: true });
       }
     };
 
