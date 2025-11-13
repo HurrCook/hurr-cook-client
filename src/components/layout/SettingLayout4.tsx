@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-
+import arrow from '@/assets/arrow.svg';
 // 💡 헤더 높이 상수 정의 (Tailwind 클래스 및 인라인 스타일에 재사용)
 const HEADER_HEIGHT_PX = '127px';
 
@@ -33,7 +33,7 @@ export default function SettingLayout4() {
           >
             <img
               className="hover:bg-orange-300 rotate-180"
-              src="/src/assets/arrow.svg"
+              src={arrow}
               alt="arrow"
             />
           </button>
@@ -51,11 +51,7 @@ export default function SettingLayout4() {
             onClick={handleSkipClick}
           >
             건너뛰기
-            <img
-              className="hover:bg-orange-300 "
-              src="/src/assets/arrow.svg"
-              alt="arrow"
-            />
+            <img className="hover:bg-orange-300 " src={arrow} alt="arrow" />
           </button>
         </div>
 

@@ -1,6 +1,7 @@
 // /src/components/layout/SettingLayout1.tsx
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
+import arrow from '@/assets/arrow.svg';
 
 // 상단에 제목/안내문까지 포함되는 높이
 const HEADER_HEIGHT_PX = '278px';
@@ -36,11 +37,7 @@ export default function SettingLayout1() {
             onClick={handleSkipClick}
           >
             건너뛰기
-            <img
-              className="hover:bg-orange-300"
-              src="/src/assets/arrow.svg"
-              alt="arrow"
-            />
+            <img className="hover:bg-orange-300" src={arrow} alt="arrow" />
           </button>
 
           {/* 상단 타이틀/안내문 (고정) */}

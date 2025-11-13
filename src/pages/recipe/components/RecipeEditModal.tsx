@@ -12,6 +12,7 @@ import {
   type Recipe,
 } from '@/apis/recipeApi';
 import api from '@/lib/axios';
+import deleteicon from '@/assets/delete.svg';
 
 interface Ingredient {
   userFoodId: string;
@@ -322,7 +323,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
                               className="p-2 hover:bg-gray-100 rounded-full transition"
                             >
                               <img
-                                src="/src/assets/delete.svg"
+                                src={deleteicon}
                                 alt="삭제"
                                 className="w-5 h-5 opacity-70 hover:opacity-100"
                               />
