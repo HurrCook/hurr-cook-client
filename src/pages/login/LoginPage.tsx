@@ -2,9 +2,18 @@
 import React from 'react';
 import kakaologo from '@/assets/kakao_logo.svg';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL as string; // e.g. "https://api.hurrcook.shop/api"
+
 export default function LoginPage() {
   const handleKakaoLogin = () => {
-    window.location.href = 'http://13.125.158.205:8080/api/auth/kakao/login';
+    if (!API_BASE_URL) {
+      console.error('❌ VITE_API_URL 이 설정되어 있지 않습니다.');
+      alert('서버 설정 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+
+    // 백엔드 카카오 로그인 엔드포인트로 이동
+    window.location.href = `${API_BASE_URL}/auth/kakao/login`;
   };
 
   return (
