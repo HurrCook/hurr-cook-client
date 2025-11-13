@@ -194,10 +194,7 @@ export default function RefrigeratorPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {ingredients.length > 0 ? (
                 ingredients.map((item, index) => {
-                  const expire = new Date(item.expireDate);
-                  const isExpired =
-                    expire.getTime() + 9 * 3600 * 1000 <
-                    Date.now() + 9 * 3600 * 1000;
+                  const isExpired = new Date(item.expireDate) < new Date(); // ✅ 유통기한 비교
                   let imageSrc = isExpired ? DefaultBadUrl : DefaultGoodUrl; // ✅ 기본 이미지 조건 분기
 
                   if (item.imageUrl) {
