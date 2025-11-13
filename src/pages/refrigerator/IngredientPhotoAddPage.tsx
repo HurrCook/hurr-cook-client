@@ -1,107 +1,54 @@
 // src/pages/refrigerator/IngredientPhotoAddPage.tsx
-import React, { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import IngredientEditList, {
   IngredientEditData,
 } from '@/components/common/IngredientEditList';
 import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
-import DefaultGoodUrl from '@/assets/default_good.svg?url';
 import { AxiosError } from 'axios';
-
-type OcrItem = {
-  name: string;
-  date?: string;
-  quantity?: string;
-  unit?: 'EA' | 'g' | 'ml';
-  imageUrl?: string;
-};
-
-interface LocationState {
-  base64_images?: string[];
-  detected?: OcrItem[];
-  type?: 'ingredient' | 'ocr';
-}
 
 export default function IngredientPhotoAddPage() {
   const navigate = useNavigate();
-  const location = useLocation() as { state?: LocationState };
 
-  const [ingredients, setIngredients] = useState<IngredientEditData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [ingredients, setIngredients] = useState<IngredientEditData[]>([
+    { id: 1, name: '', image: '', date: '', quantity: '', unit: 'EA' },
+  ]);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<
     number | string | null
   >(null);
+  const [loading, setLoading] = useState(false);
 
-  const base64Images = useMemo(
-    () => location?.state?.base64_images ?? [],
-    [location?.state],
-  );
-  const detectedItems = useMemo(
-    () => location?.state?.detected ?? [],
-    [location?.state],
-  );
-  const pageType = location?.state?.type ?? 'ingredient';
+  // ✅ 재료 항목 업데이트
+  const handleUpdate = (
+    id: number | string,
+    field: keyof IngredientEditData,
+    value: string,
+  ) => {
+    setIngredients((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
+  };
 
-  /** ✅ 초기 데이터 세팅 */
-  useEffect(() => {
-    if (!location?.state) {
-      console.warn(
-        '[IngredientPhotoAddPage] location.state 없음 → 초기화만 수행',
-      );
-      setIngredients([]);
-      return;
-    }
+  // ✅ 재료 추가
+  const handleAddIngredient = () => {
+    setIngredients((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        name: '',
+        image: '',
+        date: '',
+        quantity: '',
+        unit: 'EA',
+      },
+    ]);
+  };
 
-    console.log('[IngredientPhotoAddPage] location.state:', location.state);
-    console.log(`[IngredientPhotoAddPage] pageType: ${pageType}`);
-
-    const { base64_images, detected } = location.state;
-    if (
-      (!base64_images || base64_images.length === 0) &&
-      (!detected || detected.length === 0)
-    ) {
-      console.warn('[IngredientPhotoAddPage] 감지 데이터 없음 → 초기화만 수행');
-      setIngredients([]);
-      return;
-    }
-
-    const mapped: IngredientEditData[] = (detected ?? []).map((it, idx) => {
-      const rawBase64 = it.imageUrl || base64_images[idx] || '';
-      const imgSrc = rawBase64.startsWith('data:image')
-        ? rawBase64
-        : rawBase64.startsWith('http')
-          ? rawBase64
-          : rawBase64
-            ? `data:image/png;base64,${rawBase64}`
-            : DefaultGoodUrl;
-
-      const finalImage = pageType === 'ocr' ? DefaultGoodUrl : imgSrc;
-
-      return {
-        id: idx + 1,
-        name: it.name || '이름없음',
-        image: finalImage,
-        imageUrl:
-          pageType === 'ocr'
-            ? null
-            : rawBase64.startsWith('data:image')
-              ? rawBase64.split(',')[1]
-              : rawBase64 || null,
-        date: it.date || '',
-        quantity: it.quantity || '1',
-        unit: it.unit || 'EA',
-      };
-    });
-
-    console.log('[IngredientPhotoAddPage] 감지된 재료 매핑 결과:', mapped);
-    setIngredients(mapped);
-  }, [detectedItems, base64Images, navigate, pageType]);
-
-  /** ✅ 파일 -> base64 변환 */
+  // ✅ 파일을 base64로 변환
   const fileToBase64 = (file: File): Promise<string> =>
     new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -110,34 +57,33 @@ export default function IngredientPhotoAddPage() {
       reader.readAsDataURL(file);
     });
 
-  /** ✅ 갤러리에서 이미지 선택 */
+  // ✅ 갤러리에서 이미지 선택
   const handleSelectPhoto = async (file: File) => {
     const base64 = await fileToBase64(file);
     if (!selectedIngredientId) return;
 
     console.log('📸 선택된 이미지(base64 앞 80자):', base64.slice(0, 80));
+
     setIngredients((prev) =>
       prev.map((item) =>
-        item.id === selectedIngredientId
-          ? { ...item, image: base64, imageUrl: base64.split(',')[1] }
-          : item,
+        item.id === selectedIngredientId ? { ...item, image: base64 } : item,
       ),
     );
   };
 
-  /** ✅ 이미지 옵션 모달 열기 */
+  // ✅ 이미지 옵션 모달 열기
   const handleOpenImageOptions = (id: number | string) => {
     setSelectedIngredientId(id);
     setIsImageOptionOpen(true);
   };
 
-  /** ✅ 카메라 실행 */
+  // ✅ 카메라 열기
   const handleLaunchCamera = () => {
     setIsImageOptionOpen(false);
     setTimeout(() => setIsCameraOpen(true), 100);
   };
 
-  /** ✅ 앨범 실행 */
+  // ✅ 앨범 열기
   const handleLaunchLibrary = () => {
     setIsImageOptionOpen(false);
     const input = document.createElement('input');
@@ -151,7 +97,7 @@ export default function IngredientPhotoAddPage() {
     input.click();
   };
 
-  /** ✅ 저장 */
+  // ✅ 저장 (prefix 제거 + 로그 추가)
   const handleSaveIngredients = async () => {
     try {
       setLoading(true);
@@ -160,29 +106,55 @@ export default function IngredientPhotoAddPage() {
       const payload = {
         ingredients: ingredients.map((item, idx) => {
           let imageBase64: string | null = null;
+
+          // data:image 형식이면 prefix 제거
           if (item.image && item.image.startsWith('data:image')) {
             imageBase64 = item.image.split(',')[1];
           } else if (item.image) {
             imageBase64 = item.image;
           }
 
+          // 💡 날짜 유효성 검사 및 변환 강화
+          let expireDateIso: string;
+
+          if (item.date) {
+            // YYYY.MM.DD 또는 YYYY-MM-DD를 YYYY/MM/DD로 통일하여 Date 객체 생성 시 오류 방지
+            const safeDateString = item.date.replace(/[.]/g, '/');
+            const dateObj = new Date(safeDateString);
+
+            if (isNaN(dateObj.getTime())) {
+              // ✅ Invalid Date인 경우: 오늘 날짜로 대체
+              console.warn(
+                `[Save] Invalid Date detected for: ${item.name}. Using today's date.`,
+              );
+              expireDateIso = new Date().toISOString();
+            } else {
+              // ✅ 유효한 Date인 경우: ISOString으로 변환
+              expireDateIso = dateObj.toISOString();
+            }
+          } else {
+            // 날짜 입력이 없으면 오늘 날짜 사용
+            expireDateIso = new Date().toISOString();
+          }
+          // ------------------------------------
+
           console.log(
             `📦 [${idx}] imageBase64(앞 80자):`,
             imageBase64?.slice(0, 80),
           );
+
           return {
             name: item.name.trim(),
             amount: Number(item.quantity) || 0,
             unit: item.unit.toUpperCase(),
-            expireDate: item.date
-              ? new Date(item.date).toISOString()
-              : new Date().toISOString(),
+            expireDate: expireDateIso, // ✅ 안전하게 처리된 날짜 사용
             imageUrl: imageBase64 || null,
           };
         }),
       };
 
       console.log('📤 최종 전송 payload:', payload);
+
       const res = await api.post('/api/ingredients', payload, {
         headers: { 'Content-Type': 'application/json' },
         maxBodyLength: 15 * 1024 * 1024,
@@ -200,7 +172,11 @@ export default function IngredientPhotoAddPage() {
     } catch (error: unknown) {
       const err = error as AxiosError;
       if (err.response)
-        console.error('❌ [POST /ingredients 오류]', err.response.data);
+        console.error(
+          '❌ [POST /ingredients 오류]',
+          err.response.status,
+          err.response.data,
+        );
       else console.error('❌ 요청 실패:', err.message);
       navigate('/fail');
     } finally {
@@ -208,31 +184,35 @@ export default function IngredientPhotoAddPage() {
     }
   };
 
-  /** ✅ state 없으면 렌더 차단 */
-  if (!location?.state) return null;
-
   return (
-    <div className="flex flex-col min-h-screen bg-white relative">
-      <main className="flex-1 overflow-y-auto px-6 mt-[-2rem] pb-40">
-        <div className="w-full max-w-[600px] mx-auto mt-8">
-          {loading ? (
-            <div className="text-center py-20 text-gray-500 text-sm">
-              분석 중...
-            </div>
-          ) : (
-            <IngredientEditList
-              ingredients={ingredients}
-              onUpdate={(id, field, value) =>
-                setIngredients((prev) =>
-                  prev.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
-                )
-              }
-              onOpenCamera={handleOpenImageOptions}
-              onSelectPhoto={handleSelectPhoto}
-            />
-          )}
+    <div className="flex flex-col items-center min-h-screen bg-white px-6 pb-32">
+      <div className="w-full max-w-[600px] mt-8">
+        {ingredients.length > 0 ? (
+          <IngredientEditList
+            ingredients={ingredients}
+            onUpdate={handleUpdate}
+            onOpenCamera={handleOpenImageOptions}
+            onSelectPhoto={handleSelectPhoto}
+          />
+        ) : (
+          <p className="text-center text-gray-500 mt-10">
+            등록된 재료가 없습니다. + 버튼으로 추가하세요.
+          </p>
+        )}
+
+        <div className="flex justify-center mt-6">
+          <button
+            type="button"
+            onClick={handleAddIngredient}
+            className="w-full border-2 border-dashed border-[#FF8800] text-[#FF8800]
+                       rounded-lg py-3 font-medium text-sm bg-transparent
+                       hover:bg-[#FFF8F2] hover:scale-[1.02] active:scale-[0.98]
+                       transition-all"
+          >
+            + 재료 추가하기
+          </button>
         </div>
-      </main>
+      </div>
 
       {/* 이미지 옵션 모달 */}
       <ImageOptionsModal
@@ -251,15 +231,12 @@ export default function IngredientPhotoAddPage() {
               '📷 카메라 캡처 base64(앞 80자):',
               dataUrl.slice(0, 80),
             );
+
             if (selectedIngredientId && dataUrl) {
               setIngredients((prev) =>
                 prev.map((item) =>
                   item.id === selectedIngredientId
-                    ? {
-                        ...item,
-                        image: dataUrl,
-                        imageUrl: dataUrl.split(',')[1],
-                      }
+                    ? { ...item, image: dataUrl }
                     : item,
                 ),
               );
@@ -275,11 +252,12 @@ export default function IngredientPhotoAddPage() {
           type="button"
           onClick={handleSaveIngredients}
           disabled={loading}
-          className={`w-[90%] max-w-[600px] py-3 rounded-lg font-medium transition-all shadow-md ${
-            loading
-              ? 'bg-[#FFD3A5] text-white cursor-not-allowed'
-              : 'bg-[#FF8800] text-white hover:bg-[#ff7b00] active:scale-[0.98]'
-          }`}
+          className={`w-[90%] max-w-[600px] py-3 rounded-lg font-medium transition-all shadow-md 
+            ${
+              loading
+                ? 'bg-[#FFD3A5] text-white cursor-not-allowed'
+                : 'bg-[#FF8800] text-white hover:bg-[#ff7b00] active:scale-[0.98]'
+            }`}
         >
           {loading ? '저장 중...' : '저장하기'}
         </button>
