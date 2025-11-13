@@ -3,24 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "http://13.125.158.205:8080/api/$1"
-    }
-  ],
-  "redirects": [
+    },
     {
       "source": "/(.*)",
-      "destination": "/index.html",
-      "statusCode": 200
+      "destination": "/index.html"
     }
-  ],
-  "headers": [
-    {
-      "source": "/sw.js",
-      "headers": [{ "key": "Cache-Control", "value": "no-store" }]
-    }
-  ],
-  "build": {
-    "env": {
-      "VERCEL_FORCE_NO_BUILD_CACHE": "1"
-    }
-  }
+  ]
 }
