@@ -8,15 +8,16 @@ export default function LoginPage() {
   };
 
   return (
-    // 🔥 여기 수정: min-h-screen → min-h-[100dvh]
-    <div className="flex justify-center items-center min-h-[100dvh] bg-white">
-      <div className="flex flex-col items-center justify-center w-full max-w-md">
+    // ✅ 전체 뷰포트 기준 가로/세로 중앙 정렬
+    <div className="min-h-[100dvh] w-screen flex items-center justify-center bg-white">
+      {/* ✅ 가운데 정렬 + 최대 폭 + 자동 중앙정렬 */}
+      <div className="w-full max-w-sm mx-auto px-6 flex flex-col items-center justify-center text-center">
         {/* 타이틀 */}
         <div className="flex flex-col items-center gap-6 mb-10">
           <h1 className="text-amber-500 text-5xl font-['Gretoon']">
             Hurr Cook
           </h1>
-          <p className="text-amber-500 text-base font-['Pretendard'] text-center">
+          <p className="text-amber-500 text-base font-['Pretendard']">
             자취생을 위한 쉽고 간편한 AI 레시피 서비스
           </p>
         </div>
