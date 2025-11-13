@@ -65,7 +65,7 @@ const RecipeEditModal: React.FC<RecipeEditModalProps> = ({
     if (!isOpen) return;
     const fetchInventory = async () => {
       try {
-        const res = await api.get<IngredientResponse>('/ingredients');
+        const res = await api.get<IngredientResponse>('/api/ingredients');
         if (res.data.success && Array.isArray(res.data.data)) {
           setInventory(res.data.data);
         } else {

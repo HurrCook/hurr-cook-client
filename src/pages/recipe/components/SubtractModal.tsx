@@ -65,7 +65,7 @@ export default function SubtractModal({
     const fetchIngredients = async () => {
       try {
         setLoading(true);
-        const res = await api.get<IngredientResponse>('/ingredients');
+        const res = await api.get<IngredientResponse>('/api/ingredients');
         if (res.data.success && Array.isArray(res.data.data)) {
           setInventory(res.data.data);
         } else {
@@ -177,7 +177,7 @@ export default function SubtractModal({
           };
         });
 
-      await api.put('/ingredients', { ingredientUseList });
+      await api.put('/api/ingredients', { ingredientUseList });
       onClose();
     } finally {
       setLoading(false);

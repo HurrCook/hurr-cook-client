@@ -69,7 +69,7 @@ export default function RefrigeratorPage() {
   const fetchIngredients = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/ingredients');
+      const res = await api.get('/api/ingredients');
       if (res.data.success && Array.isArray(res.data.data)) {
         setIngredients(res.data.data);
       } else {
@@ -99,7 +99,7 @@ export default function RefrigeratorPage() {
   const fetchTools = useCallback(async () => {
     setToolLoading(true);
     try {
-      const res = await api.get('/cookwares');
+      const res = await api.get('/api/cookwares');
       if (res.data.success && res.data.data) {
         const activeTools = Object.entries(res.data.data)
           .filter(([, value]) => value)
@@ -143,7 +143,7 @@ export default function RefrigeratorPage() {
     };
 
     try {
-      await api.post('/cookwares', payload);
+      await api.post('/api/cookwares', payload);
     } catch (error: unknown) {
       const err = error as AxiosError;
       if (err.response)

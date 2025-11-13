@@ -92,14 +92,14 @@ export default function UserInfoPage2() {
     };
 
     try {
-      const res = await api.post('/ingredients', payload, {
+      const res = await api.post('/api/ingredients', payload, {
         headers: { 'Content-Type': 'application/json' },
         maxBodyLength: Infinity,
       });
 
       if (!res.data?.success) return;
 
-      await api.get('/ingredients');
+      await api.get('/api/ingredients');
       navigate('/userinfopage3');
     } catch (err) {
       console.error('[UserInfoPage2] POST /ingredients error:', err);

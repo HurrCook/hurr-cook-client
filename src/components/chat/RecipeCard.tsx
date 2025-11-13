@@ -86,7 +86,7 @@ export default function RecipeCard({
         time: time || '15분',
       };
 
-      await api.post('/recipes', payload);
+      await api.post('/api/recipes', payload);
       onSaved?.();
     } catch (error: unknown) {
       const err = error as AxiosError;
