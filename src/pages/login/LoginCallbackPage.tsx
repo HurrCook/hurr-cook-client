@@ -59,6 +59,7 @@ export default function LoginCallbackPage() {
     },
   });
 
+  // ⭐ location.search가 바뀔 때마다 실행됨
   useEffect(() => {
     const code = new URLSearchParams(location.search).get('code');
     console.log('🔹 카카오 인가 코드:', code);
