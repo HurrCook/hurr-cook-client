@@ -42,6 +42,7 @@ const pwaOptions: Partial<VitePWAOptions> = {
   },
   workbox: {
     globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+    navigateFallbackDenylist: [/\/login/, /\/auth\//],
     runtimeCaching: [
       {
         urlPattern: /.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
