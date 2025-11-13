@@ -19,19 +19,17 @@ export default function LoadingPage() {
 
       if (!base64Images || base64Images.length === 0) {
         console.warn('[LoadingPage] base64Images가 비어 있음 → /fail 이동');
-        navigate('/fail');
+        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
         return;
       }
 
       try {
-        console.log('[LoadingPage] POST 요청 시작 → /chats/yolo');
+        console.log('[LoadingPage] POST 요청 시작 → api/chats/yolo');
 
-        // 💡 API 호출 시, 데이터 전송 용량 제한 회피를 위해 maxBodyLength 설정 유지 권장
         const { data, status } = await axiosInstance.post(
           'api/chats/yolo',
           { base64_images: base64Images },
           {
-            // 💡 Base64 데이터가 매우 클 경우를 대비해 설정 유지
             maxBodyLength: Infinity,
             maxContentLength: Infinity,
           },
@@ -54,16 +52,15 @@ export default function LoadingPage() {
               detected,
               type: 'ingredient',
             },
+            replace: true, // ✅ 핵심 수정: 로딩 페이지를 히스토리에서 제거
           });
         } else {
-          // 💡 API는 성공했으나 감지된 재료가 없는 경우
           console.warn(
             '[LoadingPage] 감지 실패 (API 성공, 재료 0개) → /fail 이동',
           );
-          navigate('/fail');
+          navigate('/fail', { replace: true }); // ✅ 히스토리 정리
         }
       } catch (err) {
-        // 💡 API 요청 자체에서 오류가 난 경우 (네트워크, 4xx, 5xx)
         if (axios.isAxiosError(err)) {
           console.error(
             '[LoadingPage] API 요청 실패:',
@@ -73,7 +70,7 @@ export default function LoadingPage() {
         } else {
           console.error('[LoadingPage] 기타 API 요청 중 오류:', err);
         }
-        navigate('/fail');
+        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
       }
     };
 

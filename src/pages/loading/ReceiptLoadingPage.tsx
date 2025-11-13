@@ -23,14 +23,13 @@ export default function ReceiptLoadingPage() {
         console.warn(
           '[ReceiptLoadingPage] base64Images가 비어 있음 → /fail 이동',
         );
-        navigate('/fail');
+        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
         return;
       }
 
       try {
-        console.log('[ReceiptLoadingPage] POST 요청 시작 → /chats/ocr');
+        console.log('[ReceiptLoadingPage] POST 요청 시작 → api/chats/ocr');
 
-        // 💡 API 호출 시, 데이터 전송 용량 제한 회피를 위해 설정 유지
         const { data, status } = await axiosInstance.post(
           'api/chats/ocr',
           { base64_images: base64Images },
@@ -58,16 +57,15 @@ export default function ReceiptLoadingPage() {
               detected,
               type: 'ocr', // ✅ 영수증 명시
             },
+            replace: true, // ✅ 핵심 수정: 로딩 페이지를 히스토리에서 제거
           });
         } else {
-          // 💡 API는 성공했으나 감지된 재료가 없는 경우
           console.warn(
             '[ReceiptLoadingPage] 감지 실패 (API 성공, 재료 0개) → /fail 이동',
           );
-          navigate('/fail');
+          navigate('/fail', { replace: true }); // ✅ 히스토리 정리
         }
       } catch (err) {
-        // 💡 API 요청 자체에서 오류가 난 경우
         if (axios.isAxiosError(err)) {
           console.error(
             '[ReceiptLoadingPage] API 요청 실패:',
@@ -77,7 +75,7 @@ export default function ReceiptLoadingPage() {
         } else {
           console.error('[ReceiptLoadingPage] 기타 API 요청 중 오류:', err);
         }
-        navigate('/fail');
+        navigate('/fail', { replace: true }); // ✅ 히스토리 정리
       }
     };
 
