@@ -41,19 +41,17 @@ const pwaOptions: Partial<VitePWAOptions> = {
     ],
   },
   workbox: {
-    globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
     runtimeCaching: [
       {
-        urlPattern: /.*\.(?:png|jpg|jpeg|svg|gif|webp)$/,
-        handler: 'StaleWhileRevalidate',
+        urlPattern: /.*\.js$/,
+        handler: 'NetworkFirst',
         options: {
-          cacheName: 'images',
-          expiration: { maxEntries: 100 },
+          cacheName: 'js-cache',
+          expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
+          networkTimeoutSeconds: 3,
         },
       },
     ],
-    // 🔥 여기 추가: 캐시에 올릴 수 있는 최대 파일 크기(바이트 단위)
-    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
   },
   devOptions: { enabled: false },
 };
