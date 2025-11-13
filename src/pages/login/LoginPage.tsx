@@ -1,11 +1,22 @@
 // src/pages/login/LoginPage.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import kakaologo from '@/assets/kakao_logo.svg';
 
 export default function LoginPage() {
+  useEffect(() => {
+    console.log('🔵 [LoginPage] 컴포넌트 마운트됨');
+    console.log('🌐 현재 페이지 URL:', window.location.href);
+    console.log('📱 User Agent:', navigator.userAgent);
+  }, []);
+
   const handleKakaoLogin = () => {
-    // ✅ 프론트 기준 /api 로 보내면 vercel가 백엔드로 프록시
-    window.location.href = '/api/auth/kakao/login';
+    const redirectUrl = '/api/auth/kakao/login';
+
+    console.log('🟡 [LoginPage] 카카오 로그인 버튼 클릭됨');
+    console.log('➡️ 이동 요청 URL:', redirectUrl);
+
+    // 실제 이동
+    window.location.href = redirectUrl;
   };
 
   return (
@@ -28,6 +39,8 @@ export default function LoginPage() {
             src={kakaologo}
             alt="kakao"
             className="absolute left-4 w-6 h-6"
+            onLoad={() => console.log('🟢 kakao_logo.svg 로드됨')}
+            onError={() => console.log('🔴 kakao_logo.svg 로드 실패')}
           />
           <span className="text-black text-[18px] font-semibold font-['Pretendard']">
             카카오로 로그인

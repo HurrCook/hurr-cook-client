@@ -18,13 +18,15 @@ type LoginResponse = {
 
 export default function LoginCallbackPage() {
   const navigate = useNavigate();
-  const didRunRef = useRef(false);
+  const didRunRef = useRef(false); // ✅ StrictMode로 인한 2번 실행 방지
 
   const { mutate } = useMutation<LoginResponse, AxiosError, string>({
     mutationFn: async (code: string) => {
+      // ✅ 프론트 기준 /api → vercel 프록시 → 백엔드
       const url = `/api/auth/kakao/callback?code=${code}`;
       console.log('🔗 카카오 콜백 요청 URL:', url);
 
+      // 여기서는 axiosInstance(인터셉터) 쓰지 말고 생 axios 사용
       const { data } = await axios.get<LoginResponse>(url, {
         withCredentials: true,
       });
@@ -41,12 +43,15 @@ export default function LoginCallbackPage() {
 
       const { accessToken, refreshToken, firstLogin, name } = res.data;
 
+      // 토큰 저장
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userName', name);
 
+      // 새로고침 시 code로 다시 요청 안 가게 URL 정리
       window.history.replaceState({}, '', '/login/callback');
 
+      // 첫 로그인 여부에 따라 분기
       navigate(firstLogin ? '/userinfopage1' : '/chat', { replace: true });
     },
     onError: (err) => {
