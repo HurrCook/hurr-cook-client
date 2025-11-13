@@ -1,97 +1,104 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 type CameraModalProps = {
   onClose: () => void;
+  onCapture: (dataUrl: string) => void;
 };
 
-export default function CameraModal({ onClose }: CameraModalProps) {
+export default function CameraModal({ onClose, onCapture }: CameraModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>(
+    'environment',
+  );
+  const [stream, setStream] = useState<MediaStream | null>(null);
+
+  const startCamera = async (mode: 'user' | 'environment') => {
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: mode, width: 430, height: 932 },
+        audio: false,
+      });
+      if (videoRef.current) videoRef.current.srcObject = newStream;
+      setStream(newStream);
+    } catch (err) {
+      console.error('카메라 접근 실패:', err);
+      alert('카메라 권한이 필요합니다.');
+      onClose();
+    }
+  };
 
   useEffect(() => {
-    const startCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 430 },
-            height: { ideal: 932 },
-            aspectRatio: 430 / 932,
-          },
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (err) {
-        console.error('카메라 접근 실패:', err);
-        alert('카메라 권한이 필요합니다.');
-        onClose();
-      }
-    };
-
-    startCamera();
-
+    void startCamera(facingMode);
     return () => {
-      if (videoRef.current && videoRef.current.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((track) => track.stop());
-      }
+      stream?.getTracks().forEach((t) => t.stop());
     };
-  }, [onClose]);
+  }, [facingMode]);
 
-  const takePhoto = () => {
+  const handleTakePhoto = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!videoRef.current || !canvasRef.current) return;
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
 
+    const canvas = canvasRef.current;
     canvas.width = 430;
     canvas.height = 932;
 
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/png');
+    if (!ctx) return;
 
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `capture_${Date.now()}.png`;
-      link.click();
-    }
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    onCapture(canvas.toDataURL('image/png'));
+  };
+
+  const handleSwitchCamera = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'));
   };
 
   return (
-    <div className="fixed inset-0 bg-black flex justify-center items-center z-50">
-      {/* 카메라 뷰 */}
-      <div className="relative w-[430px] h-[932px] bg-black overflow-hidden flex flex-col justify-between">
-        {/* 비디오 */}
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black"
+      onClick={onClose}
+    >
+      <div
+        className="relative h-[932px] w-[430px] overflow-hidden rounded-md bg-black"
+        onClick={(e) => e.stopPropagation()}
+      >
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none scale-x-[-1]"
+          className="absolute inset-0 h-full w-full object-cover z-0 pointer-events-none"
         />
 
-        {/* 상단 영역 */}
-        <div className="relative z-20 flex justify-start p-4">
-          <button
-            onClick={onClose}
-            className="bg-black/20 text-white w-8 h-8 flex items-center justify-center rounded-full text-xl"
-          >
-            ✕
-          </button>
-        </div>
+        {/* 닫기 */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute left-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white text-xl"
+        >
+          ✕
+        </button>
 
-        {/* 하단 영역 */}
-        <div className="relative z-20 flex justify-center p-6">
-          <button
-            onClick={takePhoto}
-            className="w-20 h-20 rounded-full border-4 border-white bg-black/40 flex items-center justify-center mb-10"
-          >
-            <div className="w-12 h-12 bg-white rounded-full" />
-          </button>
-        </div>
+        {/* 촬영 버튼 - 하단 중앙 */}
+        <button
+          onClick={handleTakePhoto}
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 transform rounded-full border-[6px] border-white bg-white/10 p-2 z-20 active:scale-95 transition-transform"
+        >
+          <div className="h-16 w-16 rounded-full bg-white" />
+        </button>
+
+        {/* 전환 버튼 - 하단 우측 */}
+        <button
+          onClick={handleSwitchCamera}
+          className="absolute bottom-24 right-16 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-black/40 text-white text-xl active:scale-95 transition-transform"
+        >
+          전환
+        </button>
       </div>
 
-      {/* 캔버스 */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );

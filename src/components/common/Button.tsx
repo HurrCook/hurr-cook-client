@@ -11,13 +11,13 @@ const COLOR_MAP: { [k in ButtonProps['color']]: string } = {
     'text-neutral-500 bg-gray-200 hover:bg-neutral-300 disabled:bg-neutral-600',
 };
 
-export default function FooterButton({
+export default function Button({
   color,
   children,
   className = '',
   ...rest
 }: ButtonProps) {
-  const fixedSizeClasses = 'py-[3px] text-lg font-normal';
+  const fixedSizeClasses = 'py-1 text-l font-normal';
 
   const classes = `w-24 inline-flex items-center justify-center rounded-[10px] ${fixedSizeClasses} ${COLOR_MAP[color]} ${className}`;
 

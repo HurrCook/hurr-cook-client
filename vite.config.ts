@@ -7,7 +7,6 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// PWA 옵션 타입 지정
 const pwaOptions: Partial<VitePWAOptions> = {
   registerType: 'autoUpdate',
   includeAssets: [
@@ -53,6 +52,8 @@ const pwaOptions: Partial<VitePWAOptions> = {
         },
       },
     ],
+    // 🔥 여기 추가: 캐시에 올릴 수 있는 최대 파일 크기(바이트 단위)
+    maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
   },
   devOptions: { enabled: false },
 };
