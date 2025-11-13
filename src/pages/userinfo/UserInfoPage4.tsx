@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import FooterButton from '/src/components/common/FooterButton';
-
+import Hurricon from '/src/assets/Hurr3.svg';
 export default function UserInfoPage4() {
   const navigate = useNavigate();
   const handleNextClick = () => {
@@ -19,11 +19,7 @@ export default function UserInfoPage4() {
           // 💡 top-[26.93%] 유지, left-1/2와 -translate-x-1/2 추가하여 수평 중앙 정렬
           className="fixed top-[26.93%] left-1/2 -translate-x-1/2 flex flex-col items-center"
         >
-          <img
-            className="flex max-w-62"
-            src="/src/assets/Hurr3.svg"
-            alt="Hurr Cook 로고"
-          />
+          <img className="flex max-w-62" src={Hurricon} alt="Hurr Cook 로고" />
           <div className="w-72 pt-[30px] inline-flex flex-col justify-start items-center gap-[23px]">
             <div className="self-stretch text-center justify-start text-amber-500 text-3xl font-normal font-['Gretoon']">
               Hurr Cook

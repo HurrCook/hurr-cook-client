@@ -6,6 +6,7 @@ import ImageOptionsModal from '/src/components/modal/ImageOptionsModal';
 import axiosInstance from '@/apis/axiosInstance';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import ingredientAdd from '/src/assets/ingredient_add_image.svg';
 
 export type DetectedIngredient = {
   id: string;
@@ -200,7 +201,7 @@ export default function UserInfoPage1() {
               className="aspect-square rounded-lg overflow-hidden border border-dashed border-amber-400 flex items-center justify-center hover:bg-amber-50"
             >
               <img
-                src="/src/assets/ingredient_add_image.svg"
+                src={ingredientAdd}
                 alt="재료 추가"
                 className="h-full w-full object-cover"
               />
