@@ -1,6 +1,6 @@
 // src/pages/login/LoginPage.tsx
 import React from 'react';
-
+import kakaologo from '/src/assets/kakao_logo.svg';
 export default function LoginPage() {
   const handleKakaoLogin = () => {
     // ✅ 백엔드에서 카카오 인증 URL로 리다이렉트 → 카카오 로그인 → (프론트 콜백) /login/callback?code=...
@@ -26,7 +26,7 @@ export default function LoginPage() {
           className="relative flex items-center justify-center w-full h-12 bg-[#FEE500] rounded-lg hover:brightness-95 transition shadow-md"
         >
           <img
-            src="/src/assets/kakao_logo.svg"
+            src={kakaologo}
             alt="kakao"
             className="absolute left-4 w-6 h-6"
           />
