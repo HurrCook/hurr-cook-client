@@ -13,31 +13,9 @@ const IngredientCard: React.FC<IngredientCardProps> = ({
   date,
   quantity,
 }) => {
-  // ✅ 수정된 날짜 파싱 및 비교 로직 (가장 안정적인 방식)
-
-  // 1. "YYYY.MM.DD" 문자열을 연, 월, 일로 분리
-  const dateParts = date.split('.').map((part) => parseInt(part, 10));
-
-  // 날짜 파싱 실패 시 만료되지 않은 것으로 간주하고 렌더링을 차단
-  if (dateParts.length !== 3 || dateParts.some(isNaN)) {
-    console.error('Invalid date format received:', date);
-    return null;
-  }
-
-  const [year, month, day] = dateParts;
-  // new Date() 생성자는 월(Month)을 0부터 시작 (1월=0, 12월=11).
-  const monthIndex = month - 1;
-
-  // 2. 만료일: 로컬 시간대 기준으로 00:00:00에 해당하는 Date 객체 생성
-  const parsedDate = new Date(year, monthIndex, day, 0, 0, 0, 0);
-
-  // 3. 오늘: 오늘 날짜의 시간을 00:00:00으로 설정
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // 4. 유통기한이 오늘 날짜와 같거나 (<=) 이미 지났으면 true
-  const isExpired = parsedDate <= today;
-  // ------------------------------------
+  const parsedDate = new Date(date.replace(/\./g, '-'));
+  const isExpired = parsedDate < today;
 
   return (
     <div
