@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isAuthed } from '@/lib/auth';
-import Hurricon from '/src/assets/Hurr1.svg';
+import Hurricon from '@/assets/Hurr1.svg';
 
 export default function SplashScreen() {
   const navigate = useNavigate();

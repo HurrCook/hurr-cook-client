@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import FooterButton from '/src/components/common/FooterButton';
-import Hurricon from '/src/assets/Hurr3.svg';
+import FooterButton from '@/components/common/FooterButton';
+import Hurricon from '@/assets/Hurr3.svg';
 export default function UserInfoPage4() {
   const navigate = useNavigate();
   const handleNextClick = () => {
