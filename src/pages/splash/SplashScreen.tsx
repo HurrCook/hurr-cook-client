@@ -18,23 +18,12 @@ export default function SplashScreen() {
   }, [navigate]);
 
   return (
-    <div
-      className="flex justify-center items-center"
-      style={{
-        minHeight: '100vh',
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
-      <div
-        className="relative px-21 w-full h-full flex flex-col items-center overflow-hidden"
-        style={{
-          background: 'linear-gradient(to bottom, #FFB53F, #FF8800)',
-        }}
-      >
+    <div className="flex justify-center items-center min-h-screen">
+      {/* 앱 프레임 */}
+      <div className="relative px-21 w-screen h-screen bg-gradient-to-b from-[#FFB53F] to-[#FF8800] flex flex-col items-center overflow-hidden">
         <div className="absolute top-[28.15%] flex flex-col items-center">
-          <img className="flex max-w-62 mb-[2.5%]" src={Hurricon} />
-          <div className="text-[38.4px] text-white font-normal font-['Gretoon']">
+          <img className="flex max-w-62 mb-[2.5%] " src={Hurricon} />
+          <div className="text-[38.4px] justify-center text-white font-normal font-['Gretoon']">
             Hurr Cook
           </div>
         </div>

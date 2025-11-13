@@ -175,7 +175,7 @@ export default function RefrigeratorPage() {
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       <div className="fixed left-0 w-full z-30 justify-center">
-        <div className="w-full mt-[-1.3vh] px-4 py-2 bg-white">
+        <div className="w-full mt-[-1.3vh] px-4 ">
           <RefrigeratorTab activeTab={activeTab} onChange={setActiveTab} />
         </div>
       </div>
