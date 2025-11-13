@@ -29,16 +29,56 @@ export default function Sidebar({ onClose }: SidebarProps) {
   };
 
   /** ✅ 로그아웃 처리 로직 */
-  const handleLogoutConfirm = () => {
+  // src/components/header/Sidebar.tsx 중 handleLogoutConfirm만 수정
+
+  const handleLogoutConfirm = async () => {
     try {
+      console.log('🔴 [Logout] 로그아웃 시작 - 스토리지/캐시 정리');
+
+      // 1) 토큰 & 유저 정보 제거
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('userName');
       sessionStorage.removeItem('accessToken');
       sessionStorage.removeItem('refreshToken');
+
+      // 2) service worker 해제 (PWA 캐시를 쓰고 있다면)
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          console.log('🧹 [Logout] ServiceWorker unregister:', reg.scope);
+          await reg.unregister();
+        }
+      }
+
+      // 3) caches API 로 저장된 캐시 제거
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const key of keys) {
+          console.log('🧹 [Logout] Cache delete:', key);
+          await caches.delete(key);
+        }
+      }
+
+      // 4) (선택) 카카오 로그아웃까지 같이 태우고 싶으면 여기서 호출
+      //    → 카카오 세션까지 지우고 싶을 때
+      /*
+        const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY;
+        if (KAKAO_REST_API_KEY) {
+          const redirectUri = encodeURIComponent('https://hurrcook.shop/login');
+          const kakaoLogoutUrl =
+            `https://kauth.kakao.com/oauth/logout` +
+            `?client_id=${KAKAO_REST_API_KEY}&logout_redirect_uri=${redirectUri}`;
+          window.location.href = kakaoLogoutUrl;
+          return; // 여기서 함수 종료
+        }
+        */
+
+      // 5) 우리 앱 로그인 페이지로 이동
       navigate('/login', { replace: true });
     } catch (error) {
       console.error('❌ 로그아웃 에러:', error);
+      navigate('/login', { replace: true });
     } finally {
       setIsLogoutModalOpen(false);
     }
