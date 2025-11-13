@@ -1,98 +1,47 @@
 // src/apis/axiosInstance.ts
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: '/api', // 프록시 통해 백엔드 연결
+  baseURL: '/api', // Vercel 프록시
   headers: { 'Content-Type': 'application/json' },
   withCredentials: false,
 });
 
+// 요청 인터셉터: 토큰 자동 추가
 axiosInstance.interceptors.request.use(
   (config) => {
     const token =
       localStorage.getItem('accessToken') ||
       sessionStorage.getItem('accessToken');
-
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-let isRefreshing = false;
-let pendingQueue: Array<(token: string) => void> = [];
-
-const flushQueue = (newToken: string) => {
-  pendingQueue.forEach((cb) => cb(newToken));
-  pendingQueue = [];
-};
-
+// 응답 인터셉터: 401 → 무조건 로그인 페이지로 (무한루프 방지)
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (error) => {
-    // 🔧 타입 안전하게 변경
-    const original = error.config as AxiosRequestConfig & { _retry?: boolean };
-
-    if (error.response?.status !== 401 || original._retry) {
+    if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    original._retry = true;
+    console.warn('🚫 401 Unauthorized → 토큰 초기화 및 로그인 이동');
 
-    if (isRefreshing) {
-      return new Promise((resolve) => {
-        pendingQueue.push((token: string) => {
-          if (original.headers) {
-            original.headers.Authorization = `Bearer ${token}`;
-          }
-          resolve(axiosInstance(original));
-        });
-      });
-    }
+    // 토큰 삭제
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('accessToken');
 
-    try {
-      isRefreshing = true;
-
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) throw new Error('No refreshToken');
-
-      const { data } = await axios.post(
-        '/api/auth/reissuance',
-        { refreshToken },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('accessToken') ?? ''}`,
-          },
-        },
-      );
-
-      const newAccess = data?.data?.accessToken;
-      const newRefresh = data?.data?.refreshToken;
-
-      if (!newAccess) throw new Error('No new access token');
-
-      localStorage.setItem('accessToken', newAccess);
-      if (newRefresh) localStorage.setItem('refreshToken', newRefresh);
-      axiosInstance.defaults.headers.Authorization = `Bearer ${newAccess}`;
-
-      flushQueue(newAccess);
-
-      if (original.headers) {
-        original.headers.Authorization = `Bearer ${newAccess}`;
-      }
-
-      return axiosInstance(original);
-    } catch (e) {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
+    // 이미 /login이면 또 리다이렉트 안 함
+    if (!window.location.pathname.startsWith('/login')) {
       window.location.href = '/login';
-      return Promise.reject(e);
-    } finally {
-      isRefreshing = false;
     }
+
+    return Promise.reject(error);
   },
 );
 
