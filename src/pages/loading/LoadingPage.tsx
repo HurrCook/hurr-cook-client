@@ -28,7 +28,7 @@ export default function LoadingPage() {
 
         // 💡 API 호출 시, 데이터 전송 용량 제한 회피를 위해 maxBodyLength 설정 유지 권장
         const { data, status } = await axiosInstance.post(
-          '/chats/yolo',
+          'api/chats/yolo',
           { base64_images: base64Images },
           {
             // 💡 Base64 데이터가 매우 클 경우를 대비해 설정 유지

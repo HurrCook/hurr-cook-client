@@ -32,7 +32,7 @@ export default function ReceiptLoadingPage() {
 
         // 💡 API 호출 시, 데이터 전송 용량 제한 회피를 위해 설정 유지
         const { data, status } = await axiosInstance.post(
-          '/chats/ocr',
+          'api/chats/ocr',
           { base64_images: base64Images },
           {
             maxBodyLength: Infinity,
