@@ -24,7 +24,7 @@ export async function uploadIngredientImage(
 
   // 업로드 엔드포인트 경로(백엔드에 맞게 바꿔도 됨)
   const { data } = await axiosInstance.post<UploadResponse>(
-    '/ingredients/upload', // 예시: /api/ingredients/upload (axiosInstance baseURL에 /api가 포함되어 있으면 이렇게)
+    '/api/ingredients/upload', // 예시: /api/ingredients/upload (axiosInstance baseURL에 /api가 포함되어 있으면 이렇게)
     form,
     { headers: { 'Content-Type': 'multipart/form-data' } },
   );

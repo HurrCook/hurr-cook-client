@@ -17,7 +17,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   useEffect(() => {
     const fetchUserPreference = async () => {
       try {
-        const res = await api.get('/users');
+        const res = await api.get('/api/users');
         if (res.data.success && res.data.data?.personalPreference) {
           setInputValue(res.data.data.personalPreference);
         }
@@ -36,7 +36,7 @@ export default function SettingsModal({ onClose }: SettingsModalProps) {
   const handleSubmit = async () => {
     try {
       setLoading(true);
-      const res = await api.post('/users', {
+      const res = await api.post('/api/users', {
         personalPreference: inputValue.trim(),
       });
 

@@ -74,7 +74,7 @@ export default function RecipeModal({
   // ✅ 냉장고 재료 불러오기
   const fetchUserIngredients = async (): Promise<void> => {
     try {
-      const res = await api.get('/ingredients');
+      const res = await api.get('/api/ingredients');
       if (res.data?.success && Array.isArray(res.data.data)) {
         const ingredients: UserIngredient[] = res.data.data;
         setUserIngredients(ingredients);

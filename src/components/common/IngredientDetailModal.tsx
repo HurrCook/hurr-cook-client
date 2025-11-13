@@ -48,7 +48,7 @@ export default function IngredientDetailModal({
     const fetchIngredient = async () => {
       setLoading(true);
       try {
-        const res = await api.get(`/ingredients/${ingredientId}`);
+        const res = await api.get(`/api/ingredients/${ingredientId}`);
         if (!ignore && res.data.success && res.data.data) {
           const item = res.data.data;
           setEditData({
@@ -92,7 +92,7 @@ export default function IngredientDetailModal({
         expireDate: new Date(editData.date.replace(/\./g, '-')).toISOString(),
       };
 
-      await api.put(`/ingredients/${ingredientId}`, payload, {
+      await api.put(`/api/ingredients/${ingredientId}`, payload, {
         headers: { 'Content-Type': 'application/json' },
         maxBodyLength: 15 * 1024 * 1024,
       });
@@ -109,7 +109,7 @@ export default function IngredientDetailModal({
   /** 재료 삭제 */
   const handleDelete = async () => {
     try {
-      await api.delete(`/ingredients/${ingredientId}`);
+      await api.delete(`/api/ingredients/${ingredientId}`);
       onUpdated?.();
       onClose();
     } catch (error: unknown) {
