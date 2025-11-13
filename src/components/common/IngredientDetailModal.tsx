@@ -6,8 +6,8 @@ import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
-import DefaultGoodUrl from '@/assets/default_good.svg?url'; // ✅ 추가
-import DefaultBadUrl from '@/assets/default_bad.svg?url'; // ✅ 추가
+import DefaultGoodUrl from '@/assets/default_good.svg'; // ✅ 추가
+import DefaultBadUrl from '@/assets/default_bad.svg'; // ✅ 추가
 
 interface IngredientDetailModalProps {
   isOpen: boolean;
