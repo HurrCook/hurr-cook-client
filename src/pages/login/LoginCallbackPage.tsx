@@ -1,6 +1,7 @@
+// src/pages/login/LoginCallbackPage.tsx
 import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios, { AxiosError } from 'axios';
 
 type LoginResponse = {
@@ -29,6 +30,7 @@ export default function LoginCallbackPage() {
       });
       return data;
     },
+
     onSuccess: (res) => {
       console.log('✅ 콜백 응답:', res);
 
@@ -44,31 +46,30 @@ export default function LoginCallbackPage() {
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userName', name);
 
-      // URL 정리 (code 제거)
+      // code 제거
       window.history.replaceState({}, '', '/login/callback');
 
       navigate(firstLogin ? '/userinfopage1' : '/chat', { replace: true });
     },
+
     onError: (err) => {
       console.error('❌ 로그인 콜백 에러:', err.response?.data || err.message);
-      alert('로그인 중 오류가 발생했습니다.');
+      alert('로그인 중 오류 발생');
       navigate('/login', { replace: true });
     },
   });
 
   // ⭐ location.search가 바뀔 때마다 실행됨
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const code = params.get('code');
+    const code = new URLSearchParams(location.search).get('code');
+    console.log('🔹 카카오 인가 코드:', code);
 
-    console.log('🔹 감지된 카카오 code:', code);
     if (code) {
       mutate(code);
     } else {
       navigate('/login', { replace: true });
     }
-  }, [location.search, mutate, navigate]);
-  // location.search 추가
+  }, [location.search]); // ★ 핵심: 쿼리 변경을 감지해 재실행
 
   return (
     <div className="flex flex-col items-center justify-center h-screen text-center">
