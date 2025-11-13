@@ -10,11 +10,17 @@ export default function LoginPage() {
 
   const handleKakaoLogin = () => {
     const REST_API_KEY = import.meta.env.VITE_KAKAO_REST_KEY;
-    const LOGOUT_REDIRECT_URI = 'https://hurrcook.shop/login';
 
-    const kakaoLogoutUrl = `https://kauth.kakao.com/oauth/logout?client_id=${REST_API_KEY}&logout_redirect_uri=${LOGOUT_REDIRECT_URI}`;
+    console.log('REST:', REST_API_KEY);
 
-    window.location.href = kakaoLogoutUrl;
+    if (!REST_API_KEY) {
+      alert('카카오 REST_API_KEY가 설정되지 않았습니다.');
+      return;
+    }
+
+    const kakaoLogoutThenLoginUrl = `https://kauth.kakao.com/oauth/logout?client_id=${REST_API_KEY}&logout_redirect_uri=https://hurrcook.shop/api/auth/kakao/login`;
+
+    window.location.href = kakaoLogoutThenLoginUrl;
   };
 
   return (
