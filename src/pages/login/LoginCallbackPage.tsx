@@ -1,4 +1,3 @@
-// src/pages/login/LoginCallbackPage.tsx
 import { useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -20,21 +19,27 @@ export default function LoginCallbackPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log('🔵 [Callback] 컴포넌트 렌더링');
+  console.log('📍 [Callback] location:', location.pathname, location.search);
+
   const { mutate } = useMutation<LoginResponse, AxiosError, string>({
     mutationFn: async (code: string) => {
       const url = `/api/auth/kakao/callback?code=${code}`;
-      console.log('🔗 카카오 콜백 요청 URL:', url);
+      console.log('🔗 [Callback] 카카오 콜백 요청 URL:', url);
 
       const { data } = await axios.get<LoginResponse>(url, {
         withCredentials: true,
       });
+
+      console.log('📥 [Callback] 백엔드 응답 원본:', data);
       return data;
     },
 
     onSuccess: (res) => {
-      console.log('✅ 콜백 응답:', res);
+      console.log('✅ [Callback] 콜백 onSuccess:', res);
 
       if (!res?.success || !res?.data) {
+        console.warn('⚠️ [Callback] success=false 또는 data 없음:', res);
         alert(res?.message || '로그인 실패');
         navigate('/login', { replace: true });
         return;
@@ -46,30 +51,39 @@ export default function LoginCallbackPage() {
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('userName', name);
 
-      // code 제거
       window.history.replaceState({}, '', '/login/callback');
 
       navigate(firstLogin ? '/userinfopage1' : '/chat', { replace: true });
     },
 
-    onError: (err) => {
-      console.error('❌ 로그인 콜백 에러:', err.response?.data || err.message);
-      alert('로그인 중 오류 발생');
+    onError: (err: AxiosError) => {
+      const errorData = err.response?.data;
+
+      console.error(
+        '❌ [Callback] 로그인 콜백 에러:',
+        errorData || err.message,
+      );
+
+      alert('로그인 중 오류가 발생했습니다.');
       navigate('/login', { replace: true });
     },
   });
 
   // ⭐ location.search가 바뀔 때마다 실행됨
   useEffect(() => {
-    const code = new URLSearchParams(location.search).get('code');
-    console.log('🔹 카카오 인가 코드:', code);
+    console.log('🟡 [Callback useEffect] 실행, search =', location.search);
+
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    console.log('🔹 [Callback useEffect] 카카오 인가 코드:', code);
 
     if (code) {
       mutate(code);
     } else {
+      console.warn('⚠️ [Callback useEffect] code 없음 → /login 이동');
       navigate('/login', { replace: true });
     }
-  }, [location.search]); // ★ 핵심: 쿼리 변경을 감지해 재실행
+  }, [location.search]);
 
   return (
     <div className="flex flex-col items-center justify-center h-screen text-center">
