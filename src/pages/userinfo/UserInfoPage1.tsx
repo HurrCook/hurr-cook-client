@@ -1,12 +1,12 @@
 // src/pages/userinfo/UserInfoPage1.tsx
 import React, { useRef, useState } from 'react';
-import FooterButton from '/src/components/common/FooterButton';
-import CameraModal from '/src/components/header/CameraModal';
-import ImageOptionsModal from '/src/components/modal/ImageOptionsModal';
+import FooterButton from '@/components/common/FooterButton';
+import CameraModal from '@/components/header/CameraModal';
+import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import axiosInstance from '@/apis/axiosInstance';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import ingredientAdd from '/src/assets/ingredient_add_image.svg';
+import ingredientAdd from '@/assets/ingredient_add_image.svg';
 
 export type DetectedIngredient = {
   id: string;

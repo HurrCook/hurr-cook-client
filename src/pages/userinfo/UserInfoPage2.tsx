@@ -1,7 +1,7 @@
 // src/pages/userinfo/UserInfoPage2.tsx
 import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import FooterButton from '/src/components/common/FooterButton';
+import FooterButton from '@/components/common/FooterButton';
 import IngredientEditList, {
   IngredientEditData,
 } from '@/components/common/IngredientEditList';
