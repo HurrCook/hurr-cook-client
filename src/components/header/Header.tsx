@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import TabIcon from '@/assets/tab.svg';
 import SettingIcon from '@/assets/setting.svg';
 import CameraIcon from '@/assets/camera.svg';
-import PencilIcon from '@/assets/연필.svg';
+import PencilIcon from '@/assets/add.svg';
 import ArrowIcon from '@/assets/arrow.svg';
 import HeaderImageOptionsModal from '@/components/modal/HeaderImageOptionsModal';
 import CameraModal from '@/components/header/CameraModal';
@@ -75,7 +75,7 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
           <button
             onClick={() => setIsImageOptionOpen(true)}
             aria-label="카메라 열기"
-            className="flex items-center justify-center w-8 h-8"
+            className="flex items-center justify-center w-8 h-8 "
           >
             <img src={CameraIcon} alt="카메라 아이콘" className="w-6 h-6" />
           </button>
@@ -83,9 +83,9 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
           <button
             onClick={() => navigate('/refrigerator/add')}
             aria-label="재료 추가"
-            className="flex items-center mt-0.5 justify-center w-8 h-8"
+            className="flex items-center mb-0.5 justify-center w-8 h-8 text-[#303030]"
           >
-            <img src={PencilIcon} alt="연필 아이콘" className="w-6 h-6" />
+            <img src={PencilIcon} alt="연필 아이콘" className="w-7 h-7" />
           </button>
         </div>
       );
