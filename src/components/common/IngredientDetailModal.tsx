@@ -26,9 +26,10 @@ interface IngredientEditData {
 
 // ✅ SVG XML 문자열을 Base64 Data URL로 변환하는 헬퍼 함수
 const svgContentToBase64 = (svgContent: string): string => {
-  // Base64 인코딩 시 발생하는 문제를 피하기 위해 unescape(encodeURIComponent) 사용
-  const base64 = btoa(unescape(encodeURIComponent(svgContent)));
-  // 💡 image/svg+xml MIME 타입을 사용하여 브라우저가 SVG로 정확히 해석하도록 함
+  // 💡 Base64 인코딩 시 발생하는 문제를 최소화하기 위해 UTF-8을 사용합니다.
+  const utf8Content = unescape(encodeURIComponent(svgContent));
+  const base64 = btoa(utf8Content);
+  // image/svg+xml MIME 타입을 사용하여 브라우저가 SVG로 정확히 해석하도록 함
   return `data:image/svg+xml;base64,${base64}`;
 };
 
@@ -57,6 +58,16 @@ export default function IngredientDetailModal({
   const defaultBadBase64 = useMemo(() => {
     return svgContentToBase64(DefaultBadContent);
   }, []);
+
+  // 💡 디버그용 useEffect: Base64 변환 결과를 확인
+  useEffect(() => {
+    if (isOpen) {
+      console.log('--- 기본 이미지 Base64 확인 ---');
+      console.log('Good Base64 Start:', defaultGoodBase64.slice(0, 50)); // PDR2Zy... 형태여야 함
+      console.log('Bad Base64 Start:', defaultBadBase64.slice(0, 50));
+      console.log('---------------------------');
+    }
+  }, [isOpen, defaultGoodBase64, defaultBadBase64]);
 
   /** 재료 상세 데이터 불러오기 */
   useEffect(() => {
