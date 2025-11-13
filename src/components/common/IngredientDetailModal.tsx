@@ -1,14 +1,15 @@
 // src/components/common/IngredientDetailModal.tsx
-import React, { useState, useEffect, useMemo } from 'react'; // ✅ useMemo 추가
+
+import React, { useState, useEffect } from 'react'; // useMemo 제거
 import TrashIcon from '@/assets/쓰레기통.svg';
 import Button from '@/components/common/Button';
 import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
-// ❌ ?url 대신 ?raw를 사용하여 SVG 파일 내용을 문자열로 가져옵니다.
-import DefaultGoodContent from '@/assets/default_good.svg?raw';
-import DefaultBadContent from '@/assets/default_bad.svg?raw';
+// ✅ ?url 임포트로 복원 (IngredientPhotoAddPage 방식 차용)
+import DefaultGoodUrl from '@/assets/default_good.svg?url';
+import DefaultBadUrl from '@/assets/default_bad.svg?url';
 
 interface IngredientDetailModalProps {
   isOpen: boolean;
@@ -24,12 +25,7 @@ interface IngredientEditData {
   imageUrl: string;
 }
 
-// ✅ SVG XML 문자열을 Base64 Data URL로 변환하는 헬퍼 함수
-const svgContentToBase64 = (svgContent: string): string => {
-  // Base64 인코딩 시 발생하는 문제를 피하기 위해 unescape(encodeURIComponent) 사용
-  const base64 = btoa(unescape(encodeURIComponent(svgContent)));
-  return `data:image/svg+xml;base64,${base64}`;
-};
+// ❌ svgContentToBase64 함수 제거
 
 export default function IngredientDetailModal({
   isOpen,
@@ -48,14 +44,7 @@ export default function IngredientDetailModal({
     imageUrl: '',
   });
 
-  // ✅ 기본 이미지를 useMemo를 사용하여 Base64 Data URL로 변환
-  const defaultGoodBase64 = useMemo(() => {
-    return svgContentToBase64(DefaultGoodContent);
-  }, []);
-
-  const defaultBadBase64 = useMemo(() => {
-    return svgContentToBase64(DefaultBadContent);
-  }, []);
+  // ❌ useMemo를 사용한 defaultGoodBase64/defaultBadBase64 변수 제거
 
   /** 재료 상세 데이터 불러오기 */
   useEffect(() => {
@@ -174,7 +163,7 @@ export default function IngredientDetailModal({
 
   if (!isOpen) return null;
 
-  // ✅ 유통기한 비교 로직
+  // ✅ 유통기한 비교 로직 (유지)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -236,9 +225,9 @@ export default function IngredientDetailModal({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  // ✅ Base64 인코딩된 SVG 이미지를 기본 이미지로 사용
+                  // ✅ ?url 임포트로 가져온 변수를 사용
                   <img
-                    src={isExpired ? defaultBadBase64 : defaultGoodBase64}
+                    src={isExpired ? DefaultBadUrl : DefaultGoodUrl}
                     alt="기본 재료 이미지"
                     className="w-full h-full object-cover"
                   />
