@@ -86,7 +86,7 @@ export default function ChatbotPage() {
     const skeletonTimer = setTimeout(() => setShowRecipeSkeleton(true), 800);
 
     try {
-      const res = await api.post('/chats', { 프롬프트: text });
+      const res = await api.post('/api/chats', { 프롬프트: text });
       clearTimeout(skeletonTimer);
       setShowRecipeSkeleton(false);
 

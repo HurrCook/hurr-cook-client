@@ -183,7 +183,7 @@ export default function IngredientPhotoAddPage() {
       };
 
       console.log('📤 최종 전송 payload:', payload);
-      const res = await api.post('/ingredients', payload, {
+      const res = await api.post('/api/ingredients', payload, {
         headers: { 'Content-Type': 'application/json' },
         maxBodyLength: 15 * 1024 * 1024,
       });
