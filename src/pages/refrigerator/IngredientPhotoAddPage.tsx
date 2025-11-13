@@ -97,7 +97,48 @@ export default function IngredientPhotoAddPage() {
     input.click();
   };
 
-  // ✅ 저장 (prefix 제거 + 로그 추가)
+  // ✅ 날짜 문자열을 백엔드가 먹기 좋은 형식으로 통일
+  // - 허용: 'YYYY-MM-DD', 'YYYY.MM.DD', 'YYYY/MM/DD'
+  // - 결과: 'YYYY-MM-DDT00:00:00'
+  const formatExpireDate = (raw?: string): string => {
+    if (!raw || !raw.trim()) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const result = `${yyyy}-${mm}-${dd}T00:00:00`;
+      console.log('[DATE] 빈 값 → 오늘 날짜 사용:', result);
+      return result;
+    }
+
+    const cleaned = raw.trim().replace(/[./]/g, '-'); // 2025.11.13 → 2025-11-13
+    const match = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+    if (!match) {
+      console.warn(
+        '[DATE WARN] 예상치 못한 포맷, raw =',
+        raw,
+        'cleaned =',
+        cleaned,
+      );
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      const result = `${yyyy}-${mm}-${dd}T00:00:00`;
+      console.log('[DATE] 포맷 오류 → 오늘 날짜 사용:', result);
+      return result;
+    }
+
+    const yyyy = match[1];
+    const mm = match[2].padStart(2, '0');
+    const dd = match[3].padStart(2, '0');
+    const result = `${yyyy}-${mm}-${dd}T00:00:00`;
+    console.log('[DATE] 최종 expireDate 문자열:', result, '(raw:', raw, ')');
+    return result;
+  };
+
+  // ✅ 저장
   const handleSaveIngredients = async () => {
     try {
       setLoading(true);
@@ -114,72 +155,23 @@ export default function IngredientPhotoAddPage() {
             imageBase64 = item.image;
           }
 
-          // 💡 날짜 유효성 검사 및 변환 최종 강화
-          let expireDateIso: string;
-
-          if (item.date) {
-            // YYYY.MM.DD 또는 YYYY/MM/DD에서 숫자 부분만 추출
-            const dateParts = item.date
-              .split(/[./]/)
-              .map((p) => parseInt(p.trim(), 10));
-
-            let dateObj: Date;
-
-            if (dateParts.length === 3 && !dateParts.some(isNaN)) {
-              // 연/월/일 추출 성공 시, 로컬 시간 기준 Date 객체 생성
-              dateObj = new Date(
-                dateParts[0],
-                dateParts[1] - 1,
-                dateParts[2],
-                0,
-                0,
-                0,
-                0,
-              );
-
-              // 🚨 UTC 자정으로 강제 설정하여 시간대 오류와 유효성 검사 실패 방지
-              dateObj.setUTCHours(0, 0, 0, 0);
-            } else {
-              // 파싱 실패 시, Invalid Date로 설정
-              dateObj = new Date(NaN);
-            }
-
-            // 🚨 핵심 디버그 로그 추가 (날짜 파싱 결과 확인)
-            console.log(
-              `[DATE DEBUG] Input: ${item.date}, Parts: ${dateParts}, Date Obj Valid: ${!isNaN(dateObj.getTime())}`,
-            );
-
-            if (isNaN(dateObj.getTime())) {
-              // Invalid Date인 경우: 오늘 날짜로 대체
-              console.warn(
-                `[Save] Invalid Date detected for: ${item.name} (${item.date}). Using today's date.`,
-              );
-              expireDateIso = new Date().toISOString();
-            } else {
-              // 유효한 Date인 경우: ISOString으로 변환
-              expireDateIso = dateObj.toISOString();
-            }
-          } else {
-            // 날짜 입력이 없으면 오늘 날짜 사용
-            expireDateIso = new Date().toISOString();
-          }
-          // ------------------------------------
+          const expireDate = formatExpireDate(item.date);
 
           console.log(
             `📦 [${idx}] imageBase64(앞 80자):`,
             imageBase64?.slice(0, 80),
           );
-
-          // 🚨 디버그 로그 추가: 페이로드에 들어갈 name/amount/unit 확인
           console.log(
-            `[PAYLOAD DEBUG ${idx}] Name: '${item.name.trim()}', Amount: ${Number(item.quantity) || 0}, Unit: ${item.unit.toUpperCase()}`,
+            `[PAYLOAD DEBUG ${idx}] Name: '${item.name.trim()}', Amount: ${
+              Number(item.quantity) || 0
+            }, Unit: ${item.unit.toUpperCase()}, ExpireDate: ${expireDate}`,
           );
 
           return {
             name: item.name.trim(),
-            amount: Number(item.quantity) || 0, // 0이 유효하지 않으면 null로 변경해야 할 수 있음
+            amount: Number(item.quantity) || 0,
             unit: item.unit.toUpperCase(),
-            expireDate: expireDateIso,
+            expireDate,
             imageUrl: imageBase64 || null,
           };
         }),
@@ -187,7 +179,8 @@ export default function IngredientPhotoAddPage() {
 
       console.log('📤 최종 전송 payload:', payload);
 
-      const res = await api.post('/api/ingredients', payload, {
+      // ⚠️ api 인스턴스 baseURL이 '/api' 라면 여기 path는 '/ingredients' (앞에 /api 붙이지 말기)
+      const res = await api.post('/ingredients', payload, {
         headers: { 'Content-Type': 'application/json' },
         maxBodyLength: 15 * 1024 * 1024,
       });
@@ -204,7 +197,6 @@ export default function IngredientPhotoAddPage() {
     } catch (error: unknown) {
       const err = error as AxiosError;
       if (err.response) {
-        // 🚨 서버 응답 상세 오류 로그 출력
         console.error(
           '❌ [POST /ingredients 오류] Status:',
           err.response.status,
