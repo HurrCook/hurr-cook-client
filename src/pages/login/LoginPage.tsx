@@ -10,7 +10,7 @@ export default function LoginPage() {
   return (
     // 🔥 여기 수정: min-h-screen → min-h-[100dvh]
     <div className="flex justify-center items-center min-h-[100dvh] bg-white">
-      <div className="flex flex-col items-center justify-center w-full max-w-md px-10">
+      <div className="flex flex-col items-center justify-center w-full max-w-md">
         {/* 타이틀 */}
         <div className="flex flex-col items-center gap-6 mb-10">
           <h1 className="text-amber-500 text-5xl font-['Gretoon']">
