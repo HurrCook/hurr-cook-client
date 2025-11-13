@@ -6,7 +6,6 @@ import CameraModal from '@/components/header/CameraModal';
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
-// ✅ ?raw를 사용하여 SVG 파일 내용을 문자열로 가져옵니다.
 import DefaultGoodContent from '@/assets/default_good.svg?raw';
 import DefaultBadContent from '@/assets/default_bad.svg?raw';
 
@@ -26,11 +25,25 @@ interface IngredientEditData {
 
 // ✅ SVG XML 문자열을 Base64 Data URL로 변환하는 헬퍼 함수
 const svgContentToBase64 = (svgContent: string): string => {
-  // 💡 Base64 인코딩 시 발생하는 문제를 최소화하기 위해 UTF-8을 사용합니다.
   const utf8Content = unescape(encodeURIComponent(svgContent));
   const base64 = btoa(utf8Content);
-  // image/svg+xml MIME 타입을 사용하여 브라우저가 SVG로 정확히 해석하도록 함
   return `data:image/svg+xml;base64,${base64}`;
+};
+
+// ✅ 이미지 소스를 안전하게 결정하는 헬퍼 함수 (유저 요청 반영)
+const getSafeImageSrc = (imageUrl: string): string => {
+  if (!imageUrl) return '';
+  if (imageUrl.startsWith('http')) return imageUrl;
+  if (imageUrl.startsWith('data:image')) return imageUrl;
+
+  // 순수한 Base64 문자열로 추정되면 PNG Data URL 프리픽스 붙여 반환
+  // 길이와 문자열 패턴(A-Z, a-z, 0-9, +, /, =)을 검사하여 Base64로 간주
+  if (imageUrl.length > 50 && imageUrl.match(/^[A-Za-z0-9+/=]+$/)) {
+    return `data:image/png;base64,${imageUrl}`;
+  }
+
+  // 그 외의 잘못된 경로 문자열 등은 빈 문자열로 반환하여 기본 이미지 렌더링을 유도
+  return '';
 };
 
 export default function IngredientDetailModal({
@@ -59,15 +72,14 @@ export default function IngredientDetailModal({
     return svgContentToBase64(DefaultBadContent);
   }, []);
 
-  // 💡 디버그용 useEffect: Base64 변환 결과를 확인
+  // 💡 디버그용
   useEffect(() => {
     if (isOpen) {
       console.log('--- 기본 이미지 Base64 확인 ---');
-      console.log('Good Base64 Start:', defaultGoodBase64.slice(0, 50)); // PDR2Zy... 형태여야 함
-      console.log('Bad Base64 Start:', defaultBadBase64.slice(0, 50));
+      console.log('Good Base64 Start:', defaultGoodBase64.slice(0, 50));
       console.log('---------------------------');
     }
-  }, [isOpen, defaultGoodBase64, defaultBadBase64]);
+  }, [isOpen, defaultGoodBase64]);
 
   /** 재료 상세 데이터 불러오기 */
   useEffect(() => {
@@ -110,6 +122,7 @@ export default function IngredientDetailModal({
       const amount = amountMatch ? parseFloat(amountMatch[0]) : 1;
 
       let imageValue = editData.imageUrl || '';
+      // data:image 접두사 제거 로직 유지 (서버 전송용)
       if (imageValue.startsWith('data:image')) {
         const commaIndex = imageValue.indexOf(',');
         if (commaIndex !== -1) imageValue = imageValue.slice(commaIndex + 1);
@@ -195,6 +208,9 @@ export default function IngredientDetailModal({
   // 유통기한이 오늘 날짜와 같거나 이미 지난 경우 isExpired = true
   const isExpired = parsedDate <= today;
 
+  // 💡 렌더링 시 사용할 최종 이미지 소스 결정
+  const imageSrc = getSafeImageSrc(editData.imageUrl);
+
   return (
     <>
       {/* 메인 모달 */}
@@ -232,20 +248,14 @@ export default function IngredientDetailModal({
                 className="w-[162px] h-[162px] bg-[#F5F5F5] rounded-[10px] overflow-hidden cursor-pointer"
                 onClick={() => setIsImageOptionOpen(true)}
               >
-                {editData.imageUrl ? (
+                {imageSrc ? ( // ✅ imageSrc가 유효하면 (비어 있지 않으면)
                   <img
-                    src={
-                      editData.imageUrl.startsWith('data:image')
-                        ? editData.imageUrl
-                        : editData.imageUrl.startsWith('http')
-                          ? editData.imageUrl
-                          : `data:image/png;base64,${editData.imageUrl}`
-                    }
+                    src={imageSrc} // ✅ 안전하게 처리된 URL 사용
                     alt={editData.name || '재료 이미지'}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  // ✅ Base64 인코딩된 SVG 이미지를 기본 이미지로 사용
+                  // ✅ imageSrc가 비어있으면 기본 이미지 사용
                   <img
                     src={isExpired ? defaultBadBase64 : defaultGoodBase64}
                     alt="기본 재료 이미지"
