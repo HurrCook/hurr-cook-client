@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import TabIcon from '@/assets/탭.svg';
-import SettingIcon from '@/assets/세팅.svg';
-import CameraIcon from '@/assets/카메라.svg';
+import TabIcon from '@/assets/tab.svg';
+import SettingIcon from '@/assets/setting.svg';
+import CameraIcon from '@/assets/camera.svg';
 import PencilIcon from '@/assets/연필.svg';
 import ArrowIcon from '@/assets/arrow.svg';
 import HeaderImageOptionsModal from '@/components/modal/HeaderImageOptionsModal';
@@ -60,38 +60,44 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
 
     if (location.pathname.startsWith('/chat')) {
       return (
-        <button onClick={onOpenModal}>
-          <img src={SettingIcon} alt="세팅 아이콘" className="w-7 h-7" />
+        <button
+          onClick={onOpenModal}
+          className="flex items-center justify-center mt-0.5 w-8 h-8"
+        >
+          <img src={SettingIcon} alt="세팅 아이콘" className="w-6 h-6" />
         </button>
       );
     }
 
     if (location.pathname.startsWith('/refrigerator')) {
       return (
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center justify-center gap-1">
           <button
             onClick={() => setIsImageOptionOpen(true)}
             aria-label="카메라 열기"
+            className="flex items-center justify-center w-8 h-8"
           >
-            <img src={CameraIcon} alt="카메라 아이콘" className="w-7 h-7" />
+            <img src={CameraIcon} alt="카메라 아이콘" className="w-6 h-6" />
           </button>
+
           <button
             onClick={() => navigate('/refrigerator/add')}
             aria-label="재료 추가"
+            className="flex items-center mt-0.5 justify-center w-8 h-8"
           >
-            <img
-              src={PencilIcon}
-              alt="연필 아이콘"
-              className="w-8 h-8 ml-1 mt-2"
-            />
+            <img src={PencilIcon} alt="연필 아이콘" className="w-6 h-6" />
           </button>
         </div>
       );
     }
 
     return (
-      <button onClick={onOpenModal} aria-label="설정 열기">
-        <img src={SettingIcon} alt="세팅 아이콘" className="w-7 h-7" />
+      <button
+        onClick={onOpenModal}
+        aria-label="설정 열기"
+        className="flex items-center justify-center mt-0.5 w-8 h-8"
+      >
+        <img src={SettingIcon} alt="세팅 아이콘" className="w-6 h-6" />
       </button>
     );
   };
@@ -99,7 +105,11 @@ export default function Header({ onOpenSidebar, onOpenModal }: HeaderProps) {
   return (
     <>
       <header className="fixed left-0 right-0 h-13 bg-white flex items-center px-4 z-30">
-        <button onClick={onOpenSidebar} aria-label="사이드바 열기">
+        <button
+          onClick={onOpenSidebar}
+          aria-label="사이드바 열기"
+          className="flex items-center justify-center w-8 h-8"
+        >
           <img src={TabIcon} alt="탭 아이콘" className="w-6 h-6" />
         </button>
 
