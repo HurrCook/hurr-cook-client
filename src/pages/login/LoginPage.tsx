@@ -2,17 +2,10 @@
 import React from 'react';
 import kakaologo from '@/assets/kakao_logo.svg';
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) || '/api';
-
 export default function LoginPage() {
   const handleKakaoLogin = () => {
-    // 사용될 URL 예:
-    // 로컬 개발 → http://13.125.158.205:8080/api/auth/kakao/login
-    // 배포(Vercel) → https://hurrcook.shop/api/auth/kakao/login (Vercel이 프록시)
-    const loginUrl = `${API_BASE_URL}/auth/kakao/login`;
-
-    window.location.href = loginUrl;
+    // ✅ 프론트 기준 /api 로 보내면 vercel가 백엔드로 프록시
+    window.location.href = '/api/auth/kakao/login';
   };
 
   return (

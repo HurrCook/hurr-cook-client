@@ -1,32 +1,27 @@
 // src/apis/axiosInstance.ts
-import axios from 'axios';
-
-const BASE_URL = import.meta.env.VITE_API_URL;
+import axios, { AxiosRequestConfig } from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: '/api', // 프록시 통해 백엔드 연결
   headers: { 'Content-Type': 'application/json' },
   withCredentials: false,
 });
 
-// ---------------------
-//  🔐 AccessToken 자동 첨부
-// ---------------------
 axiosInstance.interceptors.request.use(
   (config) => {
     const token =
       localStorage.getItem('accessToken') ||
       sessionStorage.getItem('accessToken');
 
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     return config;
   },
   (error) => Promise.reject(error),
 );
 
-// ---------------------
-//  ♻️ Refresh Token 로직
-// ---------------------
 let isRefreshing = false;
 let pendingQueue: Array<(token: string) => void> = [];
 
@@ -38,7 +33,8 @@ const flushQueue = (newToken: string) => {
 axiosInstance.interceptors.response.use(
   (res) => res,
   async (error) => {
-    const original = error.config;
+    // 🔧 타입 안전하게 변경
+    const original = error.config as AxiosRequestConfig & { _retry?: boolean };
 
     if (error.response?.status !== 401 || original._retry) {
       return Promise.reject(error);
@@ -49,7 +45,9 @@ axiosInstance.interceptors.response.use(
     if (isRefreshing) {
       return new Promise((resolve) => {
         pendingQueue.push((token: string) => {
-          original.headers.Authorization = `Bearer ${token}`;
+          if (original.headers) {
+            original.headers.Authorization = `Bearer ${token}`;
+          }
           resolve(axiosInstance(original));
         });
       });
@@ -61,9 +59,8 @@ axiosInstance.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) throw new Error('No refreshToken');
 
-      // 🔥 환경변수 기반으로 재발급 주소도 자동 생성
       const { data } = await axios.post(
-        `${BASE_URL}/auth/reissuance`,
+        '/api/auth/reissuance',
         { refreshToken },
         {
           headers: {
@@ -79,11 +76,14 @@ axiosInstance.interceptors.response.use(
 
       localStorage.setItem('accessToken', newAccess);
       if (newRefresh) localStorage.setItem('refreshToken', newRefresh);
-
       axiosInstance.defaults.headers.Authorization = `Bearer ${newAccess}`;
+
       flushQueue(newAccess);
 
-      original.headers.Authorization = `Bearer ${newAccess}`;
+      if (original.headers) {
+        original.headers.Authorization = `Bearer ${newAccess}`;
+      }
+
       return axiosInstance(original);
     } catch (e) {
       localStorage.removeItem('accessToken');
