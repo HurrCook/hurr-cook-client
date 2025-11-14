@@ -39,19 +39,12 @@ interface RecipeModalProps {
   recipe: Recipe;
 }
 
-// ✅ 헬퍼 함수: 유통기한 날짜의 다음 날 자정 UTC 시점을 계산
-const getExpiryTimestamp = (expireDate: string): number => {
-  const expiry = new Date(expireDate);
-
-  if (isNaN(expiry.getTime())) return 0;
-
-  // 1. 유통기한 당일의 로컬 시간 00:00:00으로 정규화 (시간대 오류 최소화)
-  expiry.setHours(0, 0, 0, 0);
-
-  // 2. 이 날짜(유통기한 당일 자정)에 하루(24시간)를 더합니다.
-  const oneDayInMs = 24 * 60 * 60 * 1000;
-  // 이 값은 유통기한 다음 날의 로컬 자정 시각이 됩니다.
-  return expiry.getTime() + oneDayInMs;
+// ✅ 헬퍼 함수: Date 객체의 시간을 00:00:00으로 정규화하여 날짜만 비교할 수 있게 만듭니다.
+const normalizeDate = (date: Date): Date => {
+  const safeDate = new Date(date);
+  // 로컬 시간 기준 00:00:00으로 설정 (시간 정보 제거)
+  safeDate.setHours(0, 0, 0, 0);
+  return safeDate;
 };
 
 export default function RecipeModal({
@@ -105,8 +98,8 @@ export default function RecipeModal({
   const evaluateIngredientStatus = (
     ingredients: { name: string; expireDate: string }[],
   ): void => {
-    // 🚨 수정: 시간 정보 포함된 현재 시각 사용
-    const nowTime = Date.now();
+    // 1. 현재 날짜 (시간 00:00:00으로 정규화)
+    const today = normalizeDate(new Date());
 
     const normalizeName = (s: string): string => s.normalize('NFC').trim();
     const recipeNames = normIngredients.map((i) => normalizeName(i.name));
@@ -114,11 +107,14 @@ export default function RecipeModal({
       recipeNames.includes(normalizeName(i.name)),
     );
 
-    // ✅ 만료 로직: 만료일 다음 날 자정 (로컬 시간)보다 현재 시간이 크거나 같으면 만료
+    // ✅ 만료 로직 (수정): 만료 날짜(정규화)가 오늘 날짜(정규화)보다 엄격하게 작은 경우에만 만료
+    // -> 만료일 당일은 유효합니다.
     const hasExpired = matched.some((i) => {
-      const nextDayTimestamp = getExpiryTimestamp(i.expireDate);
-      // 만료일 다음 날 자정 시점(nextDayTimestamp)이 현재 시각(nowTime)보다 작거나 같으면 만료
-      return nextDayTimestamp > 0 && nextDayTimestamp <= nowTime;
+      // 2. 재료의 만료 날짜 (시간 00:00:00으로 정규화)
+      const expiry = normalizeDate(new Date(i.expireDate));
+
+      // 만료일의 타임스탬프가 오늘 날짜의 타임스탬프보다 작으면 (하루 전 이상이면) 만료
+      return expiry.getTime() < today.getTime();
     });
 
     setIsExpiredFound(hasExpired); // ✅ 상태 업데이트
