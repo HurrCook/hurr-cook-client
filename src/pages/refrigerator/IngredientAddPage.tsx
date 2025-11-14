@@ -1,10 +1,10 @@
 // src/pages/refrigerator/IngredientPhotoAddPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react'; // ✅ useRef 추가
 import { useNavigate } from 'react-router-dom';
 import IngredientEditList, {
   IngredientEditData,
 } from '@/components/common/IngredientEditList';
-import CameraModal from '@/components/header/CameraModal';
+// import CameraModal from '@/components/header/CameraModal'; // ❌ CameraModal 임포트 제거
 import ImageOptionsModal from '@/components/modal/ImageOptionsModal';
 import api from '@/lib/axios';
 import { AxiosError } from 'axios';
@@ -15,12 +15,15 @@ export default function IngredientPhotoAddPage() {
   const [ingredients, setIngredients] = useState<IngredientEditData[]>([
     { id: 1, name: '', image: '', date: '', quantity: '', unit: 'EA' },
   ]);
-  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  // const [isCameraOpen, setIsCameraOpen] = useState(false); // ❌ isCameraOpen 상태 제거
   const [isImageOptionOpen, setIsImageOptionOpen] = useState(false);
   const [selectedIngredientId, setSelectedIngredientId] = useState<
     number | string | null
   >(null);
   const [loading, setLoading] = useState(false);
+
+  // ✅ Ref for hidden camera input
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // ✅ 재료 항목 업데이트
   const handleUpdate = (
@@ -71,16 +74,50 @@ export default function IngredientPhotoAddPage() {
     );
   };
 
+  // ✅ 카메라로 촬영된 이미지 처리 (새 함수)
+  const handleCameraFileChange: React.ChangeEventHandler<
+    HTMLInputElement
+  > = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedIngredientId) return; // 파일이나 ID가 없으면 중단
+
+    try {
+      const dataUrl = await fileToBase64(file);
+      console.log('📷 카메라 캡처 base64(앞 80자):', dataUrl.slice(0, 80));
+
+      // 선택된 재료 항목의 이미지 업데이트
+      setIngredients((prev) =>
+        prev.map((item) =>
+          item.id === selectedIngredientId ? { ...item, image: dataUrl } : item,
+        ),
+      );
+    } catch (error) {
+      console.error('❌ 카메라 파일 처리 오류:', error);
+    } finally {
+      // Input 값을 초기화하여 같은 파일을 다시 선택할 수 있도록 함
+      if (cameraInputRef.current) {
+        cameraInputRef.current.value = '';
+      }
+      setIsImageOptionOpen(false); // 옵션 모달 닫기
+      setSelectedIngredientId(null);
+    }
+  };
+
   // ✅ 이미지 옵션 모달 열기
   const handleOpenImageOptions = (id: number | string) => {
     setSelectedIngredientId(id);
     setIsImageOptionOpen(true);
   };
 
-  // ✅ 카메라 열기
+  // ✅ 카메라 실행 (CameraModal 대신 Input 클릭)
   const handleLaunchCamera = () => {
     setIsImageOptionOpen(false);
-    setTimeout(() => setIsCameraOpen(true), 100);
+    // ❌ setTimeout(() => setIsCameraOpen(true), 100); 제거
+
+    // ✅ 숨겨진 input을 클릭하여 네이티브 카메라 실행
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
   };
 
   // ✅ 앨범 열기
@@ -160,6 +197,16 @@ export default function IngredientPhotoAddPage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-white px-6 pb-32">
+      {/* ✅ 숨겨진 카메라 Input (카메라 실행 역할) */}
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment" // 후면 카메라 즉시 실행
+        ref={cameraInputRef}
+        onChange={handleCameraFileChange} // ✅ 새 핸들러 연결
+        style={{ display: 'none' }}
+      />
+
       <div className="w-full max-w-[600px] mt-8">
         {ingredients.length > 0 ? (
           <IngredientEditList
@@ -192,33 +239,17 @@ export default function IngredientPhotoAddPage() {
       <ImageOptionsModal
         isVisible={isImageOptionOpen}
         onClose={() => setIsImageOptionOpen(false)}
-        onLaunchCamera={handleLaunchCamera}
+        onLaunchCamera={handleLaunchCamera} // ✅ Input 클릭 함수로 변경
         onLaunchLibrary={handleLaunchLibrary}
       />
 
-      {/* 카메라 모달 */}
-      {isCameraOpen && (
+      {/* ❌ 카메라 모달 렌더링 제거 */}
+      {/* {isCameraOpen && (
         <CameraModal
           onClose={() => setIsCameraOpen(false)}
-          onCapture={(dataUrl: string) => {
-            console.log(
-              '📷 카메라 캡처 base64(앞 80자):',
-              dataUrl.slice(0, 80),
-            );
-
-            if (selectedIngredientId && dataUrl) {
-              setIngredients((prev) =>
-                prev.map((item) =>
-                  item.id === selectedIngredientId
-                    ? { ...item, image: dataUrl }
-                    : item,
-                ),
-              );
-            }
-            setIsCameraOpen(false);
-          }}
+          onCapture={...}
         />
-      )}
+      )} */}
 
       {/* 저장 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 flex justify-center bg-white py-4 shadow-inner">
