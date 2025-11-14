@@ -89,14 +89,23 @@ export default function RecipeModal({
   const evaluateIngredientStatus = (
     ingredients: { name: string; expireDate: string }[],
   ): void => {
-    const today = new Date();
+    // 🚨 수정: 현재 시각(today)의 시간 정보를 UTC 자정(00:00:00Z)으로 리셋
+    const todayUTC = new Date();
+    todayUTC.setUTCHours(0, 0, 0, 0); // 오늘 날짜의 UTC 자정으로 설정 (시간 정보 제거)
+
     const normalizeName = (s: string): string => s.normalize('NFC').trim();
     const recipeNames = normIngredients.map((i) => normalizeName(i.name));
     const matched = ingredients.filter((i) =>
       recipeNames.includes(normalizeName(i.name)),
     );
 
-    const hasExpired = matched.some((i) => new Date(i.expireDate) < today);
+    // 🚨 수정: 유통기한 날짜(UTC 자정)가 오늘 날짜(UTC 자정)보다 작은지 비교
+    const hasExpired = matched.some((i) => {
+      const expiry = new Date(i.expireDate);
+      // 두 날짜 모두 UTC 자정이므로 순수한 날짜 비교가 가능합니다.
+      return expiry.getTime() < todayUTC.getTime();
+    });
+
     if (hasExpired) setStatusMessage('재료 유통기한이 지났어요.');
     else if (matched.length < normIngredients.length)
       setStatusMessage('재료가 부족해요.');
