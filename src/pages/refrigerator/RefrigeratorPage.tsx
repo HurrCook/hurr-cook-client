@@ -166,10 +166,11 @@ export default function RefrigeratorPage() {
     setSelectedIngredientId(null);
   }, []);
 
-  // ✅ 날짜 비교를 위한 헬퍼 함수: 시간을 00:00:00으로 정규화
+  // ✅ 날짜 비교를 위한 헬퍼 함수: 시간을 00:00:00으로 정규화 (안전 복사 적용)
   const normalizeDate = (date: Date) => {
-    date.setHours(0, 0, 0, 0);
-    return date;
+    const safeDate = new Date(date); // 원본 객체 복사
+    safeDate.setHours(0, 0, 0, 0);
+    return safeDate;
   };
 
   return (
@@ -204,7 +205,8 @@ export default function RefrigeratorPage() {
                   const today = normalizeDate(new Date());
                   const expiryDate = normalizeDate(new Date(item.expireDate));
 
-                  const isExpired = expiryDate <= today; // ✅ 날짜 단위 비교
+                  // 만료일 다음 날부터 만료 (expiryDate < today)
+                  const isExpired = expiryDate < today; // ✅ 핵심 수정: <= 를 < 로 변경
 
                   let imageSrc = isExpired ? DefaultBadUrl : DefaultGoodUrl; // ✅ 기본 이미지 조건 분기
 
@@ -239,16 +241,6 @@ export default function RefrigeratorPage() {
                         quantity={`${item.amount}${item.unit}`}
                         expired={isExpired} // 🔥 수정된 만료 여부 전달
                       />
-                      {/*
-                      // 💡 디버그 로그 (주석 처리): 제거 후 재확인
-                      <p className="text-[10px] text-blue-600 mt-1">
-                          parsed: {String(expiryDate)}
-                          <br />
-                          today: {String(today)}
-                          <br />
-                          expired: {isExpired ? 'YES' : 'NO'}
-                      </p>
-                      */}
                     </motion.div>
                   );
                 })
