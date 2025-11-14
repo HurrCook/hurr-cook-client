@@ -1,5 +1,4 @@
 // src/pages/refrigerator/RefrigeratorPage.tsx
-// ㅎㅇ
 import React, { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
@@ -167,6 +166,12 @@ export default function RefrigeratorPage() {
     setSelectedIngredientId(null);
   }, []);
 
+  // ✅ 날짜 비교를 위한 헬퍼 함수: 시간을 00:00:00으로 정규화
+  const normalizeDate = (date: Date) => {
+    date.setHours(0, 0, 0, 0);
+    return date;
+  };
+
   return (
     <motion.div
       className="min-h-screen flex flex-col items-center px-6 relative"
@@ -195,7 +200,12 @@ export default function RefrigeratorPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               {ingredients.length > 0 ? (
                 ingredients.map((item, index) => {
-                  const isExpired = new Date(item.expireDate) < new Date(); // ✅ 유통기한 비교
+                  // 🚨 수정된 만료 로직 적용 🚨
+                  const today = normalizeDate(new Date());
+                  const expiryDate = normalizeDate(new Date(item.expireDate));
+
+                  const isExpired = expiryDate <= today; // ✅ 날짜 단위 비교
+
                   let imageSrc = isExpired ? DefaultBadUrl : DefaultGoodUrl; // ✅ 기본 이미지 조건 분기
 
                   if (item.imageUrl) {
@@ -221,27 +231,24 @@ export default function RefrigeratorPage() {
                     >
                       <IngredientCard
                         name={item.name}
-                        image={imageSrc}
+                        // 💡 toLocaleDateString('ko-KR')는 YYYY. M. D. 형태로 출력
                         date={new Date(item.expireDate).toLocaleDateString(
                           'ko-KR',
                         )}
+                        image={imageSrc}
                         quantity={`${item.amount}${item.unit}`}
-                        expired={isExpired} // 🔥 추가
+                        expired={isExpired} // 🔥 수정된 만료 여부 전달
                       />
-                      {/*<p className="text-[10px] text-blue-600 mt-1">*/}
-                      {/*  raw: {item.expireDate}*/}
-                      {/*  <br />*/}
-                      {/*  parsed: {String(new Date(item.expireDate))}*/}
-                      {/*  <br />*/}
-                      {/*  timestamp: {new Date(item.expireDate).getTime()}*/}
-                      {/*  <br />*/}
-                      {/*  now: {Date.now()}*/}
-                      {/*  <br />*/}
-                      {/*  expired:{' '}*/}
-                      {/*  {new Date(item.expireDate).getTime() < Date.now()*/}
-                      {/*    ? 'YES'*/}
-                      {/*    : 'NO'}*/}
-                      {/*</p>*/}
+                      {/*
+                      // 💡 디버그 로그 (주석 처리): 제거 후 재확인
+                      <p className="text-[10px] text-blue-600 mt-1">
+                          parsed: {String(expiryDate)}
+                          <br />
+                          today: {String(today)}
+                          <br />
+                          expired: {isExpired ? 'YES' : 'NO'}
+                      </p>
+                      */}
                     </motion.div>
                   );
                 })
