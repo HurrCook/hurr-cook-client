@@ -39,6 +39,21 @@ interface RecipeModalProps {
   recipe: Recipe;
 }
 
+// ✅ 헬퍼 함수: 유통기한 날짜의 다음 날 자정 UTC 시점을 계산
+const getExpiryTimestamp = (expireDate: string): number => {
+  const expiry = new Date(expireDate);
+
+  if (isNaN(expiry.getTime())) return 0;
+
+  // 1. 유통기한 당일의 로컬 시간 00:00:00으로 정규화 (시간대 오류 최소화)
+  expiry.setHours(0, 0, 0, 0);
+
+  // 2. 이 날짜(유통기한 당일 자정)에 하루(24시간)를 더합니다.
+  const oneDayInMs = 24 * 60 * 60 * 1000;
+  // 이 값은 유통기한 다음 날의 로컬 자정 시각이 됩니다.
+  return expiry.getTime() + oneDayInMs;
+};
+
 export default function RecipeModal({
   isOpen,
   onClose,
@@ -90,9 +105,8 @@ export default function RecipeModal({
   const evaluateIngredientStatus = (
     ingredients: { name: string; expireDate: string }[],
   ): void => {
-    // 🚨 수정: 현재 시각(today)의 시간 정보를 UTC 자정(00:00:00Z)으로 리셋
-    const todayUTC = new Date();
-    todayUTC.setUTCHours(0, 0, 0, 0); // 오늘 날짜의 UTC 자정으로 설정 (시간 정보 제거)
+    // 🚨 수정: 시간 정보 포함된 현재 시각 사용
+    const nowTime = Date.now();
 
     const normalizeName = (s: string): string => s.normalize('NFC').trim();
     const recipeNames = normIngredients.map((i) => normalizeName(i.name));
@@ -100,11 +114,11 @@ export default function RecipeModal({
       recipeNames.includes(normalizeName(i.name)),
     );
 
-    // ✅ 만료 로직: 유통기한 날짜(expiry)가 오늘 날짜(todayUTC)보다 엄격하게 작은 경우에만 만료 처리
-    // -> 만료일 당일(expiry == todayUTC)은 유효한 것으로 간주합니다.
+    // ✅ 만료 로직: 만료일 다음 날 자정 (로컬 시간)보다 현재 시간이 크거나 같으면 만료
     const hasExpired = matched.some((i) => {
-      const expiry = new Date(i.expireDate);
-      return expiry.getTime() < todayUTC.getTime();
+      const nextDayTimestamp = getExpiryTimestamp(i.expireDate);
+      // 만료일 다음 날 자정 시점(nextDayTimestamp)이 현재 시각(nowTime)보다 작거나 같으면 만료
+      return nextDayTimestamp > 0 && nextDayTimestamp <= nowTime;
     });
 
     setIsExpiredFound(hasExpired); // ✅ 상태 업데이트
