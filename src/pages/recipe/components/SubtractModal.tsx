@@ -48,6 +48,13 @@ const SkeletonCard = () => (
   </div>
 );
 
+// ✅ 헬퍼 함수: 날짜를 00:00:00으로 정규화 (재사용성 및 안정성 확보)
+const normalizeDate = (date: Date) => {
+  const safeDate = new Date(date);
+  safeDate.setHours(0, 0, 0, 0);
+  return safeDate;
+};
+
 export default function SubtractModal({
   isOpen,
   onClose,
@@ -59,6 +66,7 @@ export default function SubtractModal({
   const [insufficientItems, setInsufficientItems] = useState<
     { name: string; required: number; owned: number; expired?: boolean }[]
   >([]);
+  // 💡 사용량이 변경된 재료 목록 상태가 필요할 수 있으나, 현재 로직은 차감만 처리하므로 제외
 
   useEffect(() => {
     if (!isOpen) return;
@@ -97,7 +105,11 @@ export default function SubtractModal({
       const parsedRequiredAmount =
         Number(rIng.amount.replace(/[^0-9.]/g, '')) || 0;
 
-      const isExpired = inv ? new Date(inv.expireDate) < new Date() : false; // ✅ 유통기한 체크
+      // ✅ 유통기한 체크 수정
+      const today = normalizeDate(new Date());
+      const expired = inv
+        ? normalizeDate(new Date(inv.expireDate)).getTime() < today.getTime()
+        : false;
 
       // ✅ 이미지 결정 로직
       let imageSrc = DefaultGood;
@@ -111,7 +123,8 @@ export default function SubtractModal({
           imageSrc = `data:image/png;base64,${inv.imageUrl}`;
         }
       } else {
-        imageSrc = isExpired ? DefaultBad : DefaultGood;
+        // ✅ 만료 여부에 따라 기본 이미지 분기
+        imageSrc = expired ? DefaultBad : DefaultGood;
       }
 
       return {
@@ -128,7 +141,7 @@ export default function SubtractModal({
   useEffect(() => {
     if (!inventory.length || !recipe?.ingredients?.length) return;
 
-    const today = new Date();
+    const today = normalizeDate(new Date()); // ✅ 정규화된 오늘 날짜
     const insuff: {
       name: string;
       required: number;
@@ -142,7 +155,11 @@ export default function SubtractModal({
       );
       const required = Number(rIng.amount.replace(/[^0-9.]/g, '')) || 0;
       const owned = inv?.amount || 0;
-      const expired = inv ? new Date(inv.expireDate) < today : false;
+
+      // ✅ 유통기한 비교 로직 수정
+      const expired = inv
+        ? normalizeDate(new Date(inv.expireDate)).getTime() < today.getTime()
+        : false;
 
       if (!inv || owned < required || expired) {
         insuff.push({ name: rIng.name, required, owned, expired });
@@ -153,7 +170,9 @@ export default function SubtractModal({
   }, [inventory, recipe]);
 
   const handleConfirm = async () => {
+    // 💡 유통기한 만료 재료가 있어도 차감하지 않는다면 이 로직 유지
     if (insufficientItems.length > 0) return;
+
     try {
       setLoading(true);
       const ingredientUseList = matchedItems
@@ -183,6 +202,9 @@ export default function SubtractModal({
       setLoading(false);
     }
   };
+
+  // 💡 SubractCard에서 사용량을 변경할 때 호출되지만, 현재는 사용되지 않음
+  // const handleChangeUsed = (id: string | number, usedAmount: number) => { /* ... */ };
 
   if (!isOpen) return null;
 
@@ -228,7 +250,11 @@ export default function SubtractModal({
             <div className="flex flex-col gap-[10px]">
               {matchedItems.length > 0 ? (
                 matchedItems.map((item) => {
-                  const isExpired = new Date(item.expiryDate) < new Date();
+                  // ✅ JSX 내부 isExpired 수정
+                  const today = normalizeDate(new Date());
+                  const expiryDate = normalizeDate(new Date(item.expiryDate));
+                  const isExpired = expiryDate.getTime() < today.getTime(); // ✅ 날짜 단위 비교
+
                   const isInsufficient = item.amount < item.requiredAmount;
                   return (
                     <div

@@ -1,3 +1,4 @@
+// src/components/common/SubtractCard.tsx
 import React, { useState, useEffect } from 'react';
 
 interface SubtractCardProps {
@@ -40,8 +41,19 @@ const SubtractCard: React.FC<SubtractCardProps> = ({ item, onChangeUsed }) => {
     setUsedAmount(validValue);
   };
 
-  // ✅ 유통기한 지난 재료 여부
-  const isExpired = new Date(item.expiryDate) < new Date();
+  // ✅ 유통기한 지난 재료 여부 (수정된 로직)
+  const isExpired = (() => {
+    // 1. 현재 날짜 (시간 00:00:00)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // 2. 만료 날짜 (시간 00:00:00)
+    const expiry = new Date(item.expiryDate);
+    expiry.setHours(0, 0, 0, 0);
+
+    // 3. 만료일 다음 날부터 만료 (expiry < today)
+    return expiry.getTime() < today.getTime();
+  })();
 
   return (
     <div
