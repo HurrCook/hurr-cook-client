@@ -50,6 +50,7 @@ export default function RecipeModal({
   const [statusMessage, setStatusMessage] = useState('');
   const [showUsedBanner, setShowUsedBanner] = useState(false);
   const [showSubtractModal, setShowSubtractModal] = useState(false);
+  const [isExpiredFound, setIsExpiredFound] = useState(false); // ✅ 만료 재료 존재 여부 상태
 
   // ✅ 재료 정규화
   const normIngredients = useMemo(() => {
@@ -99,12 +100,14 @@ export default function RecipeModal({
       recipeNames.includes(normalizeName(i.name)),
     );
 
-    // 🚨 수정: 유통기한 날짜(UTC 자정)가 오늘 날짜(UTC 자정)보다 작은지 비교
+    // ✅ 만료 로직: 유통기한 날짜(expiry)가 오늘 날짜(todayUTC)보다 엄격하게 작은 경우에만 만료 처리
+    // -> 만료일 당일(expiry == todayUTC)은 유효한 것으로 간주합니다.
     const hasExpired = matched.some((i) => {
       const expiry = new Date(i.expireDate);
-      // 두 날짜 모두 UTC 자정이므로 순수한 날짜 비교가 가능합니다.
       return expiry.getTime() < todayUTC.getTime();
     });
+
+    setIsExpiredFound(hasExpired); // ✅ 상태 업데이트
 
     if (hasExpired) setStatusMessage('재료 유통기한이 지났어요.');
     else if (matched.length < normIngredients.length)
@@ -114,6 +117,12 @@ export default function RecipeModal({
 
   // ✅ SubtractModal 열기
   const handleGoSubtract = (): void => {
+    // 만료된 재료가 있다면 차감 로직 실행 방지
+    if (isExpiredFound) {
+      // 사용자에게 시각적인 경고를 줄 수 있습니다.
+      return;
+    }
+
     setShowSubtractModal(true);
   };
 
@@ -230,7 +239,8 @@ export default function RecipeModal({
               <Button
                 color="default"
                 onClick={handleGoSubtract}
-                disabled={loading}
+                // ✅ 만료된 재료가 발견되면 버튼 비활성화
+                disabled={loading || isExpiredFound}
               >
                 {loading ? '처리 중...' : '재료차감'}
               </Button>
