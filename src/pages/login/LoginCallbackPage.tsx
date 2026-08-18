@@ -1,3 +1,4 @@
+// src/pages/login/LoginCallbackPage.tsx
 import { useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -69,7 +70,7 @@ export default function LoginCallbackPage() {
     },
   });
 
-  // ⭐ location.search가 바뀔 때마다 실행됨
+  // ⭐ location.search가 바뀔 때마다 실행됨 (두 번째 로그인부터도 잡아냄)
   useEffect(() => {
     console.log('🟡 [Callback useEffect] 실행, search =', location.search);
 
@@ -83,7 +84,7 @@ export default function LoginCallbackPage() {
       console.warn('⚠️ [Callback useEffect] code 없음 → /login 이동');
       navigate('/login', { replace: true });
     }
-  }, [location.search]);
+  }, [location.search, mutate, navigate]); // ❗ 핵심: location.search 의존성 추가
 
   return (
     <div className="flex flex-col items-center justify-center h-screen text-center">
